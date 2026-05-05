@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# For3s — Brian Aguilar
 
-## Getting Started
+Portafolio personal de Brian Aguilar (CEO de For3s, infraestructura para agentes de IA en LATAM).
 
-First, run the development server:
+Construido en colaboración con [Frutero Club](https://frutero.club) y [Godinez Studio](https://godinez.studio).
+
+## Stack
+
+- **Framework**: Next.js 16 (App Router) + Turbopack
+- **UI**: Tailwind CSS v4 + shadcn/ui
+- **Animation**: Framer Motion
+- **Typography**: Inter Variable + Fira Mono (Google Fonts)
+- **Package manager**: Bun
+
+## Sistema de diseño
+
+- Dark mode hardcoded (`#181818` ground, OKLCH color space)
+- Brand: amarillo dorado For3s (escala custom de 12 pasos)
+- Tokens semánticos al estilo Modal: `foreground-*`, `surface-*`, `edge-*`, `icon-*`
+- Botones pill con micro-feedback (`scale: 0.97` en `:active`)
+- Mouse-tracked spotlight en el Hero
+- Section blends con gradients para transiciones suaves entre superficies
+
+## Desarrollo
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+bun install
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+El contenido es escalable desde [`lib/data.ts`](lib/data.ts) — agregar proyectos, skills, timeline o colaboradores ahí.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Build
 
-## Learn More
+```bash
+bun run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Estructura
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/                   # App Router de Next.js
+  ├─ layout.tsx        # Fonts globales + metadata
+  ├─ page.tsx          # Compone las secciones
+  └─ globals.css       # Design system completo
+components/
+  ├─ sections/         # Hero, About, Projects, Skills, Timeline, Contact
+  ├─ shared/           # Navbar, Footer
+  └─ ui/               # shadcn primitives
+lib/
+  └─ data.ts           # Source of truth del contenido
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Optimizado para Vercel. `bun run build` produce un build listo para CDN.

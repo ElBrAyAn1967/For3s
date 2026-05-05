@@ -1,26 +1,394 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* =============================================================
+   For3s Design System — Modal-inspired, dark hardcoded, amarillo brand
+   ============================================================= */
 
 @theme inline {
+  /* Fonts */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+
+  /* Brand scale (amarillo For3s — sigue patrón Modal c-*) */
+  --color-c-brand-5:   var(--c-brand-5);
+  --color-c-brand-10:  var(--c-brand-10);
+  --color-c-brand-15:  var(--c-brand-15);
+  --color-c-brand-20:  var(--c-brand-20);
+  --color-c-brand-30:  var(--c-brand-30);
+  --color-c-brand-40:  var(--c-brand-40);
+  --color-c-brand-50:  var(--c-brand-50);
+  --color-c-brand-60:  var(--c-brand-60);
+  --color-c-brand-70:  var(--c-brand-70);
+  --color-c-brand-80:  var(--c-brand-80);
+  --color-c-brand-90:  var(--c-brand-90);
+  --color-c-brand-100: var(--c-brand-100);
+
+  /* Gray scale (neutros) */
+  --color-c-gray-0:   var(--c-gray-0);
+  --color-c-gray-2:   var(--c-gray-2);
+  --color-c-gray-5:   var(--c-gray-5);
+  --color-c-gray-7:   var(--c-gray-7);
+  --color-c-gray-10:  var(--c-gray-10);
+  --color-c-gray-15:  var(--c-gray-15);
+  --color-c-gray-20:  var(--c-gray-20);
+  --color-c-gray-30:  var(--c-gray-30);
+  --color-c-gray-40:  var(--c-gray-40);
+  --color-c-gray-50:  var(--c-gray-50);
+  --color-c-gray-60:  var(--c-gray-60);
+  --color-c-gray-70:  var(--c-gray-70);
+  --color-c-gray-80:  var(--c-gray-80);
+  --color-c-gray-90:  var(--c-gray-90);
+  --color-c-gray-100: var(--c-gray-100);
+
+  /* Semantic foreground */
+  --color-foreground-primary:    var(--foreground-primary);
+  --color-foreground-secondary:  var(--foreground-secondary);
+  --color-foreground-tertiary:   var(--foreground-tertiary);
+  --color-foreground-active:     var(--foreground-active);
+  --color-foreground-accent:     var(--foreground-accent);
+
+  /* Semantic surface */
+  --color-surface-primary:        var(--surface-primary);
+  --color-surface-secondary:      var(--surface-secondary);
+  --color-surface-primary-hover:  var(--surface-primary-hover);
+  --color-surface-primary-active: var(--surface-primary-active);
+  --color-surface-overlay-large:  var(--surface-overlay-large);
+  --color-surface-overlay-small:  var(--surface-overlay-small);
+  --color-surface-accent:         var(--surface-accent);
+  --color-surface-accent-hover:   var(--surface-accent-hover);
+  --color-surface-accent-active:  var(--surface-accent-active);
+
+  /* Semantic edge */
+  --color-edge-primary:    var(--edge-primary);
+  --color-edge-secondary:  var(--edge-secondary);
+  --color-edge-accent:     var(--edge-accent);
+
+  /* Semantic icon */
+  --color-icon-primary:           var(--icon-primary);
+  --color-icon-secondary:         var(--icon-secondary);
+  --color-icon-secondary-hover:   var(--icon-secondary-hover);
+  --color-icon-accent:            var(--icon-accent);
+
+  /* shadcn aliases — apuntan al sistema semántico */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand aliases — para compatibilidad con código legacy */
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-light: var(--brand-light);
+
+  /* Motion */
+  --default-transition-duration: 0.15s;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Radius */
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-pill: 3.40282e38px;
+  --radius: var(--radius-lg);
+
+  /* Blur */
+  --blur-xs: 4px;
+  --blur-sm: 8px;
+  --blur-md: 12px;
+  --blur-xl: 24px;
+
+  /* Spacing marketing */
+  --spacing-marketing-sm: 1rem;
+  --spacing-marketing-md: 2rem;
+  --spacing-marketing-lg: 3rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  color-scheme: dark;
+
+  /* ------------- BRAND — escala amarilla For3s (oklch) -------------
+     Hue ~80° (amarillo dorado), pasando a 60° (cálido) en el primary,
+     y derivando a 38° (café) en oscuros. Equivalente perceptual de
+     #FFC857 / #EF9B11 / #B07A0E como anclas. */
+  --c-brand-5:   oklch(0.180 0.025 50);
+  --c-brand-10:  oklch(0.235 0.045 55);
+  --c-brand-15:  oklch(0.290 0.065 58);
+  --c-brand-20:  oklch(0.355 0.085 60);
+  --c-brand-30:  oklch(0.430 0.115 60);
+  --c-brand-40:  oklch(0.505 0.140 60);
+  --c-brand-50:  oklch(0.580 0.155 60);
+  --c-brand-60:  oklch(0.655 0.165 60);
+  --c-brand-70:  oklch(0.715 0.165 60);  /* ← BRAND PRIMARY (#EF9B11 eq) */
+  --c-brand-80:  oklch(0.790 0.165 70);
+  --c-brand-90:  oklch(0.860 0.150 80);
+  --c-brand-100: oklch(0.925 0.130 90);  /* casi crema dorado */
+
+  /* ------------- GRAY scale neutros (oklch) ------------- */
+  --c-gray-0:   oklch(0.205 0 0);  /* #181818 — ground */
+  --c-gray-2:   oklch(0.215 0 0);  /* #1c1c1c — surface base */
+  --c-gray-5:   oklch(0.245 0 0);  /* #242424 */
+  --c-gray-7:   oklch(0.260 0 0);  /* #272727 — surface highlight */
+  --c-gray-10:  oklch(0.285 0 0);  /* #2f2f2f — edge primary */
+  --c-gray-15:  oklch(0.330 0 0);  /* #3b3b3b */
+  --c-gray-20:  oklch(0.375 0 0);  /* #464646 */
+  --c-gray-30:  oklch(0.460 0 0);  /* #5d5d5d */
+  --c-gray-40:  oklch(0.540 0 0);  /* #747474 */
+  --c-gray-50:  oklch(0.610 0 0);  /* #8b8b8b */
+  --c-gray-60:  oklch(0.685 0 0);  /* #a3a3a3 */
+  --c-gray-70:  oklch(0.760 0 0);  /* #bababa */
+  --c-gray-80:  oklch(0.835 0 0);  /* #d1d1d1 — foreground primary */
+  --c-gray-90:  oklch(0.910 0 0);  /* #e8e8e8 */
+  --c-gray-100: oklch(1 0 0);      /* #ffffff */
+
+  /* ------------- TOKENS SEMÁNTICOS (Modal pattern) ------------- */
+  /* Foreground */
+  --foreground-primary:   var(--c-gray-80);
+  --foreground-secondary: var(--c-gray-60);
+  --foreground-tertiary:  var(--c-gray-40);
+  --foreground-active:    var(--c-gray-100);
+  --foreground-accent:    var(--c-brand-70);
+
+  /* Surface */
+  --surface-primary:        var(--c-gray-0);
+  --surface-secondary:      var(--c-gray-10);
+  --surface-primary-hover:  rgba(255, 255, 255, 0.05);
+  --surface-primary-active: rgba(255, 255, 255, 0.10);
+  --surface-overlay-large:  var(--c-gray-2);
+  --surface-overlay-small:  var(--c-gray-7);
+  --surface-accent:         var(--c-brand-5);
+  --surface-accent-hover:   var(--c-brand-10);
+  --surface-accent-active:  var(--c-brand-15);
+
+  /* Edge */
+  --edge-primary:   var(--c-gray-20);
+  --edge-secondary: var(--c-gray-10);
+  --edge-accent:    var(--c-brand-20);
+
+  /* Icon */
+  --icon-primary:         var(--c-gray-30);
+  --icon-secondary:       var(--c-gray-60);
+  --icon-secondary-hover: var(--c-gray-80);
+  --icon-accent:          var(--c-brand-50);
+
+  /* ------------- shadcn compat ------------- */
+  --background: var(--surface-primary);
+  --foreground: var(--foreground-primary);
+  --card: var(--surface-overlay-large);
+  --card-foreground: var(--foreground-primary);
+  --popover: var(--surface-overlay-small);
+  --popover-foreground: var(--foreground-primary);
+  --primary: var(--c-brand-70);
+  --primary-foreground: var(--c-gray-0);
+  --secondary: var(--c-gray-10);
+  --secondary-foreground: var(--foreground-active);
+  --muted: var(--c-gray-10);
+  --muted-foreground: var(--foreground-secondary);
+  --accent: var(--c-gray-10);
+  --accent-foreground: var(--c-brand-80);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: var(--edge-primary);
+  --input: var(--edge-primary);
+  --ring: var(--c-brand-30);
+
+  /* Legacy brand aliases */
+  --brand: var(--c-brand-70);
+  --brand-dark: var(--c-brand-50);
+  --brand-light: var(--c-brand-100);
+
+  /* Marketing gradient — amarillo 7 stops 25° */
+  --marketing-gradient: linear-gradient(
+    25deg,
+    oklch(0.860 0.150 80) 6.4%,
+    oklch(0.820 0.160 75) 21.31%,
+    oklch(0.780 0.165 70) 36.23%,
+    oklch(0.740 0.165 65) 51.97%,
+    oklch(0.700 0.165 60) 67.71%,
+    oklch(0.640 0.160 55) 83.45%,
+    oklch(0.580 0.150 50) 89.25%
+  ), oklch(0.715 0.165 60);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans scroll-smooth;
+  }
+
+  body {
+    background-color: var(--surface-primary);
+    color: var(--foreground-primary);
+    font-feature-settings: "cv11" on;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =============================================================
+   Botón pill marketing (Modal pattern)
+   ============================================================= */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  padding: 9px 18px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  border-radius: var(--radius-pill);
+  transition: all 0.15s var(--ease-out);
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 640px) {
+  .btn-pill {
+    padding: 9px 21px;
+  }
+}
+
+.btn-pill:active:not(:disabled) {
+  scale: 0.97;
+}
+
+.btn-pill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-brand-30);
+}
+
+.btn-pill-primary {
+  background-color: var(--c-brand-70);
+  color: var(--c-gray-0);
+}
+
+.btn-pill-primary:hover:not(:disabled) {
+  background-color: var(--c-brand-80);
+}
+
+.btn-pill-secondary {
+  background-color: transparent;
+  color: var(--foreground-primary);
+  border: 1px solid var(--edge-primary);
+}
+
+.btn-pill-secondary:hover:not(:disabled) {
+  background-color: var(--surface-primary-hover);
+  border-color: var(--c-gray-30);
+}
+
+.btn-pill-accent {
+  background-color: transparent;
+  color: var(--c-brand-70);
+  border: 1px solid color-mix(in oklab, var(--c-brand-70) 30%, transparent);
+}
+
+.btn-pill-accent:hover:not(:disabled) {
+  background-color: color-mix(in oklab, var(--c-brand-70) 5%, transparent);
+  border-color: var(--c-brand-70);
+}
+
+/* =============================================================
+   Section blend — fade suave entre surfaces alternadas
+   Cada section recibe un gradient en su top que va del color del
+   section anterior al suyo propio. El cambio se vuelve invisible
+   sin tener que cambiar markup en cada componente.
+   ============================================================= */
+.section-blend {
+  position: relative;
+}
+
+.section-blend::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(
+    to bottom,
+    var(--blend-from) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Asegurar que el contenido de la section quede sobre el blend */
+.section-blend > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* =============================================================
+   Hero spotlight — neon tenue blanco/gris que sigue al mouse
+   ============================================================= */
+.hero-spotlight {
+  --mx: 50%;
+  --my: 50%;
+}
+
+.hero-spotlight-glow {
+  background: radial-gradient(
+    300px circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.06) 25%,
+    rgba(255, 255, 255, 0.025) 50%,
+    rgba(255, 255, 255, 0.008) 75%,
+    transparent 100%
+  );
+  transition: opacity 350ms var(--ease-out);
+  z-index: 1;
+  filter: blur(20px);
+}
+
+/* Solo en dispositivos con hover real (desktop) */
+@media (hover: none) {
+  .hero-spotlight-glow {
+    display: none;
+  }
+}
+
+/* =============================================================
+   Marquee — preservada del sistema previo
+   ============================================================= */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }
