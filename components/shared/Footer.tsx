@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { siteConfig } from "@/lib/data";
 
 export default function Footer() {
+  const t = useTranslations("Footer");
+
   return (
     <footer
       className="section-blend py-8 sm:py-10 bg-surface-primary"
@@ -10,7 +13,9 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-foreground-secondary">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-c-brand-70">For3s</span>
-          <span>— Brian Aguilar © {new Date().getFullYear()}</span>
+          <span>
+            — {t("byline")} © {new Date().getFullYear()}
+          </span>
         </div>
         <div className="flex items-center gap-5">
           <Link

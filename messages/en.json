@@ -1,0 +1,386 @@
+{
+  "Site": {
+    "title": "Brian Aguilar — For3s",
+    "description": "CEO of agent infrastructure. Founder of For3s — building the layer LATAM needs to operate in the agentic era.",
+    "tagline": "Opening the doors to the agent era."
+  },
+  "Navbar": {
+    "links": {
+      "about": "About",
+      "projects": "Projects",
+      "timeline": "Journey",
+      "contact": "Contact",
+      "docs": "Docs"
+    },
+    "cta": "Get in touch",
+    "languageSwitcher": {
+      "label": "Change language",
+      "switchToEnglish": "Switch to English",
+      "switchToSpanish": "Switch to Spanish"
+    },
+    "menu": {
+      "open": "Open menu",
+      "close": "Close menu"
+    }
+  },
+  "Hero": {
+    "overline": "CEO of Agent Infrastructure · LATAM",
+    "headline": {
+      "line1": "CEO of infrastructure",
+      "line2": "for agents."
+    },
+    "description": "Founder of For3s — a new agent infrastructure company, built in collaboration with Frutero Club and Godinez Studio. I connect vision, technology, and community so LATAM can operate in the agentic era.",
+    "cta": {
+      "primary": "View projects",
+      "secondary": "Get in touch →"
+    }
+  },
+  "About": {
+    "overline": "About me",
+    "headline": {
+      "prefix": "For3s — The doors into",
+      "accent": "the new era"
+    },
+    "p1": "I'm Brian, CEO of <strong>For3s</strong> — a new agent infrastructure company for AI agents in LATAM. The name comes from Latin: <em>the doors</em>. Every project I build is a door we open together.",
+    "p2": "I don't build features — I build platforms. My focus is the infrastructure layer: agent orchestration, memory systems, and the protocols that make the next generation of software possible.",
+    "collaboratorsLabel": "In collaboration with",
+    "collaborators": {
+      "0": {
+        "role": "Community & ecosystem",
+        "description": "A community of builders and founders in LATAM. Frutero Club is the ecosystem where vision is born, ideas get tested, and the people building the future connect."
+      },
+      "1": {
+        "role": "Product & technology",
+        "description": "A product and development studio. Godinez Studio is the creative engine behind the tools, agents, and digital experiences that bring projects to life."
+      }
+    },
+    "valuesLabel": "How I operate",
+    "values": {
+      "0": {
+        "label": "Infrastructure",
+        "desc": "I build the foundation others need to scale."
+      },
+      "1": {
+        "label": "Community",
+        "desc": "The best products are born from real communities."
+      },
+      "2": {
+        "label": "LATAM First",
+        "desc": "I solve problems from and for Latin America."
+      }
+    }
+  },
+  "Projects": {
+    "overline": "Projects",
+    "headline": "Every door I've opened",
+    "subheadline": "Initiatives built, planned, and led throughout my journey.",
+    "status": {
+      "activo": "Active",
+      "desarrollo": "In development",
+      "pausado": "Paused"
+    },
+    "items": {
+      "for3s": {
+        "tagline": "Agent infrastructure for LATAM",
+        "description": "CEO and co-founder. For3s (Latin for 'the doors') is a new company building the infrastructure layer to deploy, orchestrate, and scale AI agents in production — created in collaboration with Frutero Club and Godinez Studio."
+      },
+      "godinez-ai": {
+        "tagline": "AI tools for the modern worker",
+        "description": "AI tool suite designed for the Latin American worker. Accessible automation, practical prompts, and intelligent workflows for the day-to-day."
+      },
+      "kukulcan-brain": {
+        "tagline": "Memory and knowledge system for agents",
+        "description": "Persistent memory architecture for AI agents. Knowledge-graph based, it lets agents remember context, learn from interactions, and make better decisions."
+      },
+      "trustdrop": {
+        "tagline": "Trusted on-chain transfers",
+        "description": "Digital asset transfer protocol with on-chain trust verification. Removes friction and risk from peer-to-peer transactions."
+      },
+      "acompanante": {
+        "tagline": "Smart companion for older adults",
+        "description": "AI agent designed to keep older adults company. Natural conversation, reminders, family connection, and wellness monitoring."
+      },
+      "agentcamp": {
+        "tagline": "The bootcamp for agent builders",
+        "description": "Intensive program for builders who want to build with AI agents. S1-S5 curriculum, expert mentors, and real projects across 5 weeks."
+      }
+    }
+  },
+  "Skills": {
+    "overline": "Stack & Skills",
+    "headline": "What I build with"
+  },
+  "Timeline": {
+    "overline": "Journey",
+    "headline": "The path so far",
+    "subheadline": "A timeline of what I've built, learned, and led.",
+    "items": {
+      "2026": {
+        "title": "AgentCamp & For3s",
+        "description": "AgentCamp 2026 launch and For3s consolidation as agent infrastructure for LATAM."
+      },
+      "2025": {
+        "title": "Kukulcan Brain",
+        "description": "Memory architecture for agents kicks off. Deep dive into knowledge graphs and multi-agent systems."
+      },
+      "2024": {
+        "title": "Godinez AI & Acompañante",
+        "description": "Launch of AI tools for the modern worker and an AI companion for older adults."
+      },
+      "2023": {
+        "title": "TrustDrop & Web3",
+        "description": "On-chain transfer protocol. Deep exploration of Web3 and DeFi ecosystems."
+      },
+      "2022": {
+        "title": "First steps as a builder",
+        "description": "Start of the founder journey. First projects, communities, and lessons in technology."
+      }
+    }
+  },
+  "Contact": {
+    "overline": "Contact",
+    "headline": {
+      "prefix": "Let's build something",
+      "accent": "together?"
+    },
+    "description": "If you're building in the agent era, looking for infrastructure for your team, or just want to connect — write me.",
+    "githubCta": "GitHub →"
+  },
+  "Footer": {
+    "byline": "Brian Aguilar"
+  },
+  "Docs": {
+    "title": "Docs",
+    "subtitle": "For3s technical documentation. What we know, we give to you.",
+    "breadcrumb": "Docs",
+    "mobileLabel": "Documentation",
+    "sidebar": {
+      "expand": "Expand menu",
+      "collapse": "Collapse menu"
+    },
+    "navigation": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "search": {
+      "placeholder": "Search the docs…",
+      "label": "Search the documentation",
+      "empty": "No results.",
+      "results": "{count, plural, one {# result} other {# results}}"
+    },
+    "empty": {
+      "label": "Under construction",
+      "title": "This page is under construction",
+      "description": "We're working on this content. Check back soon — or subscribe to be notified when it's ready."
+    },
+    "categories": {
+      "empezar": "GET STARTED",
+      "agentes": "AI AGENTS",
+      "infraestructura": "INFRASTRUCTURE",
+      "memoria": "MEMORY & KNOWLEDGE",
+      "integraciones": "INTEGRATIONS",
+      "web3": "WEB3 & ONCHAIN",
+      "guias": "PRACTICAL GUIDES",
+      "herramientas": "TOOLS WE USE",
+      "casos-estudio": "CASE STUDIES",
+      "glosario": "GLOSSARY"
+    },
+    "items": {
+      "que-es-for3s": {
+        "label": "What is For3s?",
+        "title": "What is For3s?",
+        "summary": "An intro to the For3s technology stack and why we build agent infrastructure for LATAM."
+      },
+      "filosofia": {
+        "label": "Infrastructure philosophy",
+        "title": "Infrastructure philosophy",
+        "summary": "Why we build platforms instead of features. The principles guiding our technical decisions."
+      },
+      "como-leer-docs": {
+        "label": "How to read these docs",
+        "title": "How to read these docs",
+        "summary": "Builder's orientation. How information is organized and where to start based on your goal."
+      },
+      "openclaw": {
+        "label": "OpenClaw",
+        "title": "OpenClaw — For3s agent",
+        "summary": "Architecture, design, and patterns of OpenClaw, the operational agent inside the For3s ecosystem."
+      },
+      "hermes": {
+        "label": "Hermes",
+        "title": "Hermes — For3s agent",
+        "summary": "Hermes, the messenger agent. How it operates, what it solves, and how it connects with the rest of the stack."
+      },
+      "anatomia-agente": {
+        "label": "Agent anatomy",
+        "title": "Agent anatomy",
+        "summary": "Chatbot vs agent. The four properties that distinguish an agent: memory, context, action, and identity."
+      },
+      "patrones-orquestacion": {
+        "label": "Orchestration patterns",
+        "title": "Orchestration patterns",
+        "summary": "Single agent vs multi-agent. When each architecture fits and how agents coordinate with each other."
+      },
+      "memoria-contexto": {
+        "label": "Memory and context",
+        "title": "Memory and context",
+        "summary": "How an agent persists state. Short-term memory, long-term, dynamic vs static context."
+      },
+      "tool-use": {
+        "label": "Tool use and function calling",
+        "title": "Tool use and function calling",
+        "summary": "How an agent acts in the world. Function calling, tool use, and patterns for agent decision-making."
+      },
+      "arquitectura-produccion": {
+        "label": "Production agent architecture",
+        "title": "Production agent architecture",
+        "summary": "How to design a production-ready agent architecture. Stateless vs stateful, queues, workers."
+      },
+      "despliegue-escalamiento": {
+        "label": "Deployment and scaling",
+        "title": "Deployment and scaling",
+        "summary": "Strategies to deploy agents in production and scale under real demand."
+      },
+      "observabilidad": {
+        "label": "Agent observability",
+        "title": "Agent observability",
+        "summary": "Logs, traces, metrics. What to measure to understand what your agent does when you're not watching."
+      },
+      "costos-rate-limiting": {
+        "label": "Costs and rate limiting",
+        "title": "Costs and rate limiting",
+        "summary": "How to control LLM costs in production. Caching, batching, rate limits, and budgets."
+      },
+      "seguridad-guardrails": {
+        "label": "Security and guardrails",
+        "title": "Security and guardrails",
+        "summary": "Prompt injection, jailbreaks, output validation. How to protect an agent and its users."
+      },
+      "knowledge-graphs": {
+        "label": "Knowledge graphs explained",
+        "title": "Knowledge graphs explained",
+        "summary": "What knowledge graphs are, how they're built, and why they're useful for agents."
+      },
+      "rag-vs-memoria": {
+        "label": "RAG vs persistent memory",
+        "title": "RAG vs persistent memory",
+        "summary": "Differences, trade-offs, and when to use each. Hybrid patterns."
+      },
+      "embeddings-vector": {
+        "label": "Embeddings and vector stores",
+        "title": "Embeddings and vector stores",
+        "summary": "How embeddings work, which vector store to choose, and how to measure retrieval quality."
+      },
+      "kukulcan-brain": {
+        "label": "Kukulcan Brain",
+        "title": "Kukulcan Brain — how we built it",
+        "summary": "For3s' persistent memory system. Architecture, design decisions, and lessons learned."
+      },
+      "telegram": {
+        "label": "Telegram bots",
+        "title": "Telegram bots",
+        "summary": "How to build Telegram bots wired to an agent. Webhooks, commands, rich messages."
+      },
+      "whatsapp": {
+        "label": "WhatsApp Business API",
+        "title": "WhatsApp Business API",
+        "summary": "Integrate agents with WhatsApp in LATAM. Setup, templates, best practices."
+      },
+      "google-suite": {
+        "label": "Gmail, Calendar, and Notion",
+        "title": "Gmail, Calendar, and Notion",
+        "summary": "Connect your agent to the Google ecosystem + Notion. OAuth, scopes, and integration patterns."
+      },
+      "webhooks-eventos": {
+        "label": "Webhooks and events",
+        "title": "Webhooks and events",
+        "summary": "How to give your agent ears. Inbound webhooks, event sourcing, and async processing."
+      },
+      "apis-propias": {
+        "label": "Your own APIs",
+        "title": "Your own APIs",
+        "summary": "Designing APIs an agent can consume well. Clean schemas, readable errors, idempotency."
+      },
+      "identidad-onchain": {
+        "label": "Onchain identity for agents",
+        "title": "Onchain identity for agents",
+        "summary": "Why an agent needs its own onchain identity. Wallets, signatures, and reputation."
+      },
+      "pagos-programaticos": {
+        "label": "Programmatic payments",
+        "title": "Programmatic payments",
+        "summary": "Let your agent receive and send payments without middlemen. Stablecoins, micropayments, and patterns."
+      },
+      "trustdrop": {
+        "label": "TrustDrop",
+        "title": "TrustDrop — case study",
+        "summary": "Transfer protocol with onchain trust verification. What we built and what we learned."
+      },
+      "wallets-agentes": {
+        "label": "Wallets for agents",
+        "title": "Wallets for agents",
+        "summary": "How to give an agent its own secure wallet with clear spending policies."
+      },
+      "primer-agente-claude": {
+        "label": "Your first agent with Claude API",
+        "title": "Your first agent with Claude API",
+        "summary": "Step-by-step guide to building your first functional agent with the Claude API. No extra frameworks."
+      },
+      "telegram-bot-30min": {
+        "label": "Telegram bot in 30 min",
+        "title": "Telegram bot in 30 minutes",
+        "summary": "From zero to a Telegram bot wired to an agent, production-ready, in half an hour."
+      },
+      "agente-notion": {
+        "label": "Connect an agent to Notion",
+        "title": "Connect an agent to Notion",
+        "summary": "Your agent reading and writing in your Notion. OAuth setup, page reading, block writing."
+      },
+      "deploy-vercel": {
+        "label": "Deploy on Vercel + Railway",
+        "title": "Deploy on Vercel + Railway",
+        "summary": "The deployment stack we use at For3s. Frontend on Vercel, workers/agents on Railway."
+      },
+      "stack-for3s": {
+        "label": "For3s stack",
+        "title": "For3s stack — what and why",
+        "summary": "The tools we use day-to-day to build, deploy, and operate agents."
+      },
+      "claude-api": {
+        "label": "Claude API",
+        "title": "Claude API — tips and patterns",
+        "summary": "Patterns we discovered using the Claude API in production. What the official docs don't tell you."
+      },
+      "nextjs-ai": {
+        "label": "Next.js for AI products",
+        "title": "Next.js for AI products",
+        "summary": "How to leverage Next.js for AI products. Streaming, server components, edge runtime."
+      },
+      "cuando-usar-llm": {
+        "label": "When to use which LLM",
+        "title": "When to use which LLM",
+        "summary": "Claude, GPT, Llama, Gemini. How to pick the right model for the task without falling for trends."
+      },
+      "acompanante": {
+        "label": "Acompañante",
+        "title": "Acompañante — case study",
+        "summary": "AI agent built to keep older adults company. How we designed it, what we learned, what we did differently."
+      },
+      "godinez-ai": {
+        "label": "Godinez AI",
+        "title": "Godinez AI — case study",
+        "summary": "Productivity suite for the Latin American worker. Product and architecture decisions."
+      },
+      "for3s-internal": {
+        "label": "For3s Internal",
+        "title": "For3s Internal — how we operate",
+        "summary": "How we use our own agents to run For3s. Eating our own cooking."
+      },
+      "terminos": {
+        "label": "Ecosystem terms",
+        "title": "Glossary — ecosystem terms",
+        "summary": "The technical vocabulary we use at For3s. From agent to zero-shot, everything worth being clear about."
+      }
+    }
+  }
+}

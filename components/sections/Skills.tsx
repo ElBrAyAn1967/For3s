@@ -1,9 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { skills } from "@/lib/data";
 
 export default function Skills() {
+  const t = useTranslations("Skills");
   const doubled = [...skills, ...skills];
 
   return (
@@ -19,15 +21,14 @@ export default function Skills() {
           transition={{ duration: 0.5 }}
         >
           <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-c-brand-70">
-            Stack & Skills
+            {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground-active">
-            Con qué construyo
+            {t("headline")}
           </h2>
         </motion.div>
       </div>
 
-      {/* Marquee */}
       <div className="relative flex overflow-hidden">
         <div className="flex animate-marquee gap-3 whitespace-nowrap">
           {doubled.map((skill, i) => (

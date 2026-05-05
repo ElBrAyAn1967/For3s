@@ -3,9 +3,10 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRef, useState, type MouseEvent } from "react";
-import { siteConfig } from "@/lib/data";
+import { useTranslations } from "next-intl";
 
 export default function Hero() {
+  const t = useTranslations("Hero");
   const sectionRef = useRef<HTMLElement>(null);
   const [hovering, setHovering] = useState(false);
 
@@ -27,7 +28,6 @@ export default function Hero() {
       onMouseLeave={() => setHovering(false)}
       className="hero-spotlight min-h-[100svh] flex items-center pt-16 relative overflow-hidden"
     >
-      {/* Background grid pattern */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
@@ -42,7 +42,6 @@ export default function Hero() {
         }}
       />
 
-      {/* Spotlight layer — mouse-tracked neon glow */}
       <div
         aria-hidden
         className="hero-spotlight-glow absolute inset-0 pointer-events-none"
@@ -56,40 +55,36 @@ export default function Hero() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="max-w-3xl"
         >
-          {/* Overline */}
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.5 }}
             className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-5 sm:mb-6 text-c-brand-70"
           >
-            CEO de Infraestructura para Agentes · LATAM
+            {t("overline")}
           </motion.p>
 
-          {/* Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
             className="text-[clamp(2.25rem,8vw,4.5rem)] sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight mb-5 sm:mb-6 text-foreground-active"
           >
-            <span className="block">{siteConfig.headline.split("\n")[0]}</span>
+            <span className="block">{t("headline.line1")}</span>
             <span className="block text-c-brand-70">
-              {siteConfig.headline.split("\n")[1]}
+              {t("headline.line2")}
             </span>
           </motion.h1>
 
-          {/* Description */}
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35, duration: 0.6 }}
             className="text-base sm:text-lg md:text-xl text-foreground-secondary leading-relaxed mb-8 sm:mb-10 max-w-2xl"
           >
-            {siteConfig.description}
+            {t("description")}
           </motion.p>
 
-          {/* CTAs */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -100,18 +95,17 @@ export default function Hero() {
               href="#projects"
               className="btn-pill btn-pill-primary w-full sm:w-auto"
             >
-              Ver proyectos
+              {t("cta.primary")}
             </Link>
             <Link
               href="#contact"
               className="btn-pill btn-pill-secondary w-full sm:w-auto"
             >
-              Conectar →
+              {t("cta.secondary")}
             </Link>
           </motion.div>
         </motion.div>
 
-        {/* Decorative accent lines */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

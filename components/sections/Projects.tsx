@@ -1,26 +1,24 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { projects } from "@/lib/data";
+import { useTranslations } from "next-intl";
+import { projects, type ProjectStatus } from "@/lib/data";
 
-const statusConfig: Record<
-  string,
-  { label: string; bg: string; color: string; border: string }
+const statusStyle: Record<
+  ProjectStatus,
+  { bg: string; color: string; border: string }
 > = {
   activo: {
-    label: "Activo",
     bg: "color-mix(in oklab, oklch(0.78 0.18 150) 12%, transparent)",
     color: "oklch(0.82 0.15 150)",
     border: "color-mix(in oklab, oklch(0.78 0.18 150) 28%, transparent)",
   },
   desarrollo: {
-    label: "En desarrollo",
     bg: "color-mix(in oklab, oklch(0.7 0.16 250) 12%, transparent)",
     color: "oklch(0.78 0.13 250)",
     border: "color-mix(in oklab, oklch(0.7 0.16 250) 28%, transparent)",
   },
   pausado: {
-    label: "Pausado",
     bg: "rgba(255,255,255,0.04)",
     color: "var(--foreground-tertiary)",
     border: "rgba(255,255,255,0.08)",
@@ -28,6 +26,7 @@ const statusConfig: Record<
 };
 
 export default function Projects() {
+  const t = useTranslations("Projects");
   const featured = projects.filter((p) => p.featured);
   const rest = projects.filter((p) => !p.featured);
 
@@ -46,21 +45,20 @@ export default function Projects() {
           className="mb-10 sm:mb-12"
         >
           <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-c-brand-70">
-            Proyectos
+            {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground-active">
-            Cada puerta que he abierto
+            {t("headline")}
           </h2>
           <p className="mt-3 text-foreground-secondary max-w-xl">
-            Iniciativas construidas, planificadas y lideradas a lo largo de mi
-            trayectoria.
+            {t("subheadline")}
           </p>
         </motion.div>
 
-        {/* Featured grid — sibling hover dim pattern */}
+        {/* Featured grid */}
         <div className="project-cards grid md:grid-cols-2 gap-4 mb-4">
           {featured.map((project, i) => {
-            const s = statusConfig[project.status];
+            const s = statusStyle[project.status];
             return (
               <motion.div
                 key={project.id}
@@ -79,7 +77,7 @@ export default function Projects() {
                       borderColor: s.border,
                     }}
                   >
-                    {s.label}
+                    {t(`status.${project.status}`)}
                   </span>
                   <span className="text-xs text-foreground-tertiary font-mono">
                     {project.year}
@@ -90,10 +88,10 @@ export default function Projects() {
                   {project.name}
                 </h3>
                 <p className="text-sm font-medium mb-3 text-c-brand-70">
-                  {project.tagline}
+                  {t(`items.${project.id}.tagline`)}
                 </p>
                 <p className="text-sm text-foreground-secondary leading-relaxed mb-5">
-                  {project.description}
+                  {t(`items.${project.id}.description`)}
                 </p>
 
                 <div className="flex flex-wrap gap-2">
@@ -111,7 +109,6 @@ export default function Projects() {
                   ))}
                 </div>
 
-                {/* Bottom hover accent */}
                 <div className="absolute bottom-0 left-5 right-5 sm:left-6 sm:right-6 h-px bg-c-brand-70/0 group-hover:bg-c-brand-70/40 rounded-full transition-all duration-300" />
               </motion.div>
             );
@@ -141,7 +138,7 @@ export default function Projects() {
                     </span>
                   </div>
                   <p className="text-sm text-foreground-secondary">
-                    {project.tagline}
+                    {t(`items.${project.id}.tagline`)}
                   </p>
                 </div>
               </motion.div>

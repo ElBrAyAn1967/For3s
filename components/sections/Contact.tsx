@@ -1,9 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { siteConfig } from "@/lib/data";
 
 export default function Contact() {
+  const t = useTranslations("Contact");
+
   return (
     <section
       id="contact"
@@ -19,15 +22,14 @@ export default function Contact() {
           className="max-w-2xl mx-auto text-center"
         >
           <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-5 sm:mb-6 text-c-brand-70">
-            Contacto
+            {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-semibold mb-4 text-foreground-active">
-            ¿Construimos algo{" "}
-            <span className="text-c-brand-70">juntos?</span>
+            {t("headline.prefix")}{" "}
+            <span className="text-c-brand-70">{t("headline.accent")}</span>
           </h2>
           <p className="text-foreground-secondary mb-8 sm:mb-10 text-base sm:text-lg leading-relaxed">
-            Si estás construyendo en la era de los agentes, buscas
-            infraestructura para tu equipo, o quieres conectar — escríbeme.
+            {t("description")}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -43,7 +45,7 @@ export default function Contact() {
               rel="noopener noreferrer"
               className="btn-pill btn-pill-secondary w-full sm:w-auto"
             >
-              GitHub →
+              {t("githubCta")}
             </a>
           </div>
         </motion.div>

@@ -127,7 +127,7 @@
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
   /* ------------- BRAND — escala amarilla For3s (oklch) -------------
      Hue ~80° (amarillo dorado), pasando a 60° (cálido) en el primary,
@@ -163,7 +163,81 @@
   --c-gray-90:  oklch(0.910 0 0);  /* #e8e8e8 */
   --c-gray-100: oklch(1 0 0);      /* #ffffff */
 
-  /* ------------- TOKENS SEMÁNTICOS (Modal pattern) ------------- */
+  /* ------------- TOKENS SEMÁNTICOS — LIGHT MODE (default) ------------- */
+  /* Foreground (texto sobre fondos claros — invertido respecto al dark) */
+  --foreground-primary:   oklch(0.205 0 0);  /* near-black */
+  --foreground-secondary: oklch(0.385 0 0);  /* medium gray */
+  --foreground-tertiary:  oklch(0.540 0 0);  /* lighter gray */
+  --foreground-active:    oklch(0.130 0 0);  /* deepest text */
+  --foreground-accent:    var(--c-brand-50); /* amarillo más oscuro para legibilidad sobre claro */
+
+  /* Surface */
+  --surface-primary:        oklch(0.99 0 0);  /* near-white */
+  --surface-secondary:      oklch(0.965 0 0); /* card surface light */
+  --surface-primary-hover:  rgba(0, 0, 0, 0.04);
+  --surface-primary-active: rgba(0, 0, 0, 0.08);
+  --surface-overlay-large:  oklch(0.975 0 0); /* alternada — apenas más oscura */
+  --surface-overlay-small:  oklch(0.95 0 0);
+  --surface-accent:         var(--c-brand-100);
+  --surface-accent-hover:   var(--c-brand-90);
+  --surface-accent-active:  var(--c-brand-80);
+
+  /* Edge */
+  --edge-primary:   oklch(0.86 0 0);
+  --edge-secondary: oklch(0.92 0 0);
+  --edge-accent:    var(--c-brand-80);
+
+  /* Icon */
+  --icon-primary:         oklch(0.46 0 0);
+  --icon-secondary:       oklch(0.54 0 0);
+  --icon-secondary-hover: oklch(0.20 0 0);
+  --icon-accent:          var(--c-brand-50);
+
+  /* ------------- shadcn compat ------------- */
+  --background: var(--surface-primary);
+  --foreground: var(--foreground-primary);
+  --card: var(--surface-overlay-large);
+  --card-foreground: var(--foreground-primary);
+  --popover: var(--surface-primary);
+  --popover-foreground: var(--foreground-primary);
+  --primary: var(--c-brand-50);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: var(--foreground-active);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: var(--foreground-secondary);
+  --accent: var(--c-brand-100);
+  --accent-foreground: var(--c-brand-30);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: var(--edge-primary);
+  --input: var(--edge-primary);
+  --ring: var(--c-brand-50);
+
+  /* Legacy brand aliases */
+  --brand: var(--c-brand-70);
+  --brand-dark: var(--c-brand-50);
+  --brand-light: var(--c-brand-100);
+
+  /* Marketing gradient — amarillo 7 stops 25° */
+  --marketing-gradient: linear-gradient(
+    25deg,
+    oklch(0.860 0.150 80) 6.4%,
+    oklch(0.820 0.160 75) 21.31%,
+    oklch(0.780 0.165 70) 36.23%,
+    oklch(0.740 0.165 65) 51.97%,
+    oklch(0.700 0.165 60) 67.71%,
+    oklch(0.640 0.160 55) 83.45%,
+    oklch(0.580 0.150 50) 89.25%
+  ), oklch(0.715 0.165 60);
+}
+
+/* ============================================================
+   DARK MODE — activado vía .dark en <html>
+   Modal-style: ground #181818, surface tokens grayscale
+   ============================================================ */
+.dark {
+  color-scheme: dark;
+
   /* Foreground */
   --foreground-primary:   var(--c-gray-80);
   --foreground-secondary: var(--c-gray-60);
@@ -193,7 +267,7 @@
   --icon-secondary-hover: var(--c-gray-80);
   --icon-accent:          var(--c-brand-50);
 
-  /* ------------- shadcn compat ------------- */
+  /* shadcn compat — dark */
   --background: var(--surface-primary);
   --foreground: var(--foreground-primary);
   --card: var(--surface-overlay-large);
@@ -212,23 +286,6 @@
   --border: var(--edge-primary);
   --input: var(--edge-primary);
   --ring: var(--c-brand-30);
-
-  /* Legacy brand aliases */
-  --brand: var(--c-brand-70);
-  --brand-dark: var(--c-brand-50);
-  --brand-light: var(--c-brand-100);
-
-  /* Marketing gradient — amarillo 7 stops 25° */
-  --marketing-gradient: linear-gradient(
-    25deg,
-    oklch(0.860 0.150 80) 6.4%,
-    oklch(0.820 0.160 75) 21.31%,
-    oklch(0.780 0.165 70) 36.23%,
-    oklch(0.740 0.165 65) 51.97%,
-    oklch(0.700 0.165 60) 67.71%,
-    oklch(0.640 0.160 55) 83.45%,
-    oklch(0.580 0.150 50) 89.25%
-  ), oklch(0.715 0.165 60);
 }
 
 @layer base {
@@ -248,6 +305,15 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
+
+/* Theme transition — fade suave entre claro y oscuro al hacer toggle */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition: background-color 320ms ease, border-color 320ms ease,
+    color 320ms ease, fill 320ms ease, stroke 320ms ease !important;
 }
 
 /* =============================================================
@@ -314,6 +380,20 @@
 .btn-pill-accent:hover:not(:disabled) {
   background-color: color-mix(in oklab, var(--c-brand-70) 5%, transparent);
   border-color: var(--c-brand-70);
+}
+
+/* =============================================================
+   Hide scrollbars but keep scrolling functional
+   ============================================================= */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* =============================================================
