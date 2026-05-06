@@ -149,6 +149,22 @@
   "Footer": {
     "byline": "Brian Aguilar"
   },
+  "ConnectModal": {
+    "title": "Join the For3s circle",
+    "description": "Early access to tools, private betas, and technical content we don't share publicly.",
+    "socialProof": "LATAM BUILDERS IN THE AGENTIC ERA",
+    "placeholder": "you@email.com",
+    "submit": "Count me in",
+    "submitting": "Sending…",
+    "cancel": "Not right now",
+    "close": "Close",
+    "disclaimer": "No spam. We'll only reach out when there's something real to show.",
+    "success": {
+      "title": "You're in.",
+      "description": "We'll email you when we open something new. Meanwhile, keep building.",
+      "close": "Close"
+    }
+  },
   "Docs": {
     "title": "Docs",
     "subtitle": "For3s technical documentation. What we know, we give to you.",

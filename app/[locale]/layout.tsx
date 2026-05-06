@@ -6,6 +6,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import ThemeSync from "@/components/shared/ThemeSync";
+import { ConnectModalProvider } from "@/components/shared/ConnectModalContext";
+import ConnectModal from "@/components/shared/ConnectModal";
 import "../globals.css";
 
 const inter = Inter({
@@ -69,7 +71,12 @@ export default async function LocaleLayout({
           strategy="beforeInteractive"
         >{themeBootstrap}</Script>
         <ThemeSync />
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <ConnectModalProvider>
+            {children}
+            <ConnectModal />
+          </ConnectModalProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

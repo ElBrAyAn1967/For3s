@@ -8,6 +8,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import ThemeToggle from "./ThemeToggle";
 import DocsSearchInput from "@/components/docs/DocsSearchInput";
 import { useDocsSearchOptional } from "@/components/docs/DocsSearchContext";
+import { useConnectModal } from "./ConnectModalContext";
 
 const linkKeys = ["about", "projects", "timeline", "contact", "docs"] as const;
 const linkHrefs: Record<(typeof linkKeys)[number], string> = {
@@ -21,6 +22,7 @@ const linkHrefs: Record<(typeof linkKeys)[number], string> = {
 export default function Navbar() {
   const t = useTranslations("Navbar");
   const pathname = usePathname();
+  const { show: showConnectModal } = useConnectModal();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -93,12 +95,13 @@ export default function Navbar() {
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <LanguageSwitcher />
           <ThemeToggle />
-          <Link
-            href="/#contact"
+          <button
+            type="button"
+            onClick={showConnectModal}
             className="btn-pill btn-pill-primary hidden sm:inline-flex"
           >
             {t("cta")}
-          </Link>
+          </button>
 
           {/* Mobile hamburger — solo fuera de docs (en docs no hay nav links que mostrar) */}
           {!showDocsSearch && (
@@ -162,13 +165,16 @@ export default function Navbar() {
                 {t(`links.${key}`)}
               </Link>
             ))}
-            <Link
-              href="/#contact"
-              onClick={() => setOpen(false)}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                showConnectModal();
+              }}
               className="btn-pill btn-pill-primary mt-4 self-start"
             >
               {t("cta")}
-            </Link>
+            </button>
           </nav>
         </div>
       )}

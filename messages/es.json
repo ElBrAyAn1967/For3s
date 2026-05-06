@@ -149,6 +149,22 @@
   "Footer": {
     "byline": "Brian Aguilar"
   },
+  "ConnectModal": {
+    "title": "Únete al círculo de For3s",
+    "description": "Acceso temprano a herramientas, betas privadas y contenido técnico que no compartimos en abierto.",
+    "socialProof": "BUILDERS DE LATAM EN LA ERA AGENTICA",
+    "placeholder": "tu@email.com",
+    "submit": "Sumarme",
+    "submitting": "Enviando…",
+    "cancel": "Ahorita no",
+    "close": "Cerrar",
+    "disclaimer": "Sin spam. Te avisamos solo cuando hay algo real que mostrar.",
+    "success": {
+      "title": "Adentro.",
+      "description": "Recibirás un correo cuando abramos algo nuevo. Mientras tanto, sigue construyendo.",
+      "close": "Cerrar"
+    }
+  },
   "Docs": {
     "title": "Docs",
     "subtitle": "La documentación técnica de For3s. Lo que sabemos, te lo regalamos.",
