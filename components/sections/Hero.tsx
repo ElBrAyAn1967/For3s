@@ -6,16 +6,32 @@ import { useTranslations } from "next-intl";
 
 /**
  * Hero — distilled. The page's anchor: overline, headline, lead, two CTAs.
- * No grid pattern, no mouse spotlight, no decorative side lines, no
- * cascading per-element stagger. Two staggered reveals (content block,
- * then CTAs) honor PRODUCT.md's "densidad antes que decoración" principle.
+ * One subtle decorative element survives the distill: a 48px grid pattern
+ * masked with a radial fade. Color is theme-aware via --pattern-grid-fg
+ * (warm-tinted on cream canvas, white-tinted on obsidiana). It sits behind
+ * the content (z-0) with pointer-events disabled.
  */
 export default function Hero() {
   const t = useTranslations("Hero");
 
   return (
-    <section className="min-h-[100svh] flex items-center pt-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24 w-full">
+    <section className="min-h-[100svh] flex items-center pt-16 relative overflow-hidden">
+      {/* Background grid — theme-aware, radial fade toward edges */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(var(--pattern-grid-fg) 1px, transparent 1px), linear-gradient(90deg, var(--pattern-grid-fg) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+          maskImage:
+            "radial-gradient(ellipse at center, black 30%, transparent 75%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse at center, black 30%, transparent 75%)",
+        }}
+      />
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24 w-full relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
