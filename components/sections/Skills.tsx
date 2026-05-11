@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { skills } from "@/lib/data";
 
@@ -32,12 +32,15 @@ export default function Skills() {
       <div className="relative flex overflow-hidden">
         <div className="flex animate-marquee gap-3 whitespace-nowrap">
           {doubled.map((skill, i) => (
+            // Marquee duplicates the list; the position-index half is part
+            // of the identity, so compound `${skill}-${i}` is intentional.
+            // react-doctor-disable-next-line react-doctor/no-array-index-as-key
             <span
-              key={i}
+              key={`${skill}-${i}`}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-edge-secondary text-sm font-medium text-foreground-primary flex-shrink-0 hover:border-c-brand-70/40 transition-colors cursor-default"
               style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
             >
-              <span className="w-1 h-1 rounded-full bg-c-brand-70" />
+              <span className="size-1 rounded-full bg-c-brand-70" />
               {skill}
             </span>
           ))}

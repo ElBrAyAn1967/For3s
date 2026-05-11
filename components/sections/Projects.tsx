@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { projects, type ProjectStatus } from "@/lib/data";
 
@@ -127,7 +127,7 @@ export default function Projects() {
                 transition={{ delay: i * 0.08, duration: 0.4 }}
                 className="flex items-start gap-4 p-4 rounded-xl border border-edge-secondary bg-surface-overlay-large hover:border-edge-primary hover:bg-surface-overlay-small transition-colors"
               >
-                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-c-brand-70 flex-shrink-0" />
+                <div className="mt-1.5 size-1.5 rounded-full bg-c-brand-70 flex-shrink-0" />
                 <div>
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h4 className="font-semibold text-foreground-active">

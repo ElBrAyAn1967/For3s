@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ChevronRight,
@@ -50,33 +50,49 @@ function findCategoryOf(id: string): string {
   return PRIMARY_CATEGORIES[0];
 }
 
+type NavState = { activeId: string; activeCategory: string };
+type NavAction =
+  | { type: "select_item"; id: string }
+  | { type: "select_category"; catId: string };
+
+const initialNavState: NavState = {
+  activeId: DEFAULT_DOC_ID,
+  activeCategory: PRIMARY_CATEGORIES[0],
+};
+
+function navReducer(state: NavState, action: NavAction): NavState {
+  switch (action.type) {
+    case "select_item":
+      return { activeId: action.id, activeCategory: findCategoryOf(action.id) };
+    case "select_category":
+      return { ...state, activeCategory: action.catId };
+    default:
+      return state;
+  }
+}
+
 export default function DocsClient() {
   const t = useTranslations("Docs");
   const { query } = useDocsSearch();
-  const [activeId, setActiveId] = useState<string>(DEFAULT_DOC_ID);
-  const [activeCategory, setActiveCategory] = useState<string>(
-    PRIMARY_CATEGORIES[0]
-  );
+  const [nav, dispatchNav] = useReducer(navReducer, initialNavState);
+  const { activeId, activeCategory } = nav;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const id = getInitialId();
-    setActiveId(id);
-    setActiveCategory(findCategoryOf(id));
+    dispatchNav({ type: "select_item", id });
 
     const onHashChange = () => {
       const newId = getInitialId();
-      setActiveId(newId);
-      setActiveCategory(findCategoryOf(newId));
+      dispatchNav({ type: "select_item", id: newId });
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
   const handleSelect = (id: string) => {
-    setActiveId(id);
-    setActiveCategory(findCategoryOf(id));
+    dispatchNav({ type: "select_item", id });
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `#${id}`);
     }
@@ -85,7 +101,7 @@ export default function DocsClient() {
   };
 
   const handleSelectCategory = (catId: string) => {
-    setActiveCategory(catId);
+    dispatchNav({ type: "select_category", catId });
     const cat = DOC_STRUCTURE.find((c) => c.id === catId);
     if (cat && cat.items.length > 0) {
       handleSelect(cat.items[0].id);
@@ -122,15 +138,15 @@ export default function DocsClient() {
           className="flex items-center gap-3 w-full px-4 py-3 text-sm text-foreground-secondary hover:text-foreground-active transition-colors"
         >
           {sidebarOpen ? (
-            <X className="w-4 h-4 text-c-brand-70 shrink-0" />
+            <X className="size-4 text-c-brand-70 shrink-0" />
           ) : (
-            <Menu className="w-4 h-4 text-c-brand-70 shrink-0" />
+            <Menu className="size-4 text-c-brand-70 shrink-0" />
           )}
           <span className="font-mono text-xs tracking-widest uppercase text-foreground-tertiary">
             {t("mobileLabel")}
           </span>
           <ChevronRight
-            className={`w-3.5 h-3.5 ml-auto text-foreground-tertiary transition-transform duration-200 ${
+            className={`size-3.5 ml-auto text-foreground-tertiary transition-transform duration-200 ${
               sidebarOpen ? "rotate-90" : ""
             }`}
           />
@@ -175,12 +191,12 @@ export default function DocsClient() {
             onClick={() => setCollapsed((c) => !c)}
             title={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
             aria-label={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
-            className="absolute -right-3 top-8 z-10 w-6 h-6 rounded-full bg-surface-primary border border-edge-primary flex items-center justify-center text-foreground-secondary hover:text-foreground-active hover:border-c-brand-70 transition-colors"
+            className="absolute -right-3 top-8 z-10 size-6 rounded-full bg-surface-primary border border-edge-primary flex items-center justify-center text-foreground-secondary hover:text-foreground-active hover:border-c-brand-70 transition-colors"
           >
             {collapsed ? (
-              <PanelLeft className="w-3 h-3" />
+              <PanelLeft className="size-3" />
             ) : (
-              <PanelLeftClose className="w-3 h-3" />
+              <PanelLeftClose className="size-3" />
             )}
           </button>
         </aside>
@@ -323,7 +339,7 @@ function SidebarBody({
   );
 
   return (
-    <nav className="w-full h-full flex flex-col">
+    <nav className="size-full flex flex-col">
       {activeCat && (
         <SidebarCategory
           category={activeCat}
@@ -414,7 +430,7 @@ function SidebarItem({
             : "text-foreground-secondary hover:bg-surface-primary-hover hover:text-foreground-active"
         } ${collapsed ? "justify-center" : ""}`}
       >
-        <Icon className="w-4 h-4 shrink-0" />
+        <Icon className="size-4 shrink-0" />
         {!collapsed && (
           <span
             className={`text-sm leading-snug text-left ${
@@ -436,7 +452,7 @@ function DocArticle({ activeId }: { activeId: string }) {
     <article className="w-full min-w-0">
       <div className="flex items-center gap-1.5 text-xs text-foreground-tertiary mb-5">
         <span>{t("breadcrumb")}</span>
-        <ChevronRight className="w-3 h-3" />
+        <ChevronRight className="size-3" />
         <span className="text-foreground-active">
           {t(`items.${activeId}.label`)}
         </span>

@@ -472,3 +472,28 @@
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+/* =============================================================
+   Accessibility — prefers-reduced-motion (WCAG 2.3.3)
+   Honor user OS preference for reduced motion globally.
+   Covers framer-motion, CSS animations, transitions, and the
+   mouse-tracked spotlight.
+   ============================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-marquee {
+    animation: none !important;
+  }
+
+  .hero-spotlight-glow {
+    display: none !important;
+  }
+}

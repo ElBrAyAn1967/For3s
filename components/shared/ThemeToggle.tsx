@@ -44,10 +44,10 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      className="w-9 h-9 inline-flex items-center justify-center rounded-md text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover transition-colors"
+      className="size-9 inline-flex items-center justify-center rounded-md text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover transition-colors"
     >
       {!mounted ? (
-        <span className="w-4 h-4" />
+        <span className="size-4" />
       ) : isDark ? (
         // Moon
         <svg

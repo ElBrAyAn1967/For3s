@@ -10,6 +10,9 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
+    // next-intl's canonical pattern uses an interpolated dynamic import here.
+    // It's bundler-safe because `locale` is constrained by routing.locales.
+    // react-doctor-disable-next-line react-doctor/no-dynamic-import-path
     messages: (await import(`../messages/${locale}.json`)).default,
   };
 });

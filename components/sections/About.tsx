@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { collaboratorIds } from "@/lib/data";
 
@@ -58,7 +58,7 @@ export default function About() {
                   transition={{ delay: i * 0.1, duration: 0.4 }}
                   className="flex items-start gap-3 p-4 rounded-xl border border-edge-secondary bg-surface-primary hover:border-edge-primary hover:bg-surface-primary-hover transition-colors"
                 >
-                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-c-brand-70 flex-shrink-0" />
+                  <div className="mt-1.5 size-1.5 rounded-full bg-c-brand-70 flex-shrink-0" />
                   <div>
                     <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <span className="font-semibold text-sm text-foreground-active">
@@ -91,16 +91,16 @@ export default function About() {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-tertiary mb-1">
               {t("valuesLabel")}
             </p>
-            {[0, 1, 2].map((i) => (
+            {(["infra", "comunidad", "latam"] as const).map((slug, i) => (
               <motion.div
-                key={i}
+                key={slug}
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.12, duration: 0.5 }}
                 className="flex items-start gap-4 p-5 rounded-xl border border-edge-secondary bg-surface-primary hover:border-edge-primary hover:bg-surface-primary-hover transition-colors"
               >
-                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-c-brand-70 flex-shrink-0" />
+                <div className="mt-1.5 size-1.5 rounded-full bg-c-brand-70 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-foreground-active mb-1">
                     {t(`values.${i}.label`)}

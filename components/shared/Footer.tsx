@@ -13,8 +13,8 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-foreground-secondary">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-c-brand-70">For3s</span>
-          <span>
-            — {t("byline")} © {new Date().getFullYear()}
+          <span suppressHydrationWarning>
+            · {t("byline")} © {new Date().getFullYear()}
           </span>
         </div>
         <div className="flex items-center gap-5">

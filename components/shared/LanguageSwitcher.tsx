@@ -10,7 +10,7 @@ type Locale = (typeof routing.locales)[number];
 export default function LanguageSwitcher() {
   const t = useTranslations("Navbar.languageSwitcher");
   const locale = useLocale() as Locale;
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
@@ -20,7 +20,7 @@ export default function LanguageSwitcher() {
       // next-intl strips the locale prefix from `pathname` automatically.
       // Passing `{ locale }` lets it rebuild the URL with the right prefix
       // according to `localePrefix: "as-needed"`.
-      router.replace(pathname, { locale: next });
+      replace(pathname, { locale: next });
     });
   };
 

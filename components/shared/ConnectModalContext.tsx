@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, use, useState, type ReactNode } from "react";
 
 type ConnectModalValue = {
   open: boolean;
@@ -23,7 +23,7 @@ export function ConnectModalProvider({ children }: { children: ReactNode }) {
 }
 
 export function useConnectModal(): ConnectModalValue {
-  const ctx = useContext(ConnectModalContext);
+  const ctx = use(ConnectModalContext);
   if (!ctx) {
     throw new Error(
       "useConnectModal must be used within ConnectModalProvider"

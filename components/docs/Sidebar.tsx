@@ -13,7 +13,7 @@ export default function Sidebar({ activeId, onSelect, collapsed }: Props) {
   const t = useTranslations("Docs");
 
   return (
-    <nav className="w-full h-full flex flex-col overflow-y-auto scrollbar-none">
+    <nav className="size-full flex flex-col overflow-y-auto scrollbar-none">
       <div className="space-y-4">
         {DOC_STRUCTURE.map((cat, catIdx) => (
           <div key={cat.id}>
@@ -42,7 +42,7 @@ export default function Sidebar({ activeId, onSelect, collapsed }: Props) {
                           : "text-foreground-secondary hover:bg-surface-primary-hover hover:text-foreground-active"
                       } ${collapsed ? "justify-center" : ""}`}
                     >
-                      <Icon className="w-4 h-4 shrink-0" />
+                      <Icon className="size-4 shrink-0" />
                       {!collapsed && (
                         <span
                           className={`text-xs leading-snug text-left ${

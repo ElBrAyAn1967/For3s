@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, use, useState, type ReactNode } from "react";
 
 type DocsSearchValue = {
   query: string;
@@ -20,11 +20,11 @@ export function DocsSearchProvider({ children }: { children: ReactNode }) {
 
 /** Returns null when used outside /docs (e.g. on landing). */
 export function useDocsSearchOptional(): DocsSearchValue | null {
-  return useContext(DocsSearchContext);
+  return use(DocsSearchContext);
 }
 
 export function useDocsSearch(): DocsSearchValue {
-  const ctx = useContext(DocsSearchContext);
+  const ctx = use(DocsSearchContext);
   if (!ctx) {
     throw new Error("useDocsSearch must be used within DocsSearchProvider");
   }

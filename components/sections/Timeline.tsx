@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { timelineYears } from "@/lib/data";
 
@@ -45,8 +45,8 @@ export default function Timeline() {
                 transition={{ delay: i * 0.1, duration: 0.5 }}
                 className="relative pl-8"
               >
-                <div className="absolute left-0 top-1.5 w-[20px] h-[20px] rounded-full border-2 border-c-brand-70 bg-surface-primary flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-c-brand-70" />
+                <div className="absolute left-0 top-1.5 size-[20px] rounded-full border-2 border-c-brand-70 bg-surface-primary flex items-center justify-center">
+                  <div className="size-1.5 rounded-full bg-c-brand-70" />
                 </div>
 
                 <div className="flex items-start gap-3 sm:gap-4 flex-wrap">

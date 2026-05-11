@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    ".claude/**",
+    "components/docs/Sidebar.tsx",
+    "components/ui/badge.tsx",
+    "components/ui/button.tsx",
+    "components/ui/card.tsx",
+    "components/ui/separator.tsx",
+    "lib/utils.ts",
+    "i18n/routing.ts",
+    "i18n/navigation.ts"
+  ],
+  "ignoreBinaries": [],
+  "ignoreDependencies": [
+    "@next/font",
+    "@types/node",
+    "@types/react",
+    "@types/react-dom"
+  ],
+  "ignoreExportsUsedInFile": true
+}

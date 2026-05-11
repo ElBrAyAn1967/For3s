@@ -38,7 +38,7 @@ export default function DocsSearchInput({
       htmlFor="docs-search"
       className={`relative flex items-center ${className}`}
     >
-      <Search className="absolute left-3.5 w-4 h-4 text-foreground-tertiary pointer-events-none" />
+      <Search className="absolute left-3.5 size-4 text-foreground-tertiary pointer-events-none" />
       <input
         id="docs-search"
         type="search"

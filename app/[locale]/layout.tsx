@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import ThemeSync from "@/components/shared/ThemeSync";
+import MotionProvider from "@/components/shared/MotionProvider";
 import { ConnectModalProvider } from "@/components/shared/ConnectModalContext";
 import ConnectModal from "@/components/shared/ConnectModal";
 import "../globals.css";
@@ -72,10 +73,12 @@ export default async function LocaleLayout({
         >{themeBootstrap}</Script>
         <ThemeSync />
         <NextIntlClientProvider>
-          <ConnectModalProvider>
-            {children}
-            <ConnectModal />
-          </ConnectModalProvider>
+          <MotionProvider>
+            <ConnectModalProvider>
+              {children}
+              <ConnectModal />
+            </ConnectModalProvider>
+          </MotionProvider>
         </NextIntlClientProvider>
       </body>
     </html>

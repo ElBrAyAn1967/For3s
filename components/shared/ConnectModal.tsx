@@ -1,19 +1,53 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useReducer, type FormEvent } from "react";
+import { AnimatePresence, m as motion } from "framer-motion";
 import { X, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useConnectModal } from "./ConnectModalContext";
 
+type FormState = {
+  email: string;
+  submitting: boolean;
+  submitted: boolean;
+};
+
+type FormAction =
+  | { type: "set_email"; value: string }
+  | { type: "submit_start" }
+  | { type: "submit_done" }
+  | { type: "reset" };
+
+const initialFormState: FormState = {
+  email: "",
+  submitting: false,
+  submitted: false,
+};
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case "set_email":
+      return { ...state, email: action.value };
+    case "submit_start":
+      return { ...state, submitting: true };
+    case "submit_done":
+      return { ...state, submitting: false, submitted: true };
+    case "reset":
+      return initialFormState;
+    default:
+      return state;
+  }
+}
+
 export default function ConnectModal() {
   const t = useTranslations("ConnectModal");
   const { open, hide } = useConnectModal();
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [form, dispatch] = useReducer(formReducer, initialFormState);
+  const { email, submitting, submitted } = form;
 
-  // ESC to close
+  // ESC to close — needs a global listener while modal is open, so a real
+  // useEffect (not an event handler on an element) is the correct primitive.
+  // react-doctor-disable-next-line react-doctor/no-effect-event-handler
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -23,7 +57,9 @@ export default function ConnectModal() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, hide]);
 
-  // Lock body scroll while open
+  // Lock body scroll while open — side effect on document.body, not a
+  // synthetic event handler. The useEffect is the correct primitive.
+  // react-doctor-disable-next-line react-doctor/no-effect-event-handler
   useEffect(() => {
     if (open) {
       const prev = document.body.style.overflow;
@@ -34,26 +70,23 @@ export default function ConnectModal() {
     }
   }, [open]);
 
-  // Reset state when modal closes
+  // Reset form when modal closes (debounced)
   useEffect(() => {
     if (!open) {
-      const t = window.setTimeout(() => {
-        setSubmitted(false);
-        setEmail("");
-        setSubmitting(false);
+      const timer = window.setTimeout(() => {
+        dispatch({ type: "reset" });
       }, 250);
-      return () => window.clearTimeout(t);
+      return () => window.clearTimeout(timer);
     }
   }, [open]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim() || submitting) return;
-    setSubmitting(true);
+    dispatch({ type: "submit_start" });
     // Stub: simulate async (replace with real backend later)
     window.setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
+      dispatch({ type: "submit_done" });
     }, 600);
   };
 
@@ -113,9 +146,9 @@ export default function ConnectModal() {
                 type="button"
                 onClick={hide}
                 aria-label={t("close")}
-                className="absolute top-3 right-3 w-8 h-8 inline-flex items-center justify-center rounded-full bg-c-gray-0/30 hover:bg-c-gray-0/50 backdrop-blur-sm text-c-gray-100 transition-colors"
+                className="absolute top-3 right-3 size-8 inline-flex items-center justify-center rounded-full bg-c-gray-0/30 hover:bg-c-gray-0/50 backdrop-blur-sm text-c-gray-100 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="size-4" />
               </button>
             </div>
 
@@ -143,7 +176,9 @@ export default function ConnectModal() {
                       required
                       autoComplete="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) =>
+                        dispatch({ type: "set_email", value: e.target.value })
+                      }
                       placeholder={t("placeholder")}
                       aria-label={t("placeholder")}
                       className="w-full rounded-lg bg-surface-primary border border-edge-primary px-4 py-3 text-sm text-foreground-active placeholder:text-foreground-tertiary outline-none focus:border-c-brand-70 transition-colors"
@@ -155,7 +190,7 @@ export default function ConnectModal() {
                     >
                       {submitting ? t("submitting") : t("submit")}
                       {!submitting && (
-                        <ArrowRight className="w-4 h-4 ml-1.5" />
+                        <ArrowRight className="size-4 ml-1.5" />
                       )}
                     </button>
                     <button
@@ -173,8 +208,8 @@ export default function ConnectModal() {
                 </>
               ) : (
                 <div className="text-center py-4">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-c-brand-70/15 border border-c-brand-70/30 mb-4">
-                    <CheckCircle2 className="w-6 h-6 text-c-brand-70" />
+                  <div className="inline-flex items-center justify-center size-12 rounded-full bg-c-brand-70/15 border border-c-brand-70/30 mb-4">
+                    <CheckCircle2 className="size-6 text-c-brand-70" />
                   </div>
                   <h2 className="text-xl font-semibold text-foreground-active mb-2">
                     {t("success.title")}

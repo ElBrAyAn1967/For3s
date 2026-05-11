@@ -1,0 +1,7 @@
+{
+  "ignorePatterns": [
+    ".claude/**",
+    "node_modules/**",
+    ".next/**"
+  ]
+}

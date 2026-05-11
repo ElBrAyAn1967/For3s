@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code skills (installed via `npx skills add ...`)
+.claude/skills/
+
+# react-doctor reports
+/.react-doctor/
