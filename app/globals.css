@@ -542,35 +542,6 @@
 }
 
 /* =============================================================
-   Hero spotlight — neon tenue blanco/gris que sigue al mouse
-   ============================================================= */
-.hero-spotlight {
-  --mx: 50%;
-  --my: 50%;
-}
-
-.hero-spotlight-glow {
-  background: radial-gradient(
-    300px circle at var(--mx) var(--my),
-    rgba(255, 255, 255, 0.10) 0%,
-    rgba(255, 255, 255, 0.06) 25%,
-    rgba(255, 255, 255, 0.025) 50%,
-    rgba(255, 255, 255, 0.008) 75%,
-    transparent 100%
-  );
-  transition: opacity 350ms var(--ease-out);
-  z-index: 1;
-  filter: blur(20px);
-}
-
-/* Solo en dispositivos con hover real (desktop) */
-@media (hover: none) {
-  .hero-spotlight-glow {
-    display: none;
-  }
-}
-
-/* =============================================================
    Marquee — preservada del sistema previo
    ============================================================= */
 @keyframes marquee {
@@ -589,8 +560,7 @@
 /* =============================================================
    Accessibility — prefers-reduced-motion (WCAG 2.3.3)
    Honor user OS preference for reduced motion globally.
-   Covers framer-motion, CSS animations, transitions, and the
-   mouse-tracked spotlight.
+   Covers framer-motion, CSS animations and transitions.
    ============================================================= */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -604,9 +574,5 @@
 
   .animate-marquee {
     animation: none !important;
-  }
-
-  .hero-spotlight-glow {
-    display: none !important;
   }
 }
