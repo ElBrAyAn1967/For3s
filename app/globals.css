@@ -227,20 +227,24 @@
   --foreground-active:    oklch(0.130 0 0);  /* deepest text */
   --foreground-accent:    var(--c-green-30); /* verde #174023 — overlines, headlines accent */
 
-  /* Surface */
-  --surface-primary:        oklch(0.99 0 0);  /* near-white */
-  --surface-secondary:      oklch(0.965 0 0); /* card surface light */
+  /* Surface — Soft Tech cream canvas (#fff9ef) with warm amber tint (hue 80°).
+     Each layer is a notch darker than the canvas to keep the bento hierarchy:
+     canvas < overlay-large (cards) < overlay-small (hover surfaces).
+     The cream tint is consistent across all layers so the warmth feels
+     intentional, not muddy. */
+  --surface-primary:        oklch(0.984 0.015 80);  /* #fff9ef — canvas crema */
+  --surface-secondary:      oklch(0.960 0.012 80);  /* card surface, slightly darker */
   --surface-primary-hover:  rgba(0, 0, 0, 0.04);
   --surface-primary-active: rgba(0, 0, 0, 0.08);
-  --surface-overlay-large:  oklch(0.975 0 0); /* alternada — apenas más oscura */
-  --surface-overlay-small:  oklch(0.95 0 0);
+  --surface-overlay-large:  oklch(0.970 0.012 80);  /* alternada — cards en secciones */
+  --surface-overlay-small:  oklch(0.945 0.010 80);
   --surface-accent:         var(--c-green-100); /* background tinted verde claro */
   --surface-accent-hover:   var(--c-green-90);
   --surface-accent-active:  var(--c-green-80);
 
-  /* Edge */
-  --edge-primary:   oklch(0.86 0 0);
-  --edge-secondary: oklch(0.92 0 0);
+  /* Edge — warm-tinted to match the cream canvas (avoid cold gray borders) */
+  --edge-primary:   oklch(0.860 0.008 80);
+  --edge-secondary: oklch(0.910 0.008 80);
   --edge-accent:    var(--c-green-80);
 
   /* Icon */
@@ -257,10 +261,10 @@
   --popover: var(--surface-primary);
   --popover-foreground: var(--foreground-primary);
   --primary: var(--c-green-30);          /* CTA primary verde sobre claro */
-  --primary-foreground: oklch(0.99 0 0); /* texto blanco sobre verde oscuro */
-  --secondary: oklch(0.96 0 0);
+  --primary-foreground: var(--surface-primary); /* crema sobre verde oscuro — alta legibilidad y coherente con la paleta */
+  --secondary: oklch(0.955 0.011 80);
   --secondary-foreground: var(--foreground-active);
-  --muted: oklch(0.96 0 0);
+  --muted: oklch(0.955 0.011 80);
   --muted-foreground: var(--foreground-secondary);
   --accent: var(--c-green-100);
   --accent-foreground: var(--c-green-15);

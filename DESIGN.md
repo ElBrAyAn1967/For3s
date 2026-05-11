@@ -11,7 +11,7 @@ colors:
   verde-hover: "#1d5230"
 
   # Light mode (Soft Tech B2B) — verde institucional #174023
-  hueso: "#F9F9F8"
+  hueso: "#fff9ef"
   hueso-alt: "#F0F0EE"
   surface-light: "#FFFFFF"
   obsidiana: "#111111"
@@ -161,7 +161,7 @@ components:
 
 For3s opera dos modos visuales según contexto y audiencia:
 
-- **Soft Tech (light mode)** — para B2C, no-coders, founders curiosos. Fondos hueso (`#F9F9F8`), bento cards blancas con sombra sutil, espacios amplios. Transmite que la infraestructura puede usarse sin código. Estética Notion/Stripe.
+- **Soft Tech (light mode)** — para B2B institucional. Fondos crema cálido (`#fff9ef`, oklch 0.984 0.015 80°), bento cards en escalas tinted del mismo hue, espacios amplios. Transmite calidez orgánica y autoridad serena — NO un blanco frío de SaaS.
 - **Deep Tech (dark mode)** — para B2B, CTOs, ingenieros. Obsidiana profunda (`#0B0C10`) con tinte azul-espacial, ámbar como láser de precisión. Transmite potencia, escalabilidad, rigor.
 
 El **ámbar `#f5b820`** es el ADN cruzado de For3s. Ya no es alerta industrial: en light actúa como "luz solar" guiando al usuario hacia conversión; en dark se convierte en "láser" que brilla por contraste sobre obsidiana.
@@ -215,7 +215,7 @@ Verde institucional profundo (hue 145-150°). Función emocional: **autoridad c�
 
 | Token | Hex | Rol |
 |---|---|---|
-| `hueso` | `#F9F9F8` | Background canvas. NO blanco puro: evita fatiga, transmite calidez orgánica |
+| `hueso` | `#fff9ef` | Background canvas. Crema cálido (hue 80°, chroma 0.015) — NO blanco puro, NO frío. Transmite calidez orgánica y autoridad serena |
 | `hueso-alt` | `#F0F0EE` | Background alternado para secciones |
 | `surface-light` | `#FFFFFF` | Bento cards, modales, popovers (única superficie blanco puro) |
 | `obsidiana` | `#111111` | Headings — peso máximo |
