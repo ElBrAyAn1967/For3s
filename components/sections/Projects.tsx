@@ -30,9 +30,13 @@ const statusStyle: Record<
   },
 };
 
+const ANCHOR_PROJECT_ID = "for3s";
+
 export default function Projects() {
   const t = useTranslations("Projects");
   const featured = projects.filter((p) => p.featured);
+  const anchor = featured.find((p) => p.id === ANCHOR_PROJECT_ID);
+  const otherFeatured = featured.filter((p) => p.id !== ANCHOR_PROJECT_ID);
   const rest = projects.filter((p) => !p.featured);
 
   return (
@@ -60,90 +64,153 @@ export default function Projects() {
           </p>
         </motion.div>
 
-        {/* Featured grid */}
-        <div className="project-cards grid md:grid-cols-2 gap-4 mb-4">
-          {featured.map((project, i) => {
-            const s = statusStyle[project.status];
-            return (
-              <motion.div
-                key={project.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.5 }}
-                className="project-card group relative p-5 sm:p-6 rounded-2xl border border-edge-secondary bg-surface-overlay-large hover:border-edge-primary hover:bg-surface-overlay-small transition-all duration-300"
-              >
-                <div className="flex items-center justify-between mb-4">
+        {/* Anchor card — For3s, full-width, hero treatment */}
+        {anchor && (
+          <motion.article
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="group relative mb-4 p-6 sm:p-10 rounded-2xl border border-edge-secondary bg-surface-overlay-large hover:border-edge-primary transition-all duration-300 overflow-hidden"
+          >
+            {/* Decorative gradient sweep — theme-aware */}
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-[0.06] pointer-events-none"
+              style={{ background: "var(--marketing-gradient)" }}
+            />
+
+            <div className="relative grid md:grid-cols-[1.4fr_1fr] gap-6 md:gap-10 items-start">
+              <div>
+                <div className="flex items-center gap-3 mb-4 flex-wrap">
                   <span
                     className="text-xs font-semibold px-2.5 py-1 rounded-full border"
                     style={{
-                      backgroundColor: s.bg,
-                      color: s.color,
-                      borderColor: s.border,
+                      backgroundColor: statusStyle[anchor.status].bg,
+                      color: statusStyle[anchor.status].color,
+                      borderColor: statusStyle[anchor.status].border,
                     }}
                   >
-                    {t(`status.${project.status}`)}
+                    {t(`status.${anchor.status}`)}
                   </span>
                   <span className="text-xs text-foreground-tertiary font-mono">
-                    {project.year}
+                    {anchor.year}
+                  </span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-foreground-accent ml-auto">
+                    ANCHOR PROJECT
                   </span>
                 </div>
 
-                <h3 className="text-lg sm:text-xl font-semibold mb-1 text-foreground-active group-hover:text-foreground-accent transition-colors">
-                  {project.name}
+                <h3 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-3 text-foreground-active leading-[1.05]">
+                  {anchor.name}
                 </h3>
-                <p className="text-sm font-medium mb-3 text-foreground-accent">
-                  {t(`items.${project.id}.tagline`)}
+                <p className="text-base sm:text-lg font-medium mb-4 text-foreground-accent">
+                  {t(`items.${anchor.id}.tagline`)}
                 </p>
-                <p className="text-sm text-foreground-secondary leading-relaxed mb-5">
-                  {t(`items.${project.id}.description`)}
+                <p className="text-sm sm:text-base text-foreground-secondary leading-relaxed">
+                  {t(`items.${anchor.id}.description`)}
                 </p>
+              </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {project.tags.map((tag) => (
-                    <span
+              {/* Right column — tags as a compact stack */}
+              <div className="md:border-l md:border-edge-secondary md:pl-8">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-tertiary mb-3">
+                  Stack
+                </p>
+                <ul className="flex flex-wrap gap-1.5">
+                  {anchor.tags.map((tag) => (
+                    <li
                       key={tag}
-                      className="text-xs px-2.5 py-1 rounded-md text-foreground-secondary bg-surface-primary-hover border border-edge-secondary"
+                      className="text-xs px-2.5 py-1 rounded-md text-foreground-secondary bg-surface-primary-hover border border-edge-secondary font-mono"
                     >
                       {tag}
-                    </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
+              </div>
+            </div>
+          </motion.article>
+        )}
 
-                <div className="absolute bottom-0 left-5 right-5 sm:left-6 sm:right-6 h-px bg-brand-bold/0 group-hover:bg-brand-bold/40 rounded-full transition-all duration-300" />
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Rest — compact */}
-        {rest.length > 0 && (
-          <div className="grid md:grid-cols-2 gap-3">
-            {rest.map((project, i) => (
-              <motion.div
+        {/* Other featured — 3-column tight grid (visually distinct from anchor) */}
+        {otherFeatured.length > 0 && (
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 mb-12">
+            {otherFeatured.map((project, i) => (
+              <motion.article
                 key={project.id}
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.4 }}
-                className="flex items-start gap-4 p-4 rounded-xl border border-edge-secondary bg-surface-overlay-large hover:border-edge-primary hover:bg-surface-overlay-small transition-colors"
+                transition={{ delay: i * 0.06, duration: 0.45 }}
+                className="group relative p-5 rounded-xl border border-edge-secondary bg-surface-overlay-large hover:border-edge-primary hover:bg-surface-overlay-small transition-all duration-200"
               >
-                <div className="mt-1.5 size-1.5 rounded-full bg-brand-bold flex-shrink-0" />
-                <div>
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h4 className="font-semibold text-foreground-active">
+                <div className="flex items-center justify-between mb-3">
+                  <span
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+                    style={{
+                      backgroundColor: statusStyle[project.status].bg,
+                      color: statusStyle[project.status].color,
+                      borderColor: statusStyle[project.status].border,
+                    }}
+                  >
+                    {t(`status.${project.status}`)}
+                  </span>
+                  <span className="text-[10px] text-foreground-tertiary font-mono">
+                    {project.year}
+                  </span>
+                </div>
+
+                <h4 className="text-base font-semibold mb-1 text-foreground-active group-hover:text-foreground-accent transition-colors">
+                  {project.name}
+                </h4>
+                <p className="text-xs text-foreground-secondary leading-relaxed">
+                  {t(`items.${project.id}.tagline`)}
+                </p>
+              </motion.article>
+            ))}
+          </div>
+        )}
+
+        {/* Rest — editorial list (no cards), divider-based */}
+        {rest.length > 0 && (
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-tertiary mb-4">
+              También en el journey
+            </p>
+            <ul className="divide-y divide-edge-secondary border-t border-b border-edge-secondary">
+              {rest.map((project, i) => (
+                <motion.li
+                  key={project.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06, duration: 0.4 }}
+                  className="group py-3 sm:py-4 grid grid-cols-[auto_1fr_auto] gap-3 sm:gap-6 items-baseline"
+                >
+                  <span className="text-xs text-foreground-tertiary font-mono w-10">
+                    {project.year}
+                  </span>
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-4 min-w-0">
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground-active group-hover:text-foreground-accent transition-colors whitespace-nowrap">
                       {project.name}
                     </h4>
-                    <span className="text-xs text-foreground-tertiary font-mono">
-                      {project.year}
-                    </span>
+                    <p className="text-xs sm:text-sm text-foreground-secondary leading-snug truncate">
+                      {t(`items.${project.id}.tagline`)}
+                    </p>
                   </div>
-                  <p className="text-sm text-foreground-secondary">
-                    {t(`items.${project.id}.tagline`)}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                  <span
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap"
+                    style={{
+                      backgroundColor: statusStyle[project.status].bg,
+                      color: statusStyle[project.status].color,
+                      borderColor: statusStyle[project.status].border,
+                    }}
+                  >
+                    {t(`status.${project.status}`)}
+                  </span>
+                </motion.li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

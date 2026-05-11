@@ -44,44 +44,35 @@ export default function About() {
               {t("p2")}
             </p>
 
-            {/* Collaborators */}
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-tertiary mb-3">
+            {/* Collaborators — editorial list (no individual cards) */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-tertiary mb-5">
                 {t("collaboratorsLabel")}
               </p>
-              {collaboratorIds.map((c, i) => (
-                <motion.div
-                  key={c.id}
-                  initial={{ opacity: 0, x: -12 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, duration: 0.4 }}
-                  className="flex items-start gap-3 p-4 rounded-xl border border-edge-secondary bg-surface-primary hover:border-edge-primary hover:bg-surface-primary-hover transition-colors"
-                >
-                  <div className="mt-1.5 size-1.5 rounded-full bg-brand-bold flex-shrink-0" />
-                  <div>
-                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <span className="font-semibold text-sm text-foreground-active">
+              <ul className="divide-y divide-edge-secondary border-t border-b border-edge-secondary">
+                {collaboratorIds.map((c, i) => (
+                  <motion.li
+                    key={c.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1, duration: 0.4 }}
+                    className="py-4 flex flex-col gap-1"
+                  >
+                    <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                      <span className="font-semibold text-base text-foreground-active">
                         {c.name}
                       </span>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full font-medium text-foreground-accent"
-                        style={{
-                          backgroundColor:
-                            "color-mix(in oklab, var(--foreground-accent) 10%, transparent)",
-                          border:
-                            "1px solid color-mix(in oklab, var(--foreground-accent) 25%, transparent)",
-                        }}
-                      >
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-foreground-accent">
                         {t(`collaborators.${i}.role`)}
                       </span>
                     </div>
-                    <p className="text-xs text-foreground-secondary leading-relaxed">
+                    <p className="text-sm text-foreground-secondary leading-relaxed max-w-prose">
                       {t(`collaborators.${i}.description`)}
                     </p>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.li>
+                ))}
+              </ul>
             </div>
           </div>
 
