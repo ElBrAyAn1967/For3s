@@ -23,12 +23,12 @@ export default function About() {
         >
           {/* Left */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-c-brand-70">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent">
               {t("overline")}
             </p>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-5 sm:mb-6 leading-tight text-foreground-active">
               {t("headline.prefix")}{" "}
-              <span className="text-c-brand-70">{t("headline.accent")}</span>
+              <span className="text-foreground-accent">{t("headline.accent")}</span>
             </h2>
             <p className="text-foreground-secondary leading-relaxed mb-4">
               {t.rich("p1", {
@@ -65,13 +65,12 @@ export default function About() {
                         {c.name}
                       </span>
                       <span
-                        className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        className="text-xs px-2 py-0.5 rounded-full font-medium text-foreground-accent"
                         style={{
-                          color: "var(--c-brand-70)",
                           backgroundColor:
-                            "color-mix(in oklab, var(--c-brand-70) 10%, transparent)",
+                            "color-mix(in oklab, var(--foreground-accent) 10%, transparent)",
                           border:
-                            "1px solid color-mix(in oklab, var(--c-brand-70) 25%, transparent)",
+                            "1px solid color-mix(in oklab, var(--foreground-accent) 25%, transparent)",
                         }}
                       >
                         {t(`collaborators.${i}.role`)}

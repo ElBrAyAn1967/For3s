@@ -82,6 +82,16 @@ spacing:
   2xl: "80px"
   3xl: "120px"
 
+zIndex:
+  base: 0
+  decor: 1
+  content: 10
+  sticky: 30
+  nav: 50
+  modal-overlay: 90
+  modal: 100
+  tooltip: 110
+
 components:
   # Botón primary ámbar (CTA principal en ambos modos)
   button-primary:
@@ -495,6 +505,54 @@ Patrón canónico de For3s:
   <button class="btn-primary">Deploy Infrastructure</button>
   <button class="btn-secondary">Technical Docs</button>
 </div>
+```
+
+### Status tokens (project state pills)
+
+Theme-aware semantic tokens for project state indicators. **Never hard-code these colors in components** — always reference the token.
+
+```css
+/* Success — "Activo" */
+--status-success-bg, --status-success-fg, --status-success-border
+
+/* Info — "En desarrollo" */
+--status-info-bg, --status-info-fg, --status-info-border
+
+/* Muted — "Pausado" */
+--status-muted-bg, --status-muted-fg, --status-muted-border
+```
+
+Hues are committed: green family for success, blue family for info, neutral grey for muted. Chroma reduced in light mode for legibility on cream background.
+
+### Pattern tokens (decorative overlays)
+
+Theme-aware tokens for decorative surfaces — keeps decoration consistent across modes without hard-coded rgba.
+
+```css
+/* Hero grid pattern (1px lines, masked radial) */
+--pattern-grid-fg
+  /* light: rgba(0,0,0,0.05) */
+  /* dark:  rgba(255,255,255,0.04) */
+
+/* Radial glow over banners (e.g. ConnectModal yellow gradient) */
+--surface-glow-radial
+  /* light: rgba(255,255,255,0.35) */
+  /* dark:  rgba(255,255,255,0.25) */
+```
+
+### Z-index system
+
+Stack order is centralized — no `z-[100]` magic numbers in components.
+
+```css
+--z-base:          0   /* default */
+--z-decor:         1   /* hero spotlight, decorative overlays */
+--z-content:       10  /* content above decorations */
+--z-sticky:        30  /* docs tabs, mobile drawer toggle */
+--z-nav:           50  /* main navbar (fixed top) */
+--z-modal-overlay: 90
+--z-modal:         100
+--z-tooltip:       110
 ```
 
 ## Do's and Don'ts

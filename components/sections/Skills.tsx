@@ -20,7 +20,7 @@ export default function Skills() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-c-brand-70">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent">
             {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground-active">
@@ -37,8 +37,7 @@ export default function Skills() {
             // react-doctor-disable-next-line react-doctor/no-array-index-as-key
             <span
               key={`${skill}-${i}`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-edge-secondary text-sm font-medium text-foreground-primary flex-shrink-0 hover:border-c-brand-70/40 transition-colors cursor-default"
-              style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-edge-secondary bg-surface-primary-hover text-sm font-medium text-foreground-primary flex-shrink-0 hover:border-c-brand-70/40 transition-colors cursor-default"
             >
               <span className="size-1 rounded-full bg-c-brand-70" />
               {skill}

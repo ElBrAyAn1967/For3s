@@ -21,7 +21,7 @@ export default function Timeline() {
           transition={{ duration: 0.5 }}
           className="mb-10 sm:mb-12"
         >
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-c-brand-70">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent">
             {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground-active">
@@ -50,7 +50,7 @@ export default function Timeline() {
                 </div>
 
                 <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
-                  <span className="text-xs sm:text-sm font-mono font-semibold mt-0.5 w-10 sm:w-12 flex-shrink-0 text-c-brand-70">
+                  <span className="text-xs sm:text-sm font-mono font-semibold mt-0.5 w-10 sm:w-12 flex-shrink-0 text-foreground-accent">
                     {year}
                   </span>
                   <div className="min-w-0 flex-1">

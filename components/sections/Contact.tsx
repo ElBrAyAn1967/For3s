@@ -21,12 +21,12 @@ export default function Contact() {
           transition={{ duration: 0.6 }}
           className="max-w-2xl mx-auto text-center"
         >
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-5 sm:mb-6 text-c-brand-70">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-5 sm:mb-6 text-foreground-accent">
             {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-semibold mb-4 text-foreground-active">
             {t("headline.prefix")}{" "}
-            <span className="text-c-brand-70">{t("headline.accent")}</span>
+            <span className="text-foreground-accent">{t("headline.accent")}</span>
           </h2>
           <p className="text-foreground-secondary mb-8 sm:mb-10 text-base sm:text-lg leading-relaxed">
             {t("description")}

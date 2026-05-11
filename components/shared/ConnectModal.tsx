@@ -97,7 +97,8 @@ export default function ConnectModal() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="connect-modal-title"
-          className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6 sm:py-10"
+          style={{ zIndex: "var(--z-modal)" }}
+          className="fixed inset-0 flex items-center justify-center px-4 py-6 sm:py-10"
         >
           {/* Overlay */}
           <motion.button
@@ -126,13 +127,13 @@ export default function ConnectModal() {
                 className="absolute inset-0"
                 style={{ background: "var(--marketing-gradient)" }}
               />
-              {/* Glow radial sutil al centro */}
+              {/* Glow radial sutil al centro — color is theme-aware */}
               <div
                 aria-hidden
                 className="absolute inset-0"
                 style={{
                   background:
-                    "radial-gradient(ellipse at center, rgba(255,255,255,0.25) 0%, transparent 60%)",
+                    "radial-gradient(ellipse at center, var(--surface-glow-radial) 0%, transparent 60%)",
                 }}
               />
               {/* Logo overlay */}

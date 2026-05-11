@@ -97,6 +97,21 @@
   --color-brand-dark: var(--brand-dark);
   --color-brand-light: var(--brand-light);
 
+  /* Status tokens — theme-aware (cambian en .dark) */
+  --color-status-success-bg:     var(--status-success-bg);
+  --color-status-success-fg:     var(--status-success-fg);
+  --color-status-success-border: var(--status-success-border);
+  --color-status-info-bg:     var(--status-info-bg);
+  --color-status-info-fg:     var(--status-info-fg);
+  --color-status-info-border: var(--status-info-border);
+  --color-status-muted-bg:     var(--status-muted-bg);
+  --color-status-muted-fg:     var(--status-muted-fg);
+  --color-status-muted-border: var(--status-muted-border);
+
+  /* Pattern tokens — theme-aware */
+  --color-pattern-grid-fg:    var(--pattern-grid-fg);
+  --color-surface-glow-radial: var(--surface-glow-radial);
+
   /* Motion */
   --default-transition-duration: 0.15s;
   --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -229,6 +244,36 @@
     oklch(0.640 0.160 55) 83.45%,
     oklch(0.580 0.150 50) 89.25%
   ), oklch(0.715 0.165 60);
+
+  /* ------------- STATUS COLORS — LIGHT MODE ------------- */
+  /* Success (proyecto activo) — verde con chroma controlado */
+  --status-success-bg:     color-mix(in oklab, oklch(0.65 0.18 150) 12%, transparent);
+  --status-success-fg:     oklch(0.45 0.16 150);
+  --status-success-border: color-mix(in oklab, oklch(0.65 0.18 150) 28%, transparent);
+  /* Info (en desarrollo) — azul */
+  --status-info-bg:     color-mix(in oklab, oklch(0.55 0.18 250) 12%, transparent);
+  --status-info-fg:     oklch(0.45 0.18 250);
+  --status-info-border: color-mix(in oklab, oklch(0.55 0.18 250) 28%, transparent);
+  /* Muted (pausado) — neutro */
+  --status-muted-bg:     rgba(0, 0, 0, 0.04);
+  --status-muted-fg:     var(--foreground-tertiary);
+  --status-muted-border: rgba(0, 0, 0, 0.08);
+
+  /* ------------- PATTERN TOKENS — LIGHT MODE ------------- */
+  /* Grid pattern del Hero (líneas sutiles sobre canvas) */
+  --pattern-grid-fg: rgba(0, 0, 0, 0.05);
+  /* Radial glow para banners/cards (overlay sutil) */
+  --surface-glow-radial: rgba(255, 255, 255, 0.35);
+
+  /* ------------- Z-INDEX SYSTEM ------------- */
+  --z-base: 0;
+  --z-decor: 1;       /* hero spotlight, decorative overlays */
+  --z-content: 10;    /* content above decorations */
+  --z-sticky: 30;     /* docs tabs, mobile drawer toggle */
+  --z-nav: 50;        /* main navbar fixed top */
+  --z-modal-overlay: 90;
+  --z-modal: 100;
+  --z-tooltip: 110;
 }
 
 /* ============================================================
@@ -286,6 +331,21 @@
   --border: var(--edge-primary);
   --input: var(--edge-primary);
   --ring: var(--c-brand-30);
+
+  /* ------------- STATUS COLORS — DARK MODE ------------- */
+  --status-success-bg:     color-mix(in oklab, oklch(0.78 0.18 150) 12%, transparent);
+  --status-success-fg:     oklch(0.82 0.15 150);
+  --status-success-border: color-mix(in oklab, oklch(0.78 0.18 150) 28%, transparent);
+  --status-info-bg:     color-mix(in oklab, oklch(0.7 0.16 250) 12%, transparent);
+  --status-info-fg:     oklch(0.78 0.13 250);
+  --status-info-border: color-mix(in oklab, oklch(0.7 0.16 250) 28%, transparent);
+  --status-muted-bg:     rgba(255, 255, 255, 0.04);
+  --status-muted-fg:     var(--foreground-tertiary);
+  --status-muted-border: rgba(255, 255, 255, 0.08);
+
+  /* ------------- PATTERN TOKENS — DARK MODE ------------- */
+  --pattern-grid-fg: rgba(255, 255, 255, 0.04);
+  --surface-glow-radial: rgba(255, 255, 255, 0.25);
 }
 
 @layer base {

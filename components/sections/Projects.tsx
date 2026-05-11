@@ -4,24 +4,29 @@ import { m as motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { projects, type ProjectStatus } from "@/lib/data";
 
+/**
+ * Status palette is derived from semantic tokens that flip with the theme.
+ * See `globals.css` for the `--status-{success,info,muted}-{bg,fg,border}`
+ * tokens — both light and dark variants live there.
+ */
 const statusStyle: Record<
   ProjectStatus,
   { bg: string; color: string; border: string }
 > = {
   activo: {
-    bg: "color-mix(in oklab, oklch(0.78 0.18 150) 12%, transparent)",
-    color: "oklch(0.82 0.15 150)",
-    border: "color-mix(in oklab, oklch(0.78 0.18 150) 28%, transparent)",
+    bg: "var(--status-success-bg)",
+    color: "var(--status-success-fg)",
+    border: "var(--status-success-border)",
   },
   desarrollo: {
-    bg: "color-mix(in oklab, oklch(0.7 0.16 250) 12%, transparent)",
-    color: "oklch(0.78 0.13 250)",
-    border: "color-mix(in oklab, oklch(0.7 0.16 250) 28%, transparent)",
+    bg: "var(--status-info-bg)",
+    color: "var(--status-info-fg)",
+    border: "var(--status-info-border)",
   },
   pausado: {
-    bg: "rgba(255,255,255,0.04)",
-    color: "var(--foreground-tertiary)",
-    border: "rgba(255,255,255,0.08)",
+    bg: "var(--status-muted-bg)",
+    color: "var(--status-muted-fg)",
+    border: "var(--status-muted-border)",
   },
 };
 
@@ -44,7 +49,7 @@ export default function Projects() {
           transition={{ duration: 0.5 }}
           className="mb-10 sm:mb-12"
         >
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-c-brand-70">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent">
             {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground-active">
@@ -84,10 +89,10 @@ export default function Projects() {
                   </span>
                 </div>
 
-                <h3 className="text-lg sm:text-xl font-semibold mb-1 text-foreground-active group-hover:text-c-brand-70 transition-colors">
+                <h3 className="text-lg sm:text-xl font-semibold mb-1 text-foreground-active group-hover:text-foreground-accent transition-colors">
                   {project.name}
                 </h3>
-                <p className="text-sm font-medium mb-3 text-c-brand-70">
+                <p className="text-sm font-medium mb-3 text-foreground-accent">
                   {t(`items.${project.id}.tagline`)}
                 </p>
                 <p className="text-sm text-foreground-secondary leading-relaxed mb-5">
@@ -98,11 +103,7 @@ export default function Projects() {
                   {project.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-xs px-2.5 py-1 rounded-md text-foreground-secondary"
-                      style={{
-                        backgroundColor: "rgba(255,255,255,0.04)",
-                        border: "1px solid var(--edge-secondary)",
-                      }}
+                      className="text-xs px-2.5 py-1 rounded-md text-foreground-secondary bg-surface-primary-hover border border-edge-secondary"
                     >
                       {tag}
                     </span>
