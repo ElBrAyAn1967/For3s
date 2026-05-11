@@ -110,7 +110,7 @@ export default function Navbar() {
               onClick={() => setOpen((v) => !v)}
               aria-label={open ? t("menu.close") : t("menu.open")}
               aria-expanded={open}
-              className="md:hidden size-9 inline-flex items-center justify-center rounded-md text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover transition-colors"
+              className="md:hidden size-11 inline-flex items-center justify-center rounded-md text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover transition-colors"
             >
               <svg
                 width="20"

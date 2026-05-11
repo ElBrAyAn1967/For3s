@@ -53,7 +53,7 @@ export default function Projects() {
           transition={{ duration: 0.5 }}
           className="mb-10 sm:mb-12"
         >
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent font-mono">
             {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground-active">

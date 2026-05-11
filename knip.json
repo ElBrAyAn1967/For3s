@@ -2,7 +2,6 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignore": [
     ".claude/**",
-    "components/docs/Sidebar.tsx",
     "components/ui/badge.tsx",
     "components/ui/button.tsx",
     "components/ui/card.tsx",
@@ -13,7 +12,6 @@
   ],
   "ignoreBinaries": [],
   "ignoreDependencies": [
-    "@next/font",
     "@types/node",
     "@types/react",
     "@types/react-dom"

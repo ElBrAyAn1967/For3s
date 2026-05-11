@@ -23,7 +23,7 @@ export default function About() {
         >
           {/* Left */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent font-mono">
               {t("overline")}
             </p>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-5 sm:mb-6 leading-tight text-foreground-active">

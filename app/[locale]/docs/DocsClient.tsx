@@ -129,7 +129,12 @@ export default function DocsClient() {
         onSelectCategory={handleSelectCategory}
       />
 
-      {/* Mobile sidebar toggle */}
+      {/*
+        Mobile sidebar toggle.
+        Sticky offset: 6.75rem (108px) = navbar 64px + mobile search row
+        on /docs ~44px. Reverts to plain top-16 from `sm:` upward where
+        the mobile search row is hidden.
+      */}
       <div className="lg:hidden sticky top-[6.75rem] sm:top-16 z-30 bg-surface-primary/95 backdrop-blur-sm border-b border-edge-secondary">
         <button
           type="button"
@@ -166,7 +171,11 @@ export default function DocsClient() {
 
       {/* Main layout */}
       <div className="flex-1 flex relative">
-        {/* Desktop sidebar */}
+        {/*
+          Desktop sidebar.
+          Sticky offset: 7rem (112px) = navbar 64px + tabs header 48px.
+          Height fills the remaining viewport below those two stacked rows.
+        */}
         <aside
           className={`hidden lg:flex flex-col shrink-0 sticky top-[7rem] self-start h-[calc(100vh-7rem)] border-r border-edge-secondary transition-all duration-200 ${
             collapsed ? "w-12" : "w-64 xl:w-72"

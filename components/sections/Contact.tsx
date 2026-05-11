@@ -21,7 +21,7 @@ export default function Contact() {
           transition={{ duration: 0.6 }}
           className="max-w-2xl mx-auto text-center"
         >
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-5 sm:mb-6 text-foreground-accent">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-5 sm:mb-6 text-foreground-accent font-mono">
             {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-semibold mb-4 text-foreground-active">

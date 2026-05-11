@@ -136,18 +136,23 @@ export default function ConnectModal() {
                     "radial-gradient(ellipse at center, var(--surface-glow-radial) 0%, transparent 60%)",
                 }}
               />
-              {/* Logo overlay */}
+              {/*
+                Logo overlay — sits on top of --marketing-gradient which
+                flips by theme (verde en light, ámbar en dark). Use the
+                theme-aware --primary-foreground (white-on-green, near-
+                black-on-amber) for legibility in both modes.
+              */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-c-gray-0 drop-shadow-sm">
+                <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-primary-foreground drop-shadow-sm">
                   For3s
                 </span>
               </div>
-              {/* Close button */}
+              {/* Close button — same contrast logic as logo */}
               <button
                 type="button"
                 onClick={hide}
                 aria-label={t("close")}
-                className="absolute top-3 right-3 size-8 inline-flex items-center justify-center rounded-full bg-c-gray-0/30 hover:bg-c-gray-0/50 backdrop-blur-sm text-c-gray-100 transition-colors"
+                className="absolute top-3 right-3 size-11 sm:size-8 inline-flex items-center justify-center rounded-full bg-primary-foreground/15 hover:bg-primary-foreground/30 backdrop-blur-sm text-primary-foreground transition-colors"
               >
                 <X className="size-4" />
               </button>

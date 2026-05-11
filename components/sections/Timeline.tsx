@@ -21,7 +21,7 @@ export default function Timeline() {
           transition={{ duration: 0.5 }}
           className="mb-10 sm:mb-12"
         >
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent font-mono">
             {t("overline")}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground-active">
@@ -33,6 +33,7 @@ export default function Timeline() {
         </motion.div>
 
         <div className="relative">
+          {/* Vertical line centered on the 20px dots: (20 - 1) / 2 ≈ 10px */}
           <div className="absolute left-[10px] top-2 bottom-2 w-px bg-edge-secondary" />
 
           <div className="flex flex-col gap-8">

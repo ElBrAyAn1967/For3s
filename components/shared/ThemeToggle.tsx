@@ -44,7 +44,7 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      className="size-9 inline-flex items-center justify-center rounded-md text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover transition-colors"
+      className="size-11 sm:size-9 inline-flex items-center justify-center rounded-md text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover transition-colors"
     >
       {!mounted ? (
         <span className="size-4" />
