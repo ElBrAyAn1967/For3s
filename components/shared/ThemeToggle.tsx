@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { track } from "@/lib/analytics";
 
 type Theme = "light" | "dark";
 
@@ -35,6 +36,7 @@ export default function ThemeToggle() {
     const next: Theme = theme === "dark" ? "light" : "dark";
     applyTheme(next);
     setTheme(next);
+    track(next === "dark" ? "theme_switched_to_dark" : "theme_switched_to_light");
   };
 
   const isDark = theme === "dark";

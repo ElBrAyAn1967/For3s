@@ -5,6 +5,7 @@ import { AnimatePresence, m as motion } from "framer-motion";
 import { X, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useConnectModal } from "./ConnectModalContext";
+import { track } from "@/lib/analytics";
 
 type FormState = {
   email: string;
@@ -87,6 +88,7 @@ export default function ConnectModal() {
     // Stub: simulate async (replace with real backend later)
     window.setTimeout(() => {
       dispatch({ type: "submit_done" });
+      track("connect_email_submitted");
     }, 600);
   };
 

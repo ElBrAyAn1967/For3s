@@ -9,6 +9,9 @@ import ThemeSync from "@/components/shared/ThemeSync";
 import MotionProvider from "@/components/shared/MotionProvider";
 import { ConnectModalProvider } from "@/components/shared/ConnectModalContext";
 import ConnectModal from "@/components/shared/ConnectModal";
+import { ConsentProvider } from "@/components/shared/ConsentContext";
+import ConsentBanner from "@/components/shared/ConsentBanner";
+import ClarityProvider from "@/components/shared/ClarityProvider";
 import "../globals.css";
 
 // Inter — primary sans. DESIGN.md anchors For3s voice on Inter despite the
@@ -81,12 +84,16 @@ export default async function LocaleLayout({
         >{themeBootstrap}</Script>
         <ThemeSync />
         <NextIntlClientProvider>
-          <MotionProvider>
-            <ConnectModalProvider>
-              {children}
-              <ConnectModal />
-            </ConnectModalProvider>
-          </MotionProvider>
+          <ConsentProvider>
+            <ClarityProvider />
+            <MotionProvider>
+              <ConnectModalProvider>
+                {children}
+                <ConnectModal />
+                <ConsentBanner />
+              </ConnectModalProvider>
+            </MotionProvider>
+          </ConsentProvider>
         </NextIntlClientProvider>
       </body>
     </html>

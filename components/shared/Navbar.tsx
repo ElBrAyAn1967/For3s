@@ -9,6 +9,7 @@ import ThemeToggle from "./ThemeToggle";
 import DocsSearchInput from "@/components/docs/DocsSearchInput";
 import { useDocsSearchOptional } from "@/components/docs/DocsSearchContext";
 import { useConnectModal } from "./ConnectModalContext";
+import { track } from "@/lib/analytics";
 
 const linkKeys = ["about", "projects", "timeline", "contact", "docs"] as const;
 const linkHrefs: Record<(typeof linkKeys)[number], string> = {
@@ -83,6 +84,7 @@ export default function Navbar() {
               <Link
                 key={key}
                 href={linkHrefs[key]}
+                onClick={() => track("nav_link_clicked", { link: key })}
                 className="px-3.5 py-1.5 text-sm text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover rounded-md transition-colors"
               >
                 {t(`links.${key}`)}
@@ -159,7 +161,10 @@ export default function Navbar() {
               <Link
                 key={key}
                 href={linkHrefs[key]}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setOpen(false);
+                  track("nav_link_clicked", { link: key, surface: "mobile" });
+                }}
                 className="px-4 py-3 text-base text-foreground-primary hover:text-foreground-active hover:bg-surface-primary-hover rounded-lg transition-colors"
               >
                 {t(`links.${key}`)}

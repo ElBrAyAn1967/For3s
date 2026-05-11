@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import EmptyContent from "@/components/docs/EmptyContent";
 import { useDocsSearch } from "@/components/docs/DocsSearchContext";
+import { track } from "@/lib/analytics";
 import {
   DOC_STRUCTURE,
   DOC_IDS,
@@ -93,6 +94,7 @@ export default function DocsClient() {
 
   const handleSelect = (id: string) => {
     dispatchNav({ type: "select_item", id });
+    track("docs_item_clicked", { doc_id: id });
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `#${id}`);
     }
@@ -102,9 +104,17 @@ export default function DocsClient() {
 
   const handleSelectCategory = (catId: string) => {
     dispatchNav({ type: "select_category", catId });
+    track("docs_tab_clicked", { category: catId });
     const cat = DOC_STRUCTURE.find((c) => c.id === catId);
     if (cat && cat.items.length > 0) {
-      handleSelect(cat.items[0].id);
+      // Use dispatch directly to avoid double-tracking docs_item_clicked
+      // when a category jump auto-selects the first item.
+      dispatchNav({ type: "select_item", id: cat.items[0].id });
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", `#${cat.items[0].id}`);
+      }
+      setSidebarOpen(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 

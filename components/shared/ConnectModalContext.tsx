@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, use, useState, type ReactNode } from "react";
+import { track } from "@/lib/analytics";
 
 type ConnectModalValue = {
   open: boolean;
@@ -12,7 +13,10 @@ const ConnectModalContext = createContext<ConnectModalValue | null>(null);
 
 export function ConnectModalProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const show = useCallback(() => setOpen(true), []);
+  const show = useCallback(() => {
+    setOpen(true);
+    track("connect_modal_opened");
+  }, []);
   const hide = useCallback(() => setOpen(false), []);
 
   return (

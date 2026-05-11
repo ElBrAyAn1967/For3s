@@ -1,4 +1,10 @@
 {
+  "ConsentBanner": {
+    "title": "Cookies de medición",
+    "description": "Usamos Microsoft Clarity para entender cómo se usa el sitio (heatmaps, sesiones anónimas). Sin esto, For3s vuela a ciegas.",
+    "accept": "Aceptar",
+    "decline": "Solo lo esencial"
+  },
   "Site": {
     "title": "Brian Aguilar — For3s",
     "description": "CEO de infraestructura para agentes. Founder de For3s — construyo la capa que necesita LATAM para operar en la era agentica.",

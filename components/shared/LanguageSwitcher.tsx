@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useTransition } from "react";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { track } from "@/lib/analytics";
 
 type Locale = (typeof routing.locales)[number];
 
@@ -16,6 +17,7 @@ export default function LanguageSwitcher() {
 
   const switchTo = (next: Locale) => {
     if (next === locale || isPending) return;
+    track(next === "en" ? "language_switched_to_en" : "language_switched_to_es");
     startTransition(() => {
       // next-intl strips the locale prefix from `pathname` automatically.
       // Passing `{ locale }` lets it rebuild the URL with the right prefix

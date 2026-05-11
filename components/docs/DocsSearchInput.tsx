@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useDocsSearch } from "./DocsSearchContext";
+import { track } from "@/lib/analytics";
 
 export default function DocsSearchInput({
   className = "",
@@ -13,6 +14,8 @@ export default function DocsSearchInput({
   const t = useTranslations("Docs");
   const { query, setQuery } = useDocsSearch();
   const [shortcutLabel, setShortcutLabel] = useState("Ctrl K");
+  // Only fire the search event once per session to avoid 1 event per keystroke.
+  const trackedThisSession = useRef(false);
 
   useEffect(() => {
     if (typeof navigator !== "undefined" && /Mac/.test(navigator.platform)) {
@@ -43,7 +46,14 @@ export default function DocsSearchInput({
         id="docs-search"
         type="search"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          const v = e.target.value;
+          setQuery(v);
+          if (v.trim().length >= 2 && !trackedThisSession.current) {
+            trackedThisSession.current = true;
+            track("docs_search_used");
+          }
+        }}
         placeholder={t("search.placeholder")}
         aria-label={t("search.label")}
         className="w-full pl-10 pr-16 py-2 rounded-lg bg-surface-overlay-large border border-edge-secondary text-sm text-foreground-active placeholder:text-foreground-tertiary outline-none focus:border-brand-bold/50 transition-colors"
