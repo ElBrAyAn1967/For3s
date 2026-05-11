@@ -22,7 +22,7 @@ export default function Sidebar({ activeId, onSelect, collapsed }: Props) {
                 <div className="h-px bg-edge-secondary/40 mx-2 mb-3" />
               )
             ) : (
-              <p className="text-[9px] font-mono tracking-widest text-foreground-tertiary/70 uppercase mb-1 px-2">
+              <p className="text-[10px] font-mono tracking-widest text-foreground-tertiary/70 uppercase mb-1 px-2">
                 {t(`categories.${cat.id}`)}
               </p>
             )}

@@ -315,7 +315,7 @@ function SidebarBody({
     }
     return (
       <nav className="w-full">
-        <p className="text-[9px] font-mono tracking-widest text-foreground-tertiary/70 uppercase mb-2 px-2">
+        <p className="text-[10px] font-mono tracking-widest text-foreground-tertiary/70 uppercase mb-2 px-2">
           {t("search.results", { count: filtered.length })}
         </p>
         <ul className="space-y-0.5">

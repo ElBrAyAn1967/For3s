@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Fira_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -11,16 +11,24 @@ import { ConnectModalProvider } from "@/components/shared/ConnectModalContext";
 import ConnectModal from "@/components/shared/ConnectModal";
 import "../globals.css";
 
+// Inter — primary sans. DESIGN.md anchors For3s voice on Inter despite the
+// font being on impeccable's reflex-reject list: the choice is defended in
+// PRODUCT.md ("limpia, neutra, ultra-legible. Humaniza con rigor métrico").
+// Weights cover the full hero (800) → body (400) range described in DESIGN.md.
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
-const firaMono = Fira_Mono({
+// JetBrains Mono — accent mono for kickers, tags, status, code inline, stats.
+// DESIGN.md's canonical pair. NOT Fira Mono.
+const jetBrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500", "700"],
+  display: "swap",
 });
 
 const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
@@ -63,7 +71,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${firaMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetBrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

@@ -225,7 +225,9 @@ El ámbar nunca se usa para texto largo. Solo: botones primary, links de convers
 - **`Inter`** — primary. Variable, optical sized. Limpia, neutra, ultra-legible. Humaniza con rigor métrico. Pesos en uso: 400 / 500 / 600 / 700 / 800.
 - **`JetBrains Mono`** — accent. Para detalles técnicos: kickers, tags, números, status, code inline, stats. NO para body. Crea contraste B2B implícito sin romper la cordialidad B2C.
 
-> **Activación importante**: Inter con `font-feature-settings: "cv11" on` (single-storey 'a') si se mantiene el look Modal-style. Validar si choca con el "look corporativo" de las guidelines.
+> **Activaciones OpenType**: Inter en producción usa `font-feature-settings: "cv11" on` — alternate single-storey 'a' (look Modal-inspired). Aplicado globalmente en `body` desde `globals.css`. Si en el futuro un cliente B2B reporta que la 'a' alternate "se ve casual", la regla se puede sobrescribir en superficies específicas: `font-feature-settings: normal`.
+
+> **Reflex-reject del skill `impeccable`**: Inter aparece en la training-data defaults list. La decisión de For3s es **mantener Inter** como defensa explícita basada en PRODUCT.md ("limpia, neutra, ultra-legible. Humaniza con rigor métrico") y el contexto LATAM (penetración alta, soporte i18n excelente). NO cambiar Inter sin actualizar PRODUCT.md primero.
 
 ### Escala (semantic)
 
