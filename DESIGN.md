@@ -1,12 +1,16 @@
 ---
 name: For3s
-description: Soft Tech meets Deep Tech — light mode B2C amigable, dark mode B2B con autoridad técnica. Ámbar como ADN.
+description: Soft Tech B2B (verde institucional #174023) meets Deep Tech B2C (ámbar builder #EF9B11). Dos modos, dos colores de identidad. El token `--brand-bold` resuelve la elección por modo.
 colors:
-  # Brand
+  # Brand — Dark/B2C identity (ámbar builder)
   ambar: "#f5b820"
   ambar-hover: "#e5a910"
 
-  # Light mode (Soft Tech B2C)
+  # Brand — Light/B2B identity (verde institucional)
+  verde: "#174023"
+  verde-hover: "#1d5230"
+
+  # Light mode (Soft Tech B2B) — verde institucional #174023
   hueso: "#F9F9F8"
   hueso-alt: "#F0F0EE"
   surface-light: "#FFFFFF"
@@ -15,7 +19,7 @@ colors:
   muted-light: "#666666"
   border-light: "#E5E7EB"
 
-  # Dark mode (Deep Tech B2B)
+  # Dark mode (Deep Tech B2C) — ámbar builder #EF9B11
   obsidiana-deep: "#0B0C10"
   bg-alt-dark: "#111218"
   surface-dark: "#16181D"
@@ -170,16 +174,44 @@ El **ámbar `#f5b820`** es el ADN cruzado de For3s. Ya no es alerta industrial: 
 
 ## Colors
 
-### Brand — Ámbar For3s
+### Brand — Dos identidades, una marca
+
+For3s usa **dos colores de identidad** según modo. Se resuelven en código vía el token theme-aware `--brand-bold`:
+
+| Token | Hex | Resuelve a | Rol |
+|---|---|---|---|
+| `--brand-bold` (Light) | `#174023` | `--c-green-30` | Color de identidad B2B institucional |
+| `--brand-bold` (Dark) | `#EF9B11` (eq) | `--c-brand-70` | Color de identidad B2C builder |
+| `--brand-bold-hover` (Light) | — | `--c-green-40` | Hover state CTA primary en Light |
+| `--brand-bold-hover` (Dark) | — | `--c-brand-80` | Hover state CTA primary en Dark |
+
+#### Verde For3s — Light B2B (`#174023`)
 
 | Token | Hex | Rol |
 |---|---|---|
-| `ambar` | `#f5b820` | CTA primary, highlights, status activo, "la puerta" |
-| `ambar-hover` | `#e5a910` | Estado hover del CTA primary |
+| `c-green-30` | `#174023` | Color brand-bold en Light, CTAs primary, logo, overlines |
+| `c-green-40` | `#1d5230` (eq) | Hover state, decorative accents |
+| `c-green-100` | `#d4ecd5` (eq) | Background tinted muy claro |
 
-El ámbar nunca se usa para texto largo. Solo: botones primary, links de conversión, kickers (en dark mode), un palabra-acento dentro de un H1 ("sin límites" en color, el resto en obsidiana/blanco). Máximo 10% de la superficie en cualquier viewport.
+Verde institucional profundo (hue 145-150°). Función emocional: **autoridad cálida sin agresividad**. Tradición visual: capital institucional, fondos clásicos, instituciones académicas. Comunica seriedad sin perder cordialidad.
 
-### Light Mode — Soft Tech (B2C)
+#### Ámbar For3s — Dark B2C (`#EF9B11`)
+
+| Token | Hex (aprox) | Rol |
+|---|---|---|
+| `c-brand-70` | `#EF9B11` | Color brand-bold en Dark, CTAs primary, logo, overlines |
+| `c-brand-80` | hover state | Hover decorative |
+| `c-brand-5` → `c-brand-100` | escala completa | Backgrounds tinted, surfaces, hovers |
+
+Ámbar dorado (hue 60°). Función emocional: **láser de precisión** sobre obsidiana. Comunica energía técnica controlada.
+
+#### Regla cruzada
+
+- **Verde nunca aparece en Dark mode.** El ámbar nunca aparece en Light mode (excepto el banner del modal con `--marketing-gradient` que cambia su gradient por modo).
+- **Ningún componente consume `c-green-*` o `c-brand-*` directo.** Siempre usar `--brand-bold` (theme-aware) o `--foreground-accent` (theme-aware).
+- **Excepción documentada:** los tokens decorativos `c-brand-*` siguen activos en componentes específicos del modal banner cuando se necesita un gradient hardcoded ámbar (legacy). En light el marketing-gradient se sobreescribe a versión verde.
+
+### Light Mode — Soft Tech (B2B)
 
 | Token | Hex | Rol |
 |---|---|---|
@@ -191,7 +223,7 @@ El ámbar nunca se usa para texto largo. Solo: botones primary, links de convers
 | `muted-light` | `#666666` | Secondary text, captions, disabled |
 | `border-light` | `#E5E7EB` | Bordes de cards, dividers, inputs |
 
-### Dark Mode — Deep Tech (B2B)
+### Dark Mode — Deep Tech (B2C)
 
 | Token | Hex | Rol |
 |---|---|---|

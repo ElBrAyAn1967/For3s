@@ -38,7 +38,7 @@ export default function LanguageSwitcher() {
         disabled={isPending}
         className={`px-2 sm:px-2.5 py-1 rounded-full transition-colors disabled:opacity-60 ${
           locale === "es"
-            ? "bg-c-brand-70 text-c-gray-0"
+            ? "bg-brand-bold text-c-gray-0"
             : "text-foreground-tertiary hover:text-foreground-active"
         }`}
       >
@@ -52,7 +52,7 @@ export default function LanguageSwitcher() {
         disabled={isPending}
         className={`px-2 sm:px-2.5 py-1 rounded-full transition-colors disabled:opacity-60 ${
           locale === "en"
-            ? "bg-c-brand-70 text-c-gray-0"
+            ? "bg-brand-bold text-c-gray-0"
             : "text-foreground-tertiary hover:text-foreground-active"
         }`}
       >

@@ -67,7 +67,7 @@ export default function Navbar() {
         <Link
           href="/"
           onClick={() => setOpen(false)}
-          className="font-semibold text-base tracking-tight text-c-brand-70 flex-shrink-0"
+          className="font-semibold text-base tracking-tight text-brand-bold flex-shrink-0"
         >
           For3s
         </Link>

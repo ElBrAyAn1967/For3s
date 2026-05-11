@@ -138,9 +138,9 @@ export default function DocsClient() {
           className="flex items-center gap-3 w-full px-4 py-3 text-sm text-foreground-secondary hover:text-foreground-active transition-colors"
         >
           {sidebarOpen ? (
-            <X className="size-4 text-c-brand-70 shrink-0" />
+            <X className="size-4 text-brand-bold shrink-0" />
           ) : (
-            <Menu className="size-4 text-c-brand-70 shrink-0" />
+            <Menu className="size-4 text-brand-bold shrink-0" />
           )}
           <span className="font-mono text-xs tracking-widest uppercase text-foreground-tertiary">
             {t("mobileLabel")}
@@ -191,7 +191,7 @@ export default function DocsClient() {
             onClick={() => setCollapsed((c) => !c)}
             title={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
             aria-label={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
-            className="absolute -right-3 top-8 z-10 size-6 rounded-full bg-surface-primary border border-edge-primary flex items-center justify-center text-foreground-secondary hover:text-foreground-active hover:border-c-brand-70 transition-colors"
+            className="absolute -right-3 top-8 z-10 size-6 rounded-full bg-surface-primary border border-edge-primary flex items-center justify-center text-foreground-secondary hover:text-foreground-active hover:border-brand-bold transition-colors"
           >
             {collapsed ? (
               <PanelLeft className="size-3" />
@@ -215,7 +215,7 @@ export default function DocsClient() {
                   <span className="text-xs text-foreground-tertiary">
                     {t("navigation.previous")}
                   </span>
-                  <span className="text-base text-foreground-active group-hover:text-c-brand-70 transition-colors">
+                  <span className="text-base text-foreground-active group-hover:text-brand-bold transition-colors">
                     ← {t(`items.${prev.id}.label`)}
                   </span>
                 </button>
@@ -231,7 +231,7 @@ export default function DocsClient() {
                   <span className="text-xs text-foreground-tertiary">
                     {t("navigation.next")}
                   </span>
-                  <span className="text-base text-foreground-active group-hover:text-c-brand-70 transition-colors">
+                  <span className="text-base text-foreground-active group-hover:text-brand-bold transition-colors">
                     {t(`items.${next.id}.label`)} →
                   </span>
                 </button>
@@ -272,13 +272,13 @@ function DocsTabs({
               onClick={() => onSelectCategory(catId)}
               className={`relative px-3 py-3 text-sm whitespace-nowrap transition-colors ${
                 isActive
-                  ? "text-c-brand-70 font-semibold"
+                  ? "text-brand-bold font-semibold"
                   : "text-foreground-secondary hover:text-foreground-active"
               }`}
             >
               {t(`categories.${catId}`)}
               {isActive && (
-                <span className="absolute left-3 right-3 -bottom-px h-0.5 bg-c-brand-70 rounded-full" />
+                <span className="absolute left-3 right-3 -bottom-px h-0.5 bg-brand-bold rounded-full" />
               )}
             </button>
           );
@@ -426,7 +426,7 @@ function SidebarItem({
         title={t(`items.${item.id}.label`)}
         className={`w-full flex items-center gap-2.5 px-2 py-1.5 min-h-[2.25rem] rounded-lg transition-all duration-150 ${
           isActive
-            ? "bg-c-brand-70/12 text-c-brand-70"
+            ? "bg-brand-bold/12 text-brand-bold"
             : "text-foreground-secondary hover:bg-surface-primary-hover hover:text-foreground-active"
         } ${collapsed ? "justify-center" : ""}`}
       >

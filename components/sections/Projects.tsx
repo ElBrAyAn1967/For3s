@@ -110,7 +110,7 @@ export default function Projects() {
                   ))}
                 </div>
 
-                <div className="absolute bottom-0 left-5 right-5 sm:left-6 sm:right-6 h-px bg-c-brand-70/0 group-hover:bg-c-brand-70/40 rounded-full transition-all duration-300" />
+                <div className="absolute bottom-0 left-5 right-5 sm:left-6 sm:right-6 h-px bg-brand-bold/0 group-hover:bg-brand-bold/40 rounded-full transition-all duration-300" />
               </motion.div>
             );
           })}
@@ -128,7 +128,7 @@ export default function Projects() {
                 transition={{ delay: i * 0.08, duration: 0.4 }}
                 className="flex items-start gap-4 p-4 rounded-xl border border-edge-secondary bg-surface-overlay-large hover:border-edge-primary hover:bg-surface-overlay-small transition-colors"
               >
-                <div className="mt-1.5 size-1.5 rounded-full bg-c-brand-70 flex-shrink-0" />
+                <div className="mt-1.5 size-1.5 rounded-full bg-brand-bold flex-shrink-0" />
                 <div>
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h4 className="font-semibold text-foreground-active">

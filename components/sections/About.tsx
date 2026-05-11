@@ -58,7 +58,7 @@ export default function About() {
                   transition={{ delay: i * 0.1, duration: 0.4 }}
                   className="flex items-start gap-3 p-4 rounded-xl border border-edge-secondary bg-surface-primary hover:border-edge-primary hover:bg-surface-primary-hover transition-colors"
                 >
-                  <div className="mt-1.5 size-1.5 rounded-full bg-c-brand-70 flex-shrink-0" />
+                  <div className="mt-1.5 size-1.5 rounded-full bg-brand-bold flex-shrink-0" />
                   <div>
                     <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <span className="font-semibold text-sm text-foreground-active">
@@ -99,7 +99,7 @@ export default function About() {
                 transition={{ delay: i * 0.12, duration: 0.5 }}
                 className="flex items-start gap-4 p-5 rounded-xl border border-edge-secondary bg-surface-primary hover:border-edge-primary hover:bg-surface-primary-hover transition-colors"
               >
-                <div className="mt-1.5 size-1.5 rounded-full bg-c-brand-70 flex-shrink-0" />
+                <div className="mt-1.5 size-1.5 rounded-full bg-brand-bold flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-foreground-active mb-1">
                     {t(`values.${i}.label`)}

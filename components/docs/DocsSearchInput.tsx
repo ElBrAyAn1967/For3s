@@ -46,7 +46,7 @@ export default function DocsSearchInput({
         onChange={(e) => setQuery(e.target.value)}
         placeholder={t("search.placeholder")}
         aria-label={t("search.label")}
-        className="w-full pl-10 pr-16 py-2 rounded-lg bg-surface-overlay-large border border-edge-secondary text-sm text-foreground-active placeholder:text-foreground-tertiary outline-none focus:border-c-brand-70/50 transition-colors"
+        className="w-full pl-10 pr-16 py-2 rounded-lg bg-surface-overlay-large border border-edge-secondary text-sm text-foreground-active placeholder:text-foreground-tertiary outline-none focus:border-brand-bold/50 transition-colors"
       />
       <kbd className="absolute right-3 hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold text-foreground-tertiary bg-surface-primary border border-edge-secondary">
         {shortcutLabel}

@@ -26,6 +26,20 @@
   --color-c-brand-90:  var(--c-brand-90);
   --color-c-brand-100: var(--c-brand-100);
 
+  /* Green scale (For3s Light B2B identity) */
+  --color-c-green-5:   var(--c-green-5);
+  --color-c-green-10:  var(--c-green-10);
+  --color-c-green-15:  var(--c-green-15);
+  --color-c-green-20:  var(--c-green-20);
+  --color-c-green-30:  var(--c-green-30);
+  --color-c-green-40:  var(--c-green-40);
+  --color-c-green-50:  var(--c-green-50);
+  --color-c-green-60:  var(--c-green-60);
+  --color-c-green-70:  var(--c-green-70);
+  --color-c-green-80:  var(--c-green-80);
+  --color-c-green-90:  var(--c-green-90);
+  --color-c-green-100: var(--c-green-100);
+
   /* Gray scale (neutros) */
   --color-c-gray-0:   var(--c-gray-0);
   --color-c-gray-2:   var(--c-gray-2);
@@ -91,6 +105,12 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Theme-aware bold brand color (verde #174023 en light, ámbar #EF9B11 en dark).
+     Use this in components instead of c-brand-70 when you want the bold
+     identity color of the active mode. */
+  --color-brand-bold:        var(--brand-bold);
+  --color-brand-bold-hover:  var(--brand-bold-hover);
 
   /* Brand aliases — para compatibilidad con código legacy */
   --color-brand: var(--brand);
@@ -161,6 +181,24 @@
   --c-brand-90:  oklch(0.860 0.150 80);
   --c-brand-100: oklch(0.925 0.130 90);  /* casi crema dorado */
 
+  /* ------------- GREEN — escala For3s Light/B2B (institutional) -------------
+     Anchor: #174023 (oklch 0.334 0.069 150.6) en --c-green-30.
+     Hue 145-150° (forest, leve azulado), chroma controlada para autoridad
+     institucional. Reemplaza al ámbar como color de identidad en Light mode
+     (Soft Tech B2B). El Dark mode (B2C Deep Tech) sigue usando --c-brand-* */
+  --c-green-5:   oklch(0.140 0.025 150);
+  --c-green-10:  oklch(0.195 0.035 150);
+  --c-green-15:  oklch(0.245 0.045 150);
+  --c-green-20:  oklch(0.290 0.055 150);
+  --c-green-30:  oklch(0.334 0.069 150);  /* ← #174023 — TU HEX */
+  --c-green-40:  oklch(0.395 0.080 148);
+  --c-green-50:  oklch(0.470 0.092 146);
+  --c-green-60:  oklch(0.550 0.105 144);
+  --c-green-70:  oklch(0.640 0.115 142);
+  --c-green-80:  oklch(0.745 0.125 140);
+  --c-green-90:  oklch(0.840 0.115 138);
+  --c-green-100: oklch(0.930 0.085 138);
+
   /* ------------- GRAY scale neutros (oklch) ------------- */
   --c-gray-0:   oklch(0.205 0 0);  /* #181818 — ground */
   --c-gray-2:   oklch(0.215 0 0);  /* #1c1c1c — surface base */
@@ -178,13 +216,16 @@
   --c-gray-90:  oklch(0.910 0 0);  /* #e8e8e8 */
   --c-gray-100: oklch(1 0 0);      /* #ffffff */
 
-  /* ------------- TOKENS SEMÁNTICOS — LIGHT MODE (default) ------------- */
-  /* Foreground (texto sobre fondos claros — invertido respecto al dark) */
+  /* ------------- TOKENS SEMÁNTICOS — LIGHT MODE (default) -------------
+     B2B Soft Tech identity: hueso canvas + verde institucional (#174023).
+     Verde reemplaza al ámbar en TODOS los roles de identidad en Light.
+     El ámbar sigue siendo el color de identidad EXCLUSIVO de Dark/B2C. */
+  /* Foreground (texto sobre fondos claros) */
   --foreground-primary:   oklch(0.205 0 0);  /* near-black */
   --foreground-secondary: oklch(0.385 0 0);  /* medium gray */
   --foreground-tertiary:  oklch(0.540 0 0);  /* lighter gray */
   --foreground-active:    oklch(0.130 0 0);  /* deepest text */
-  --foreground-accent:    var(--c-brand-50); /* amarillo más oscuro para legibilidad sobre claro */
+  --foreground-accent:    var(--c-green-30); /* verde #174023 — overlines, headlines accent */
 
   /* Surface */
   --surface-primary:        oklch(0.99 0 0);  /* near-white */
@@ -193,20 +234,20 @@
   --surface-primary-active: rgba(0, 0, 0, 0.08);
   --surface-overlay-large:  oklch(0.975 0 0); /* alternada — apenas más oscura */
   --surface-overlay-small:  oklch(0.95 0 0);
-  --surface-accent:         var(--c-brand-100);
-  --surface-accent-hover:   var(--c-brand-90);
-  --surface-accent-active:  var(--c-brand-80);
+  --surface-accent:         var(--c-green-100); /* background tinted verde claro */
+  --surface-accent-hover:   var(--c-green-90);
+  --surface-accent-active:  var(--c-green-80);
 
   /* Edge */
   --edge-primary:   oklch(0.86 0 0);
   --edge-secondary: oklch(0.92 0 0);
-  --edge-accent:    var(--c-brand-80);
+  --edge-accent:    var(--c-green-80);
 
   /* Icon */
   --icon-primary:         oklch(0.46 0 0);
   --icon-secondary:       oklch(0.54 0 0);
   --icon-secondary-hover: oklch(0.20 0 0);
-  --icon-accent:          var(--c-brand-50);
+  --icon-accent:          var(--c-green-30);
 
   /* ------------- shadcn compat ------------- */
   --background: var(--surface-primary);
@@ -215,35 +256,40 @@
   --card-foreground: var(--foreground-primary);
   --popover: var(--surface-primary);
   --popover-foreground: var(--foreground-primary);
-  --primary: var(--c-brand-50);
-  --primary-foreground: oklch(1 0 0);
+  --primary: var(--c-green-30);          /* CTA primary verde sobre claro */
+  --primary-foreground: oklch(0.99 0 0); /* texto blanco sobre verde oscuro */
   --secondary: oklch(0.96 0 0);
   --secondary-foreground: var(--foreground-active);
   --muted: oklch(0.96 0 0);
   --muted-foreground: var(--foreground-secondary);
-  --accent: var(--c-brand-100);
-  --accent-foreground: var(--c-brand-30);
+  --accent: var(--c-green-100);
+  --accent-foreground: var(--c-green-15);
   --destructive: oklch(0.577 0.245 27.325);
   --border: var(--edge-primary);
   --input: var(--edge-primary);
-  --ring: var(--c-brand-50);
+  --ring: var(--c-green-40);
 
-  /* Legacy brand aliases */
-  --brand: var(--c-brand-70);
-  --brand-dark: var(--c-brand-50);
-  --brand-light: var(--c-brand-100);
+  /* Legacy brand aliases — en Light apuntan a la escala verde */
+  --brand: var(--c-green-30);
+  --brand-dark: var(--c-green-15);
+  --brand-light: var(--c-green-100);
 
-  /* Marketing gradient — amarillo 7 stops 25° */
+  /* Marketing gradient — Light B2B: verde institucional 7 stops 25°
+     (versión verde del gradient ámbar; mismo ángulo y stops percentuales) */
   --marketing-gradient: linear-gradient(
     25deg,
-    oklch(0.860 0.150 80) 6.4%,
-    oklch(0.820 0.160 75) 21.31%,
-    oklch(0.780 0.165 70) 36.23%,
-    oklch(0.740 0.165 65) 51.97%,
-    oklch(0.700 0.165 60) 67.71%,
-    oklch(0.640 0.160 55) 83.45%,
-    oklch(0.580 0.150 50) 89.25%
-  ), oklch(0.715 0.165 60);
+    oklch(0.745 0.125 140) 6.4%,
+    oklch(0.680 0.115 142) 21.31%,
+    oklch(0.595 0.110 144) 36.23%,
+    oklch(0.510 0.100 146) 51.97%,
+    oklch(0.430 0.090 148) 67.71%,
+    oklch(0.380 0.080 149) 83.45%,
+    oklch(0.334 0.069 150) 89.25%
+  ), oklch(0.334 0.069 150);
+
+  /* Theme-aware brand-bold (light = verde #174023) */
+  --brand-bold:       var(--c-green-30);
+  --brand-bold-hover: var(--c-green-40);
 
   /* ------------- STATUS COLORS — LIGHT MODE ------------- */
   /* Success (proyecto activo) — verde con chroma controlado */
@@ -332,6 +378,10 @@
   --input: var(--edge-primary);
   --ring: var(--c-brand-30);
 
+  /* Theme-aware brand-bold (dark = ámbar #EF9B11) */
+  --brand-bold:       var(--c-brand-70);
+  --brand-bold-hover: var(--c-brand-80);
+
   /* ------------- STATUS COLORS — DARK MODE ------------- */
   --status-success-bg:     color-mix(in oklab, oklch(0.78 0.18 150) 12%, transparent);
   --status-success-fg:     oklch(0.82 0.15 150);
@@ -408,16 +458,19 @@
 
 .btn-pill:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--c-brand-30);
+  /* Focus ring uses the bold color of the active mode at 30% chroma */
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand-bold) 50%, transparent);
 }
 
 .btn-pill-primary {
-  background-color: var(--c-brand-70);
-  color: var(--c-gray-0);
+  /* Theme-aware: verde #174023 en Light, ámbar #EF9B11 en Dark */
+  background-color: var(--brand-bold);
+  /* Contrast foreground: white-ish over dark-green, near-black over amber */
+  color: var(--primary-foreground);
 }
 
 .btn-pill-primary:hover:not(:disabled) {
-  background-color: var(--c-brand-80);
+  background-color: var(--brand-bold-hover);
 }
 
 .btn-pill-secondary {
@@ -433,13 +486,13 @@
 
 .btn-pill-accent {
   background-color: transparent;
-  color: var(--c-brand-70);
-  border: 1px solid color-mix(in oklab, var(--c-brand-70) 30%, transparent);
+  color: var(--brand-bold);
+  border: 1px solid color-mix(in oklab, var(--brand-bold) 30%, transparent);
 }
 
 .btn-pill-accent:hover:not(:disabled) {
-  background-color: color-mix(in oklab, var(--c-brand-70) 5%, transparent);
-  border-color: var(--c-brand-70);
+  background-color: color-mix(in oklab, var(--brand-bold) 5%, transparent);
+  border-color: var(--brand-bold);
 }
 
 /* =============================================================

@@ -38,7 +38,7 @@ export default function Sidebar({ activeId, onSelect, collapsed }: Props) {
                       title={t(`items.${item.id}.label`)}
                       className={`w-full flex items-center gap-2.5 px-2 py-1.5 min-h-[2.25rem] rounded-lg transition-all duration-150 ${
                         isActive
-                          ? "bg-c-brand-70/12 text-c-brand-70"
+                          ? "bg-brand-bold/12 text-brand-bold"
                           : "text-foreground-secondary hover:bg-surface-primary-hover hover:text-foreground-active"
                       } ${collapsed ? "justify-center" : ""}`}
                     >

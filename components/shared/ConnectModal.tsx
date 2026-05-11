@@ -167,7 +167,7 @@ export default function ConnectModal() {
                     {t("description")}
                   </p>
 
-                  <p className="text-[11px] font-mono uppercase tracking-widest text-c-brand-70 mb-5">
+                  <p className="text-[11px] font-mono uppercase tracking-widest text-brand-bold mb-5">
                     · {t("socialProof")}
                   </p>
 
@@ -182,7 +182,7 @@ export default function ConnectModal() {
                       }
                       placeholder={t("placeholder")}
                       aria-label={t("placeholder")}
-                      className="w-full rounded-lg bg-surface-primary border border-edge-primary px-4 py-3 text-sm text-foreground-active placeholder:text-foreground-tertiary outline-none focus:border-c-brand-70 transition-colors"
+                      className="w-full rounded-lg bg-surface-primary border border-edge-primary px-4 py-3 text-sm text-foreground-active placeholder:text-foreground-tertiary outline-none focus:border-brand-bold transition-colors"
                     />
                     <button
                       type="submit"
@@ -209,8 +209,8 @@ export default function ConnectModal() {
                 </>
               ) : (
                 <div className="text-center py-4">
-                  <div className="inline-flex items-center justify-center size-12 rounded-full bg-c-brand-70/15 border border-c-brand-70/30 mb-4">
-                    <CheckCircle2 className="size-6 text-c-brand-70" />
+                  <div className="inline-flex items-center justify-center size-12 rounded-full bg-brand-bold/15 border border-brand-bold/30 mb-4">
+                    <CheckCircle2 className="size-6 text-brand-bold" />
                   </div>
                   <h2 className="text-xl font-semibold text-foreground-active mb-2">
                     {t("success.title")}

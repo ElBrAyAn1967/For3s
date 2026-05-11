@@ -10,25 +10,32 @@ brand
 
 For3s opera dos modos visuales asignados a audiencias distintas. **No son opcionales del mismo sitio — son dos posicionamientos en una sola identidad.**
 
-### Light Mode = B2B (Soft Tech)
+### Light Mode = B2B (Soft Tech) · Verde institucional
 
 - **Audiencia:** equipos técnicos evaluando infraestructura, áreas de innovación corporativa, comités de decisión, ingeniería con presupuesto
 - **Estado mental:** evaluación, due diligence, decisión empresarial. Horario laboral, oficina, sala de juntas, presentación a stakeholders
-- **Función emocional del ámbar:** **"luz solar"** — autoridad cálida sin agresividad. Invita y guía hacia la conversión sin intimidar
+- **Color de identidad:** **`#174023` — verde profundo institucional**. Función emocional: **"bosque corporativo"** — autoridad seria sin agresividad. Es el color del capital institucional (Bloomberg, Goldman Sachs, fondos de inversión clásicos). Comunica que esta gente sí firma contratos.
 - **Lo que el modo debe transmitir:** "For3s es una empresa seria de infraestructura. Esta gente firma contratos. Podemos confiar nuestra capa de IA aquí."
 - **Anti-emoción:** intimidación tecnológica, modo hacker, caos visual, "esto parece un solo developer"
 
-### Dark Mode = B2C (Deep Tech)
+### Dark Mode = B2C (Deep Tech) · Ámbar builder
 
 - **Audiencia:** builders independientes, founders técnicos LATAM, developers construyendo con agentes, comunidad open-source, curiosos hands-on
 - **Estado mental:** construcción nocturna, exploración, learning by doing. Café a las 11pm, hoodie, terminal abierta, una mano en el teclado
-- **Función emocional del ámbar:** **"láser de precisión"** — energía que guía la acción técnica, brilla por contraste sobre obsidiana
+- **Color de identidad:** **`#EF9B11` — ámbar dorado**. Función emocional: **"láser de precisión"** — energía que guía la acción técnica, brilla por contraste sobre obsidiana. Es el color del builder ejecutando en producción.
 - **Lo que el modo debe transmitir:** "Esto es de ti y para ti, builder. Aquí están patterns reales, no demos. Hay gente real haciendo esto en LATAM."
 - **Anti-emoción:** corporativo frío, condescendencia, lenguaje de comité, "esto es para empresas grandes"
 
-### El ámbar #f5b820 es ADN cruzado
+### Dos modos, dos colores de identidad
 
-Mismo hex en ambos modos. Lo que cambia es **su función emocional**, no su valor cromático. La dualidad es la afirmación de que For3s sirve a dos mundos sin diluir identidad — no es bilingüismo visual, es **integración consciente**.
+A diferencia de marcas con un solo color "ADN cruzado", For3s deliberadamente usa **dos colores de identidad distintos** — uno por modo:
+
+- **Light/B2B → verde `#174023`** en overlines, headlines accent, CTAs primary, logo, dots, focus rings
+- **Dark/B2C → ámbar `#EF9B11`** en los mismos roles
+
+Esta dualidad es **decisión estratégica**, no inconsistencia: cada audiencia ve la versión de For3s que le pertenece. El comité corporativo no ve un sitio "para builders coloreado de amarillo brillante"; el builder nocturno no ve un sitio "corporativo verde". Cada uno recibe una marca diseñada **para su contexto**.
+
+El token `--brand-bold` resuelve esto en código: en Light apunta a `--c-green-30` (verde), en Dark apunta a `--c-brand-70` (ámbar). Toda decisión visual de identidad consume `--brand-bold` o `--foreground-accent`, nunca el color crudo directamente.
 
 ---
 
@@ -133,7 +140,7 @@ LATAM está copiando playbooks de San Francisco que asumen contexto distinto: eq
 3. *"Si no funciona en producción real, no funciona."*
 4. *"Cada doc en este sitio salió de un proyecto que ya pagó alguien."*
 5. *"For3s opera donde otros prometen."*
-6. *"Dos modos, una identidad. El ámbar no se mueve."*
+6. *"Dos modos, dos colores. Verde para el comité, ámbar para el builder."*
 7. *"Esto no es un curso. Es lo que aprendimos cobrando."*
 8. *"Abrimos las puertas hacia la era de los agentes."*
 
@@ -221,7 +228,7 @@ Las marcas/sitios que SÍ inspiran For3s, con qué tomamos y qué no de cada uno
 
 ## Design Principles
 
-1. **Dos modos, una identidad.** El ámbar `#f5b820` es el mismo hex en B2B Light y B2C Dark. La voz se modula entre modos, no se rompe. Si una decisión "solo funciona en uno", probablemente está mal planteada. **NO implica:** una identidad monolítica genérica que ignora el contexto de uso
+1. **Dos modos, dos colores de identidad.** Verde `#174023` carga la identidad en B2B Light (institucional). Ámbar `#EF9B11` carga la identidad en B2C Dark (builder). Cada audiencia recibe el color diseñado para su contexto mental. La voz se modula entre modos pero NO se rompe — los principios narrativos cruzan, los colores no. **NO implica:** cambiar el color al azar entre superficies; el token `--brand-bold` resuelve la elección y nunca se mezcla con el otro dentro del mismo modo.
 
 2. **Mostrar antes que prometer.** Cada claim técnico debe estar respaldado con caso real, código verificable, o métrica concreta. Sin evidencia, la palabra no aparece. La autoridad la da el archivo demostrable, no el adjetivo. **NO implica:** que cada palabra requiera footnote — implica que las afirmaciones grandes ("infra confiable para producción") deben mapear a algo público
 

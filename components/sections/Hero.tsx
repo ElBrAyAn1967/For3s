@@ -116,9 +116,9 @@ export default function Hero() {
           transition={{ delay: 0.8, duration: 1 }}
           className="absolute right-0 top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-3 pr-8 pointer-events-none"
         >
-          <div className="w-32 h-px bg-c-brand-70/50 rounded-full" />
-          <div className="w-20 h-px bg-c-brand-70/30 rounded-full ml-6" />
-          <div className="w-28 h-px bg-c-brand-70/15 rounded-full ml-2" />
+          <div className="w-32 h-px bg-brand-bold/50 rounded-full" />
+          <div className="w-20 h-px bg-brand-bold/30 rounded-full ml-6" />
+          <div className="w-28 h-px bg-brand-bold/15 rounded-full ml-2" />
         </motion.div>
       </div>
     </section>
