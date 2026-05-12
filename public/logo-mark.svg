@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="For3s">
+  <!--
+    For3s mark. Three parallel pipes, each entering from the right edge
+    at a different height, curving 90° down through a shared radius
+    (same arc, different origin), and exiting parallel to each other
+    out of the bottom edge. Style: rounded caps, even stroke.
+  -->
+  <g stroke="currentColor" stroke-width="5" stroke-linecap="round" fill="none">
+    <!-- Top pipe -->
+    <path d="M 60 12 L 26 12 A 8 8 0 0 0 18 20 L 18 60" />
+    <!-- Middle pipe -->
+    <path d="M 60 24 L 34 24 A 8 8 0 0 0 26 32 L 26 60" />
+    <!-- Bottom pipe -->
+    <path d="M 60 36 L 42 36 A 8 8 0 0 0 34 44 L 34 60" />
+  </g>
+</svg>

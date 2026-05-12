@@ -189,10 +189,10 @@
   --c-green-5:   oklch(0.140 0.025 150);
   --c-green-10:  oklch(0.195 0.035 150);
   --c-green-15:  oklch(0.245 0.045 150);
-  --c-green-20:  oklch(0.290 0.055 150);
-  --c-green-30:  oklch(0.334 0.069 150);  /* ← #174023 — TU HEX */
-  --c-green-40:  oklch(0.395 0.080 148);
-  --c-green-50:  oklch(0.470 0.092 146);
+  --c-green-20:  oklch(0.320 0.062 150);
+  --c-green-30:  oklch(0.395 0.080 148);  /* anchor B2B — un escalón sobre #174023 */
+  --c-green-40:  oklch(0.450 0.088 147);
+  --c-green-50:  oklch(0.510 0.095 146);
   --c-green-60:  oklch(0.550 0.105 144);
   --c-green-70:  oklch(0.640 0.115 142);
   --c-green-80:  oklch(0.745 0.125 140);

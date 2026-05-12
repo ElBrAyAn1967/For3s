@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="For3s">
+  <!--
+    For3s mark, circular avatar variant. Same three-pipe F as logo-mark.svg
+    centered and scaled inside a #EF9B11 (ámbar For3s) disc. Glyph stays
+    white. Use this version where the mark needs its own anchored
+    presence — favicon, profile, large hero badge.
+  -->
+  <circle cx="32" cy="32" r="32" fill="#EF9B11" />
+  <g stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" transform="translate(8 8) scale(0.75)">
+    <path d="M 60 12 L 26 12 A 8 8 0 0 0 18 20 L 18 60" />
+    <path d="M 60 24 L 34 24 A 8 8 0 0 0 26 32 L 26 60" />
+    <path d="M 60 36 L 42 36 A 8 8 0 0 0 34 44 L 34 60" />
+  </g>
+</svg>

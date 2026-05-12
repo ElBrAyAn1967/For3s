@@ -5,25 +5,49 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import LanguageSwitcher from "./LanguageSwitcher";
+import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import DocsSearchInput from "@/components/docs/DocsSearchInput";
 import { useDocsSearchOptional } from "@/components/docs/DocsSearchContext";
 import { useConnectModal } from "./ConnectModalContext";
+import { useTheme } from "@/lib/useTheme";
 import { track } from "@/lib/analytics";
 
-const linkKeys = ["about", "projects", "timeline", "contact", "docs"] as const;
-const linkHrefs: Record<(typeof linkKeys)[number], string> = {
+// Two link sets — one per audience mode.
+// Light (B2B): commercial trail ending in `demo` (lead-capture surface).
+// Dark (B2C): builder trail ending in `docs` (technical reference).
+type LinkKey = "about" | "projects" | "timeline" | "contact" | "docs" | "demo";
+
+const linkHrefs: Record<LinkKey, string> = {
   about: "/#about",
   projects: "/#projects",
   timeline: "/#timeline",
   contact: "/#contact",
   docs: "/docs",
+  demo: "/demo",
 };
+
+const lightLinkKeys: LinkKey[] = [
+  "about",
+  "projects",
+  "timeline",
+  "contact",
+  "demo",
+];
+const darkLinkKeys: LinkKey[] = [
+  "about",
+  "projects",
+  "timeline",
+  "contact",
+  "docs",
+];
 
 export default function Navbar() {
   const t = useTranslations("Navbar");
   const pathname = usePathname();
   const { show: showConnectModal } = useConnectModal();
+  const theme = useTheme();
+  const linkKeys = theme === "dark" ? darkLinkKeys : lightLinkKeys;
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -68,9 +92,10 @@ export default function Navbar() {
         <Link
           href="/"
           onClick={() => setOpen(false)}
-          className="font-semibold text-base tracking-tight text-brand-bold flex-shrink-0"
+          aria-label="For3s"
+          className="inline-flex items-center text-brand-bold flex-shrink-0 transition-colors"
         >
-          For3s
+          <Logo className="size-7" />
         </Link>
 
         {/* Center: search on docs, nav links elsewhere */}

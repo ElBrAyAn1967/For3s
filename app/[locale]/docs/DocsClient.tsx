@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ChevronRight,
@@ -9,13 +9,12 @@ import {
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 import EmptyContent from "@/components/docs/EmptyContent";
 import { useDocsSearch } from "@/components/docs/DocsSearchContext";
 import { track } from "@/lib/analytics";
 import {
   DOC_STRUCTURE,
-  DOC_IDS,
-  DEFAULT_DOC_ID,
   ALL_DOC_ITEMS,
   getPrevNext,
   type DocCategory,
@@ -38,84 +37,32 @@ const SECONDARY_CATEGORIES = [
   "glosario",
 ];
 
-function getInitialId(): string {
-  if (typeof window === "undefined") return DEFAULT_DOC_ID;
-  const hash = window.location.hash.slice(1);
-  return DOC_IDS.has(hash) ? hash : DEFAULT_DOC_ID;
-}
-
-function findCategoryOf(id: string): string {
-  for (const cat of DOC_STRUCTURE) {
-    if (cat.items.some((i) => i.id === id)) return cat.id;
-  }
-  return PRIMARY_CATEGORIES[0];
-}
-
-type NavState = { activeId: string; activeCategory: string };
-type NavAction =
-  | { type: "select_item"; id: string }
-  | { type: "select_category"; catId: string };
-
-const initialNavState: NavState = {
-  activeId: DEFAULT_DOC_ID,
-  activeCategory: PRIMARY_CATEGORIES[0],
+type DocsClientProps = {
+  /** Slug of the doc to render. Comes from the URL ([slug] segment). */
+  activeId: string;
+  /** Category id derived from the active doc (computed in the server). */
+  activeCategory: string;
 };
 
-function navReducer(state: NavState, action: NavAction): NavState {
-  switch (action.type) {
-    case "select_item":
-      return { activeId: action.id, activeCategory: findCategoryOf(action.id) };
-    case "select_category":
-      return { ...state, activeCategory: action.catId };
-    default:
-      return state;
-  }
-}
-
-export default function DocsClient() {
+/**
+ * DocsClient — receives the active doc + category from the server (URL-driven,
+ * NOT hash-driven anymore). All in-app navigation between docs goes through
+ * next-intl `<Link>` so each click is a real route change that gets indexed.
+ */
+export default function DocsClient({ activeId, activeCategory }: DocsClientProps) {
   const t = useTranslations("Docs");
   const { query } = useDocsSearch();
-  const [nav, dispatchNav] = useReducer(navReducer, initialNavState);
-  const { activeId, activeCategory } = nav;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  useEffect(() => {
-    const id = getInitialId();
-    dispatchNav({ type: "select_item", id });
-
-    const onHashChange = () => {
-      const newId = getInitialId();
-      dispatchNav({ type: "select_item", id: newId });
-    };
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
-
-  const handleSelect = (id: string) => {
-    dispatchNav({ type: "select_item", id });
+  const trackItemClick = (id: string) => {
     track("docs_item_clicked", { doc_id: id });
-    if (typeof window !== "undefined") {
-      window.history.replaceState(null, "", `#${id}`);
-    }
     setSidebarOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleSelectCategory = (catId: string) => {
-    dispatchNav({ type: "select_category", catId });
+  const trackCategoryClick = (catId: string) => {
     track("docs_tab_clicked", { category: catId });
-    const cat = DOC_STRUCTURE.find((c) => c.id === catId);
-    if (cat && cat.items.length > 0) {
-      // Use dispatch directly to avoid double-tracking docs_item_clicked
-      // when a category jump auto-selects the first item.
-      dispatchNav({ type: "select_item", id: cat.items[0].id });
-      if (typeof window !== "undefined") {
-        window.history.replaceState(null, "", `#${cat.items[0].id}`);
-      }
-      setSidebarOpen(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setSidebarOpen(false);
   };
 
   const { prev, next } = getPrevNext(activeId);
@@ -133,18 +80,11 @@ export default function DocsClient() {
 
   return (
     <div className="min-h-screen bg-surface-primary flex flex-col">
-      {/* Sub-header de docs: solo top tabs */}
       <DocsTabs
         activeCategory={activeCategory}
-        onSelectCategory={handleSelectCategory}
+        onTrack={trackCategoryClick}
       />
 
-      {/*
-        Mobile sidebar toggle.
-        Sticky offset: 6.75rem (108px) = navbar 64px + mobile search row
-        on /docs ~44px. Reverts to plain top-16 from `sm:` upward where
-        the mobile search row is hidden.
-      */}
       <div className="lg:hidden sticky top-[6.75rem] sm:top-16 z-30 bg-surface-primary/95 backdrop-blur-sm border-b border-edge-secondary">
         <button
           type="button"
@@ -172,20 +112,14 @@ export default function DocsClient() {
               activeId={activeId}
               activeCategoryId={activeCategory}
               filtered={filteredResults}
-              onSelect={handleSelect}
+              onTrack={trackItemClick}
               collapsed={false}
             />
           </div>
         )}
       </div>
 
-      {/* Main layout */}
       <div className="flex-1 flex relative">
-        {/*
-          Desktop sidebar.
-          Sticky offset: 7rem (112px) = navbar 64px + tabs header 48px.
-          Height fills the remaining viewport below those two stacked rows.
-        */}
         <aside
           className={`hidden lg:flex flex-col shrink-0 sticky top-[7rem] self-start h-[calc(100vh-7rem)] border-r border-edge-secondary transition-all duration-200 ${
             collapsed ? "w-12" : "w-64 xl:w-72"
@@ -200,7 +134,7 @@ export default function DocsClient() {
               activeId={activeId}
               activeCategoryId={activeCategory}
               filtered={filteredResults}
-              onSelect={handleSelect}
+              onTrack={trackItemClick}
               collapsed={collapsed}
             />
           </div>
@@ -221,14 +155,14 @@ export default function DocsClient() {
         </aside>
 
         <main className="flex-1 min-w-0">
-          <div className="px-5 sm:px-8 md:px-12 lg:px-16 xl:px-20 py-10 sm:py-12 pb-20 max-w-[860px] mx-auto lg:mx-0">
+          <div className="px-5 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24 py-10 sm:py-12 pb-20">
             <DocArticle activeId={activeId} />
 
             <div className="flex items-center justify-between gap-4 pt-8 mt-12 border-t border-edge-secondary">
               {prev ? (
-                <button
-                  type="button"
-                  onClick={() => handleSelect(prev.id)}
+                <Link
+                  href={`/docs/${prev.id}`}
+                  onClick={() => trackItemClick(prev.id)}
                   className="group flex flex-col gap-1 text-left max-w-[48%]"
                 >
                   <span className="text-xs text-foreground-tertiary">
@@ -237,14 +171,14 @@ export default function DocsClient() {
                   <span className="text-base text-foreground-active group-hover:text-brand-bold transition-colors">
                     ← {t(`items.${prev.id}.label`)}
                   </span>
-                </button>
+                </Link>
               ) : (
                 <span />
               )}
               {next ? (
-                <button
-                  type="button"
-                  onClick={() => handleSelect(next.id)}
+                <Link
+                  href={`/docs/${next.id}`}
+                  onClick={() => trackItemClick(next.id)}
                   className="group flex flex-col gap-1 text-right max-w-[48%] ml-auto"
                 >
                   <span className="text-xs text-foreground-tertiary">
@@ -253,7 +187,7 @@ export default function DocsClient() {
                   <span className="text-base text-foreground-active group-hover:text-brand-bold transition-colors">
                     {t(`items.${next.id}.label`)} →
                   </span>
-                </button>
+                </Link>
               ) : (
                 <span />
               )}
@@ -265,14 +199,14 @@ export default function DocsClient() {
   );
 }
 
-/* ─── Top tabs only ─── */
+/* ─── Top tabs ─── */
 
 function DocsTabs({
   activeCategory,
-  onSelectCategory,
+  onTrack,
 }: {
   activeCategory: string;
-  onSelectCategory: (id: string) => void;
+  onTrack: (catId: string) => void;
 }) {
   const t = useTranslations("Docs");
 
@@ -284,11 +218,14 @@ function DocsTabs({
       >
         {PRIMARY_CATEGORIES.map((catId) => {
           const isActive = activeCategory === catId;
+          const cat = DOC_STRUCTURE.find((c) => c.id === catId);
+          const firstDoc = cat?.items[0]?.id;
+          if (!firstDoc) return null;
           return (
-            <button
+            <Link
               key={catId}
-              type="button"
-              onClick={() => onSelectCategory(catId)}
+              href={`/docs/${firstDoc}`}
+              onClick={() => onTrack(catId)}
               className={`relative px-3 py-3 text-sm whitespace-nowrap transition-colors ${
                 isActive
                   ? "text-brand-bold font-semibold"
@@ -299,7 +236,7 @@ function DocsTabs({
               {isActive && (
                 <span className="absolute left-3 right-3 -bottom-px h-0.5 bg-brand-bold rounded-full" />
               )}
-            </button>
+            </Link>
           );
         })}
       </nav>
@@ -313,13 +250,13 @@ function SidebarBody({
   activeId,
   activeCategoryId,
   filtered,
-  onSelect,
+  onTrack,
   collapsed,
 }: {
   activeId: string;
   activeCategoryId: string;
   filtered: DocItem[] | null;
-  onSelect: (id: string) => void;
+  onTrack: (id: string) => void;
   collapsed: boolean;
 }) {
   const t = useTranslations("Docs");
@@ -343,7 +280,7 @@ function SidebarBody({
               key={item.id}
               item={item}
               isActive={activeId === item.id}
-              onSelect={onSelect}
+              onTrack={onTrack}
               collapsed={false}
             />
           ))}
@@ -363,7 +300,7 @@ function SidebarBody({
         <SidebarCategory
           category={activeCat}
           activeId={activeId}
-          onSelect={onSelect}
+          onTrack={onTrack}
           collapsed={collapsed}
           showLabel={!collapsed}
         />
@@ -375,7 +312,7 @@ function SidebarBody({
               key={cat.id}
               category={cat}
               activeId={activeId}
-              onSelect={onSelect}
+              onTrack={onTrack}
               collapsed={false}
               showLabel
             />
@@ -389,13 +326,13 @@ function SidebarBody({
 function SidebarCategory({
   category,
   activeId,
-  onSelect,
+  onTrack,
   collapsed,
   showLabel,
 }: {
   category: DocCategory;
   activeId: string;
-  onSelect: (id: string) => void;
+  onTrack: (id: string) => void;
   collapsed: boolean;
   showLabel: boolean;
 }) {
@@ -414,7 +351,7 @@ function SidebarCategory({
             key={item.id}
             item={item}
             isActive={activeId === item.id}
-            onSelect={onSelect}
+            onTrack={onTrack}
             collapsed={collapsed}
           />
         ))}
@@ -426,12 +363,12 @@ function SidebarCategory({
 function SidebarItem({
   item,
   isActive,
-  onSelect,
+  onTrack,
   collapsed,
 }: {
   item: DocItem;
   isActive: boolean;
-  onSelect: (id: string) => void;
+  onTrack: (id: string) => void;
   collapsed: boolean;
 }) {
   const t = useTranslations("Docs");
@@ -439,9 +376,9 @@ function SidebarItem({
 
   return (
     <li>
-      <button
-        type="button"
-        onClick={() => onSelect(item.id)}
+      <Link
+        href={`/docs/${item.id}`}
+        onClick={() => onTrack(item.id)}
         title={t(`items.${item.id}.label`)}
         className={`w-full flex items-center gap-2.5 px-2 py-1.5 min-h-[2.25rem] rounded-lg transition-all duration-150 ${
           isActive
@@ -459,7 +396,7 @@ function SidebarItem({
             {t(`items.${item.id}.label`)}
           </span>
         )}
-      </button>
+      </Link>
     </li>
   );
 }

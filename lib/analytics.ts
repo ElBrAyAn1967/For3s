@@ -25,7 +25,9 @@ export type AnalyticsEvent =
   | "docs_item_clicked"
   | "docs_search_used"
   // Navbar nav links — path discovery
-  | "nav_link_clicked";
+  | "nav_link_clicked"
+  // Hero install block (dark mode) — builder signal
+  | "hero_install_copied";
 
 type TagValue = string | string[];
 type EventTags = Record<string, TagValue>;

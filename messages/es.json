@@ -6,7 +6,8 @@
     "decline": "Solo lo esencial"
   },
   "Site": {
-    "title": "Brian Aguilar — For3s",
+    "title": "For3s",
+    "titleTemplate": "For3s — {page}",
     "description": "CEO de infraestructura para agentes. Founder de For3s — construyo la capa que necesita LATAM para operar en la era agentica.",
     "tagline": "Abriendo puertas hacia la era de los agentes."
   },
@@ -16,7 +17,8 @@
       "projects": "Proyectos",
       "timeline": "Trayectoria",
       "contact": "Contacto",
-      "docs": "Docs"
+      "docs": "Docs",
+      "demo": "Demo"
     },
     "cta": "Conectar",
     "languageSwitcher": {
@@ -39,6 +41,25 @@
     "cta": {
       "primary": "Ver proyectos",
       "secondary": "Conectar →"
+    },
+    "badge": {
+      "version": "For3s",
+      "label": "Disponible ahora"
+    },
+    "install": {
+      "command": "curl -fsSL install.for3s.dev | sh",
+      "copy": "Copiar",
+      "copied": "Copiado"
+    },
+    "dark": {
+      "headline": {
+        "line1": "Construye agentes que importan,",
+        "line2": "sin la fricción."
+      },
+      "description": {
+        "line1": "Runtime de agentes con memoria persistente.",
+        "line2": "Tool use nativo y deploy en un comando."
+      }
     }
   },
   "About": {
@@ -140,6 +161,40 @@
       "2022": {
         "title": "Primeros pasos como builder",
         "description": "Comienzo del journey como founder. Primeros proyectos, comunidades y aprendizajes en tecnología."
+      }
+    }
+  },
+  "Faq": {
+    "overline": "Preguntas frecuentes",
+    "headline": {
+      "prefix": "Lo que más nos",
+      "accent": "preguntan"
+    },
+    "description": "Las dudas que recibimos primero en cada conversación con builders y equipos técnicos.",
+    "items": {
+      "que-es-for3s": {
+        "question": "¿Qué es For3s exactamente?",
+        "answer": "For3s es una empresa de infraestructura para agentes de IA, enfocada en LATAM. Construimos la capa que conecta orquestación, memoria persistente y tool use para que los agentes pasen del prototipo a producción sin pegamento."
+      },
+      "para-quien": {
+        "question": "¿Para quién es For3s?",
+        "answer": "Para dos audiencias en una sola identidad: equipos B2B que evalúan infraestructura agentica seria, y builders independientes que construyen con agentes hoy. Los modos visuales del sitio reflejan a cada audiencia."
+      },
+      "open-source": {
+        "question": "¿For3s es open source?",
+        "answer": "Estamos diseñando For3s con una capa open core. El runtime base será abierto para que builders puedan inspeccionar, contribuir y desplegar. Las capas de orquestación a escala y soporte empresarial son comerciales."
+      },
+      "diferencia-latam": {
+        "question": "¿Por qué LATAM como centro?",
+        "answer": "Porque la región necesita infraestructura agentica construida con su contexto, no portada desde fuera. Documentación, comunidad y patrones nacen en español primero — el inglés viene después, no al revés."
+      },
+      "estado-actual": {
+        "question": "¿Está For3s disponible hoy?",
+        "answer": "El runtime y los primeros componentes están en fase de cierre. Si quieres acceso temprano, unete al círculo desde el botón Conectar — abrimos cohortes pequeñas para validar con builders reales antes del release público."
+      },
+      "como-empezar": {
+        "question": "¿Cómo empiezo a explorar For3s?",
+        "answer": "Si eres developer, entra a Docs y revisa la filosofía de infraestructura para entender los principios. Si representas un equipo, agenda una demo desde el menú para que veamos tu caso en concreto."
       }
     }
   },
@@ -403,6 +458,17 @@
         "title": "Glosario — términos del ecosistema",
         "summary": "Vocabulario técnico que usamos en For3s. De agente a zero-shot, todo lo que vale la pena tener claro."
       }
+    }
+  },
+  "Demo": {
+    "title": "Demo",
+    "overline": "Demo",
+    "headline": "Demo",
+    "description": "",
+    "comingSoon": {
+      "label": "En preparación",
+      "title": "Esta página está en construcción",
+      "description": "Estamos trabajando en este contenido. Vuelve pronto."
     }
   }
 }

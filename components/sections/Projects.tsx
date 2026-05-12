@@ -160,10 +160,10 @@ export default function Projects() {
                   </span>
                 </div>
 
-                <h4 className="text-base font-semibold mb-1 text-foreground-active group-hover:text-foreground-accent transition-colors">
+                <h4 className="text-base sm:text-lg md:text-xl font-semibold mb-1 text-foreground-active group-hover:text-foreground-accent transition-colors">
                   {project.name}
                 </h4>
-                <p className="text-xs text-foreground-secondary leading-relaxed">
+                <p className="text-xs sm:text-sm text-foreground-secondary leading-relaxed">
                   {t(`items.${project.id}.tagline`)}
                 </p>
               </motion.article>

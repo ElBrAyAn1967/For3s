@@ -6,7 +6,8 @@
     "decline": "Essentials only"
   },
   "Site": {
-    "title": "Brian Aguilar — For3s",
+    "title": "For3s",
+    "titleTemplate": "For3s — {page}",
     "description": "CEO of agent infrastructure. Founder of For3s — building the layer LATAM needs to operate in the agentic era.",
     "tagline": "Opening the doors to the agent era."
   },
@@ -16,7 +17,8 @@
       "projects": "Projects",
       "timeline": "Journey",
       "contact": "Contact",
-      "docs": "Docs"
+      "docs": "Docs",
+      "demo": "Demo"
     },
     "cta": "Get in touch",
     "languageSwitcher": {
@@ -39,6 +41,25 @@
     "cta": {
       "primary": "View projects",
       "secondary": "Get in touch →"
+    },
+    "badge": {
+      "version": "For3s",
+      "label": "Available now"
+    },
+    "install": {
+      "command": "curl -fsSL install.for3s.dev | sh",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "dark": {
+      "headline": {
+        "line1": "Build agents that matter,",
+        "line2": "with zero friction."
+      },
+      "description": {
+        "line1": "Agent runtime with persistent memory.",
+        "line2": "Native tool use and one-command deploy."
+      }
     }
   },
   "About": {
@@ -140,6 +161,40 @@
       "2022": {
         "title": "First steps as a builder",
         "description": "Start of the founder journey. First projects, communities, and lessons in technology."
+      }
+    }
+  },
+  "Faq": {
+    "overline": "Frequently asked",
+    "headline": {
+      "prefix": "What people",
+      "accent": "ask first"
+    },
+    "description": "The questions we hear first in every conversation with builders and technical teams.",
+    "items": {
+      "que-es-for3s": {
+        "question": "What is For3s exactly?",
+        "answer": "For3s is an agent infrastructure company focused on LATAM. We build the layer connecting orchestration, persistent memory, and tool use so agents can move from prototype to production without glue code."
+      },
+      "para-quien": {
+        "question": "Who is For3s for?",
+        "answer": "Two audiences in one identity: B2B teams evaluating serious agent infrastructure, and independent builders shipping with agents today. The visual modes on the site reflect each audience."
+      },
+      "open-source": {
+        "question": "Is For3s open source?",
+        "answer": "We're designing For3s with an open core layer. The base runtime will be open so builders can inspect, contribute, and deploy. Scale orchestration and enterprise support are commercial."
+      },
+      "diferencia-latam": {
+        "question": "Why LATAM as the center?",
+        "answer": "Because the region needs agent infrastructure built with its context, not ported from elsewhere. Docs, community, and patterns are born in Spanish first — English follows, not the other way around."
+      },
+      "estado-actual": {
+        "question": "Is For3s available today?",
+        "answer": "The runtime and early components are in final stages. If you want early access, join the circle from the Connect button — we're opening small cohorts to validate with real builders before public release."
+      },
+      "como-empezar": {
+        "question": "How do I start exploring For3s?",
+        "answer": "If you're a developer, head to Docs and read the infrastructure philosophy to grasp the principles. If you represent a team, book a demo from the menu so we can look at your specific case."
       }
     }
   },
@@ -403,6 +458,17 @@
         "title": "Glossary — ecosystem terms",
         "summary": "The technical vocabulary we use at For3s. From agent to zero-shot, everything worth being clear about."
       }
+    }
+  },
+  "Demo": {
+    "title": "Demo",
+    "overline": "Demo",
+    "headline": "Demo",
+    "description": "",
+    "comingSoon": {
+      "label": "Coming soon",
+      "title": "This page is under construction",
+      "description": "We're working on this content. Check back soon."
     }
   }
 }

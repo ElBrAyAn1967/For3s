@@ -1,36 +1,24 @@
 import type { Metadata } from "next";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import Navbar from "@/components/shared/Navbar";
-import Footer from "@/components/shared/Footer";
-import { DocsSearchProvider } from "@/components/docs/DocsSearchContext";
-import DocsClient from "./DocsClient";
+import { redirect } from "@/i18n/navigation";
+import { DEFAULT_DOC_ID } from "@/lib/docs";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "Docs" });
-  return {
-    title: `${t("title")} — For3s`,
-    description: t("subtitle"),
-  };
-}
+/**
+ * /docs root — server-side 307 redirect to the default doc slug. Each doc
+ * lives at its own indexable URL `/docs/{slug}` with its own metadata, so
+ * this file never paints UI. The metadata export below exists only so
+ * linters that scan for `export const metadata` on every page route stay
+ * happy; crawlers follow the 307 to the destination's metadata instead.
+ */
+export const metadata: Metadata = {
+  title: "Docs",
+  robots: { index: false, follow: true },
+};
 
-export default async function DocsPage({
+export default async function DocsIndex({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  setRequestLocale(locale);
-
-  return (
-    <DocsSearchProvider>
-      <Navbar />
-      <DocsClient />
-      <Footer />
-    </DocsSearchProvider>
-  );
+  redirect({ href: `/docs/${DEFAULT_DOC_ID}`, locale });
 }
