@@ -80,20 +80,15 @@ export async function generateMetadata({
       url: `${SITE.url}${canonicalPath}`,
       locale,
       alternateLocale: SITE.locales.filter((l) => l !== locale),
-      images: [
-        {
-          url: SITE.logo,
-          width: SITE.logoSize,
-          height: SITE.logoSize,
-          alt: SITE.name,
-        },
-      ],
+      // OG image is auto-wired by app/[locale]/opengraph-image.tsx — Next
+      // appends og:image/width/height/type tags. Per-route OGs (e.g. docs)
+      // override via their own opengraph-image.tsx file.
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: [SITE.logo],
+      // twitter:image auto-wired via twitter-image.tsx (re-export of OG).
     },
     icons: {
       icon: [{ url: "/logo-mark-circle.svg", type: "image/svg+xml" }],

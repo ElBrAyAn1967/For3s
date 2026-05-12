@@ -156,7 +156,7 @@ export default function DocsClient({ activeId, activeCategory }: DocsClientProps
 
         <main className="flex-1 min-w-0">
           <div className="px-5 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24 py-10 sm:py-12 pb-20">
-            <DocArticle activeId={activeId} />
+            <DocArticle activeId={activeId} activeCategory={activeCategory} />
 
             <div className="flex items-center justify-between gap-4 pt-8 mt-12 border-t border-edge-secondary">
               {prev ? (
@@ -401,18 +401,52 @@ function SidebarItem({
   );
 }
 
-function DocArticle({ activeId }: { activeId: string }) {
+function DocArticle({
+  activeId,
+  activeCategory,
+}: {
+  activeId: string;
+  activeCategory: string;
+}) {
   const t = useTranslations("Docs");
+  const firstSlugOfCategory = DOC_STRUCTURE.find((c) => c.id === activeCategory)
+    ?.items[0]?.id;
 
   return (
     <article className="w-full min-w-0">
-      <div className="flex items-center gap-1.5 text-xs text-foreground-tertiary mb-5">
-        <span>{t("breadcrumb")}</span>
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center flex-wrap gap-1.5 text-xs text-foreground-tertiary mb-5"
+      >
+        <Link
+          href="/"
+          className="hover:text-foreground-active transition-colors"
+        >
+          For3s
+        </Link>
+        <ChevronRight className="size-3" />
+        <Link
+          href="/docs"
+          className="hover:text-foreground-active transition-colors"
+        >
+          {t("breadcrumb")}
+        </Link>
+        <ChevronRight className="size-3" />
+        {firstSlugOfCategory ? (
+          <Link
+            href={`/docs/${firstSlugOfCategory}`}
+            className="hover:text-foreground-active transition-colors"
+          >
+            {t(`categories.${activeCategory}`)}
+          </Link>
+        ) : (
+          <span>{t(`categories.${activeCategory}`)}</span>
+        )}
         <ChevronRight className="size-3" />
         <span className="text-foreground-active">
           {t(`items.${activeId}.label`)}
         </span>
-      </div>
+      </nav>
 
       <h1 className="text-4xl md:text-5xl font-semibold leading-[1.1] tracking-tight mb-5 text-foreground-active">
         {t(`items.${activeId}.title`)}
