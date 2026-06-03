@@ -1,14 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { track } from "@/lib/analytics";
-
-type Theme = "light" | "dark";
-
-function readTheme(): Theme {
-  if (typeof document === "undefined") return "light";
-  return document.documentElement.classList.contains("dark") ? "dark" : "light";
-}
+import { useTheme, type Theme } from "@/lib/useTheme";
 
 function applyTheme(t: Theme) {
   const html = document.documentElement;
@@ -24,18 +17,11 @@ function applyTheme(t: Theme) {
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setTheme(readTheme());
-    setMounted(true);
-  }, []);
+  const theme = useTheme();
 
   const toggle = () => {
     const next: Theme = theme === "dark" ? "light" : "dark";
     applyTheme(next);
-    setTheme(next);
     track(next === "dark" ? "theme_switched_to_dark" : "theme_switched_to_light");
   };
 
@@ -48,9 +34,7 @@ export default function ThemeToggle() {
       aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
       className="size-11 sm:size-9 inline-flex items-center justify-center rounded-md text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover transition-colors"
     >
-      {!mounted ? (
-        <span className="size-4" />
-      ) : isDark ? (
+      {isDark ? (
         // Moon
         <svg
           width="16"

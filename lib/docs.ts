@@ -7,7 +7,6 @@ import {
   Network,
   Database,
   PuzzleIcon,
-  Zap,
   Brain,
   Wrench,
   ListTree,

@@ -18,7 +18,7 @@ export const SITE = {
   logoSize: 512,
   /** Founder identity for Person schema. */
   founder: {
-    name: "Brian Aguilar",
+    name: "Brian López",
     url: "https://www.linkedin.com/in/brianweb3",
     jobTitle: "Founder & CEO",
   },

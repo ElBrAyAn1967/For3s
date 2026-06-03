@@ -1,10 +1,62 @@
 "use client";
 
 import { m as motion } from "framer-motion";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { siteConfig } from "@/lib/data";
+import { useTheme } from "@/lib/useTheme";
 
 export default function Contact() {
+  const theme = useTheme();
+  return theme === "dark" ? <ContactDark /> : <ContactLight />;
+}
+
+function ContactLight() {
+  const t = useTranslations("ContactLight");
+
+  return (
+    <section
+      id="contact"
+      className="section-blend py-16 sm:py-24 bg-surface-overlay-large"
+      style={{ ["--blend-from" as string]: "var(--surface-primary)" }}
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="max-w-3xl mx-auto text-center"
+        >
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-5 sm:mb-6 text-foreground-accent font-mono">
+            {t("overline")}
+          </p>
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-semibold mb-4 text-foreground-active leading-tight">
+            {t("headline.prefix")}{" "}
+            <span className="text-foreground-accent">{t("headline.accent")}</span>
+          </h2>
+          <p className="text-foreground-secondary mb-8 sm:mb-10 text-base sm:text-lg leading-relaxed">
+            {t("description")}
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/demo" className="btn-pill btn-pill-primary w-full sm:w-auto">
+              {t("primaryCta")}
+            </Link>
+            <a
+              href={`mailto:${siteConfig.email}`}
+              className="btn-pill btn-pill-secondary w-full sm:w-auto"
+            >
+              {t("secondaryCta")}
+            </a>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function ContactDark() {
   const t = useTranslations("Contact");
 
   return (

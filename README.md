@@ -1,6 +1,6 @@
-# For3s — Brian Aguilar
+# For3s — Brian López
 
-Portafolio personal de Brian Aguilar (CEO de For3s, infraestructura para agentes de IA en LATAM).
+Portafolio personal de Brian López (CEO de For3s, infraestructura para agentes de IA en LATAM).
 
 Construido en colaboración con [Frutero Club](https://frutero.club) y [Godinez Studio](https://godinez.studio).
 

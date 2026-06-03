@@ -58,13 +58,13 @@ export default function HeroLight() {
             className="flex flex-col sm:flex-row flex-wrap gap-3"
           >
             <Link
-              href="#projects"
+              href="/demo"
               className="btn-pill btn-pill-primary w-full sm:w-auto"
             >
               {t("cta.primary")}
             </Link>
             <Link
-              href="#contact"
+              href="#projects"
               className="btn-pill btn-pill-secondary w-full sm:w-auto"
             >
               {t("cta.secondary")}

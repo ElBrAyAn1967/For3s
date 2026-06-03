@@ -8,7 +8,7 @@
   "Site": {
     "title": "For3s",
     "titleTemplate": "For3s — {page}",
-    "description": "CEO de infraestructura para agentes. Founder de For3s — construyo la capa que necesita LATAM para operar en la era agentica.",
+    "description": "For3s QA convierte contexto desordenado de producto en QA claro, revisable y listo para ejecutar.",
     "tagline": "Abriendo puertas hacia la era de los agentes."
   },
   "Navbar": {
@@ -19,6 +19,17 @@
       "contact": "Contacto",
       "docs": "Docs",
       "demo": "Demo"
+    },
+    "light": {
+      "links": {
+        "about": "Problema",
+        "projects": "Ecosistema",
+        "timeline": "Confianza",
+        "contact": "Demo",
+        "docs": "Docs",
+        "demo": "Agendar demo"
+      },
+      "cta": "Agendar demo"
     },
     "cta": "Conectar",
     "languageSwitcher": {
@@ -32,15 +43,15 @@
     }
   },
   "Hero": {
-    "overline": "CEO de Infraestructura para Agentes · LATAM",
+    "overline": "For3s QA · B2B Light",
     "headline": {
-      "line1": "CEO de infraestructura",
-      "line2": "para agentes."
+      "line1": "Convierte contexto desordenado",
+      "line2": "en QA claro."
     },
-    "description": "Founder de For3s — empresa nueva de infraestructura para agentes, construida en colaboración con Frutero Club y Godinez Studio. Conecto visión, tecnología y comunidad para que LATAM opere en la era agentica.",
+    "description": "For3s QA ayuda a equipos de software a transformar requisitos, tickets, bugs, historias de usuario, reglas de negocio y documentación dispersa en entregables QA estructurados, revisables y listos para ejecutar.",
     "cta": {
-      "primary": "Ver proyectos",
-      "secondary": "Conectar →"
+      "primary": "Agendar demo",
+      "secondary": "Ver ecosistema"
     },
     "badge": {
       "version": "For3s",
@@ -60,6 +71,29 @@
         "line1": "Runtime de agentes con memoria persistente.",
         "line2": "Tool use nativo y deploy en un comando."
       }
+    }
+  },
+  "AboutLight": {
+    "overline": "Problema y solución",
+    "headline": {
+      "prefix": "QA se rompe cuando",
+      "accent": "el contexto se rompe"
+    },
+    "problem": "QA no se rompe solo por falta de testers o automatización. Muchas veces se rompe antes: cuando el contexto del producto vive repartido entre tickets, chats, documentos, decisiones no escritas y cambios de último minuto.",
+    "solution": "For3s QA organiza ese contexto y lo convierte en una base clara para revisar, completar y ejecutar pruebas con más confianza.",
+    "signalsLabel": "Señales del problema",
+    "signals": {
+      "requirements": "Requisitos incompletos.",
+      "criteria": "Criterios de aceptación poco claros.",
+      "edgeCases": "Casos límite que aparecen tarde.",
+      "fragmented": "Equipos probando con información fragmentada.",
+      "release": "Releases donde nadie tiene la misma versión del contexto."
+    },
+    "agents": {
+      "overline": "Agentes explicados simple",
+      "title": "El cliente no tiene que volverse experto en agentes.",
+      "description": "Usamos agentes especializados para leer contexto, ordenar información, detectar vacíos y generar entregables QA revisables. El equipo mantiene el criterio; For3s aporta estructura para decidir mejor.",
+      "principle": "El agente es el mecanismo. La mejora del workflow es el producto."
     }
   },
   "About": {
@@ -97,6 +131,47 @@
       }
     }
   },
+  "ProjectsLight": {
+    "overline": "Ecosistema",
+    "headline": "Experiencia desde workflows reales",
+    "subheadline": "For3s nace de proyectos, comunidades y productos donde los agentes tuvieron que operar fuera del demo: con usuarios, contexto, herramientas, decisiones y fricción operativa real.",
+    "contextLabel": "Experiencia acumulada",
+    "contextTitle": "No estamos copiando un mercado. Estamos abriendo otro.",
+    "contextDescription": "Aprendemos de infraestructura, producto, comunidades y operaciones reales para construir agentes que mejoran workflows concretos. For3s QA es el primer punto de entrada B2B.",
+    "items": {
+      "godinezAi": {
+        "type": "Producto",
+        "name": "Godinez AI",
+        "description": "Herramientas de IA para trabajo moderno, productividad y adopción práctica en usuarios no técnicos."
+      },
+      "agentcamp": {
+        "type": "Comunidad",
+        "name": "AgentCamp",
+        "description": "Espacio de aprendizaje y construcción para builders que quieren entender y crear con agentes."
+      },
+      "vibecodingBootcamp": {
+        "type": "Programa",
+        "name": "Vibecoding Bootcamp",
+        "description": "Experiencia formativa para llevar ideas a productos usando IA, criterio de producto y ejecución."
+      },
+      "miPase": {
+        "type": "Producto",
+        "name": "Mi Pase",
+        "description": "Proyecto con operación, usuarios y flujos reales donde el contexto del negocio importa tanto como el código."
+      },
+      "paykit": {
+        "type": "Producto",
+        "name": "Paykit",
+        "description": "Producto digital donde la claridad del workflow y la experiencia de usuario son parte central del sistema."
+      },
+      "ateneaio": {
+        "type": "Producto",
+        "name": "AteneaIO",
+        "description": "Plataforma aplicada donde la IA debe convivir con procesos, usuarios y decisiones de producto reales."
+      }
+    },
+    "closing": "Esa experiencia nos ayuda a construir For3s desde una idea simple: los agentes solo importan cuando mejoran un workflow real."
+  },
   "Projects": {
     "overline": "Proyectos",
     "headline": "Cada puerta que he abierto",
@@ -133,9 +208,52 @@
       }
     }
   },
+  "SkillsLight": {
+    "overline": "Entregables",
+    "headline": "De contexto disperso a entregables útiles",
+    "subheadline": "For3s QA convierte información de producto en activos que producto, ingeniería y QA pueden revisar juntos.",
+    "outputs": {
+      "testCases": {
+        "title": "Casos de prueba",
+        "description": "Escenarios claros para validar el comportamiento esperado de un feature, release o flujo."
+      },
+      "acceptanceCriteria": {
+        "title": "Criterios de aceptación",
+        "description": "Condiciones explícitas para saber cuándo una funcionalidad está lista para aprobarse."
+      },
+      "missingQuestions": {
+        "title": "Preguntas faltantes",
+        "description": "Vacíos de información que deben resolverse antes de ejecutar QA con confianza."
+      },
+      "edgeCases": {
+        "title": "Edge cases relevantes",
+        "description": "Casos límite que suelen aparecer tarde y pueden romper la experiencia o el release."
+      }
+    },
+    "closing": "Cada entregable está pensado para ser revisado por humanos, ajustado al contexto del proyecto y usado dentro del flujo real del equipo."
+  },
   "Skills": {
     "overline": "Stack & Skills",
     "headline": "Con qué construyo"
+  },
+  "TimelineLight": {
+    "overline": "Confianza e infraestructura",
+    "headline": "Diseñado para trabajo sensible de producto",
+    "subheadline": "For3s QA está pensado para equipos que necesitan probar mejor sin perder control sobre su información, sus decisiones y su proceso.",
+    "trustLabel": "Principios de operación",
+    "trust": {
+      "privateWorkspaces": "Workspaces privados para separar el contexto de cada equipo o proyecto.",
+      "humanReview": "Entregables revisables por humanos antes de aprobarse o ejecutarse.",
+      "training": "Datos del cliente no usados para entrenamiento sin permiso.",
+      "traceability": "Trazabilidad del contexto usado para generar outputs.",
+      "pilots": "Pilotos acompañados, no automatización sin control."
+    },
+    "os": {
+      "overline": "For3s OS",
+      "title": "For3s QA es el primer módulo de For3s OS.",
+      "description": "For3s OS es la infraestructura más amplia que estamos construyendo para agentes seguros, trazables y enfocados en workflows reales de negocio. Empezamos por QA porque ahí el contexto, la memoria, la revisión humana y la trazabilidad tienen valor inmediato.",
+      "closing": "QA no es toda la visión. Es el primer punto de prueba."
+    }
   },
   "Timeline": {
     "overline": "Trayectoria",
@@ -161,6 +279,40 @@
       "2022": {
         "title": "Primeros pasos como builder",
         "description": "Comienzo del journey como founder. Primeros proyectos, comunidades y aprendizajes en tecnología."
+      }
+    }
+  },
+  "FaqLight": {
+    "overline": "Preguntas frecuentes",
+    "headline": {
+      "prefix": "Lo que un equipo necesita",
+      "accent": "entender primero"
+    },
+    "description": "Respuestas pensadas para compradores, líderes de producto, equipos técnicos y personas que todavía no conocen agentes.",
+    "items": {
+      "que-hace": {
+        "question": "¿Qué hace For3s QA?",
+        "answer": "Convierte contexto desordenado de producto en entregables QA claros: casos de prueba, criterios de aceptación, preguntas faltantes y edge cases."
+      },
+      "necesito-saber-agentes": {
+        "question": "¿Necesito saber qué es un agente para usarlo?",
+        "answer": "No. For3s empieza por el resultado del workflow. Los agentes son el mecanismo interno para ordenar contexto, detectar vacíos y generar entregables revisables."
+      },
+      "reemplaza-qa": {
+        "question": "¿For3s reemplaza a mi equipo de QA?",
+        "answer": "No. For3s QA ayuda a producto, ingeniería y QA a trabajar con una base más clara. El criterio humano sigue siendo necesario."
+      },
+      "que-entrega": {
+        "question": "¿Qué entrega un piloto?",
+        "answer": "Un primer QA Execution Pack sobre un feature, release o proyecto real: casos de prueba, criterios de aceptación, preguntas faltantes y edge cases."
+      },
+      "seguridad": {
+        "question": "¿Qué pasa con mi información de producto?",
+        "answer": "Trabajamos con espacios privados, revisión humana y datos del cliente no usados para entrenamiento sin permiso. Las promesas avanzadas de seguridad se comunican solo cuando estén implementadas y validadas."
+      },
+      "como-empezar": {
+        "question": "¿Cómo empiezo?",
+        "answer": "Agenda una demo y trae un feature, release o proyecto real. Revisamos cómo For3s QA convertiría ese contexto en un primer QA Execution Pack."
       }
     }
   },
@@ -198,6 +350,16 @@
       }
     }
   },
+  "ContactLight": {
+    "overline": "Demo",
+    "headline": {
+      "prefix": "Trae un feature, release",
+      "accent": "o proyecto real."
+    },
+    "description": "En una demo podemos revisar cómo For3s QA convertiría tu contexto actual en un primer QA Execution Pack: casos de prueba, criterios de aceptación, preguntas faltantes y edge cases.",
+    "primaryCta": "Agendar demo",
+    "secondaryCta": "Escribir por correo"
+  },
   "Contact": {
     "overline": "Contacto",
     "headline": {
@@ -208,7 +370,7 @@
     "githubCta": "GitHub →"
   },
   "Footer": {
-    "byline": "Brian Aguilar"
+    "byline": "Brian López"
   },
   "ConnectModal": {
     "title": "Únete al círculo de For3s",

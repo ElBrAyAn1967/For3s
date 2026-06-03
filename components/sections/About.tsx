@@ -3,8 +3,101 @@
 import { m as motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { collaboratorIds } from "@/lib/data";
+import { useTheme } from "@/lib/useTheme";
 
 export default function About() {
+  const theme = useTheme();
+  return theme === "dark" ? <AboutDark /> : <AboutLight />;
+}
+
+function AboutLight() {
+  const t = useTranslations("AboutLight");
+  const problemKeys = ["requirements", "criteria", "edgeCases", "fragmented", "release"] as const;
+
+  return (
+    <section
+      id="about"
+      className="section-blend py-16 sm:py-24 bg-surface-overlay-large"
+      style={{ ["--blend-from" as string]: "var(--surface-primary)" }}
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 md:gap-14 items-start"
+        >
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent font-mono">
+              {t("overline")}
+            </p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-5 sm:mb-6 leading-tight text-foreground-active">
+              {t("headline.prefix")}{" "}
+              <span className="text-foreground-accent">{t("headline.accent")}</span>
+            </h2>
+            <p className="text-foreground-secondary leading-relaxed mb-5">
+              {t("problem")}
+            </p>
+            <p className="text-foreground-secondary leading-relaxed">
+              {t("solution")}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-edge-secondary bg-surface-primary p-5 sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-tertiary mb-5">
+              {t("signalsLabel")}
+            </p>
+            <ul className="space-y-4">
+              {problemKeys.map((key, i) => (
+                <motion.li
+                  key={key}
+                  initial={{ opacity: 0, x: 16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08, duration: 0.4 }}
+                  className="flex items-start gap-3"
+                >
+                  <span className="mt-2 size-1.5 rounded-full bg-brand-bold flex-shrink-0" />
+                  <span className="text-sm sm:text-base text-foreground-secondary leading-relaxed">
+                    {t(`signals.${key}`)}
+                  </span>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mt-10 md:mt-14 rounded-xl border border-edge-secondary bg-surface-primary p-5 sm:p-6 md:p-8"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-accent font-mono mb-4">
+            {t("agents.overline")}
+          </p>
+          <div className="grid md:grid-cols-[0.85fr_1.15fr] gap-5 md:gap-8 items-start">
+            <h3 className="text-xl sm:text-2xl font-semibold text-foreground-active leading-tight">
+              {t("agents.title")}
+            </h3>
+            <div>
+              <p className="text-foreground-secondary leading-relaxed mb-4">
+                {t("agents.description")}
+              </p>
+              <p className="text-sm font-medium text-foreground-accent">
+                {t("agents.principle")}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function AboutDark() {
   const t = useTranslations("About");
 
   return (

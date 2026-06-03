@@ -3,6 +3,7 @@
 import { m as motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { projects, type ProjectStatus } from "@/lib/data";
+import { useTheme } from "@/lib/useTheme";
 
 /**
  * Status palette is derived from semantic tokens that flip with the theme.
@@ -33,6 +34,128 @@ const statusStyle: Record<
 const ANCHOR_PROJECT_ID = "for3s";
 
 export default function Projects() {
+  const theme = useTheme();
+  return theme === "dark" ? <ProjectsDark /> : <ProjectsLight />;
+}
+
+function ProjectsLight() {
+  const t = useTranslations("ProjectsLight");
+  const ecosystemKeys = [
+    "godinezAi",
+    "agentcamp",
+    "vibecodingBootcamp",
+    "miPase",
+    "paykit",
+    "ateneaio",
+  ] as const;
+  const urls: Partial<Record<(typeof ecosystemKeys)[number], string>> = {
+    paykit: "https://paykit-sigma.vercel.app/",
+    ateneaio: "https://app.ateneaio.com/",
+  };
+
+  return (
+    <section
+      id="projects"
+      className="section-blend py-16 sm:py-24 bg-surface-primary"
+      style={{ ["--blend-from" as string]: "var(--surface-overlay-large)" }}
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mb-10 sm:mb-12"
+        >
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent font-mono">
+            {t("overline")}
+          </p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground-active">
+            {t("headline")}
+          </h2>
+          <p className="mt-3 text-foreground-secondary max-w-2xl">
+            {t("subheadline")}
+          </p>
+        </motion.div>
+
+        <motion.article
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.55 }}
+          className="relative mb-5 p-6 sm:p-8 rounded-xl border border-edge-secondary bg-surface-overlay-large overflow-hidden"
+        >
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-[0.05] pointer-events-none"
+            style={{ background: "var(--marketing-gradient)" }}
+          />
+          <div className="relative grid md:grid-cols-[0.85fr_1.15fr] gap-5 md:gap-8 items-start">
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-accent mb-3">
+                {t("contextLabel")}
+              </p>
+              <h3 className="text-xl sm:text-2xl font-semibold text-foreground-active leading-tight">
+                {t("contextTitle")}
+              </h3>
+            </div>
+            <p className="text-foreground-secondary leading-relaxed">
+              {t("contextDescription")}
+            </p>
+          </div>
+        </motion.article>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          {ecosystemKeys.map((key, i) => {
+            const content = (
+              <>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-accent mb-3">
+                  {t(`items.${key}.type`)}
+                </p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-foreground-active">
+                  {t(`items.${key}.name`)}
+                </h3>
+                <p className="text-sm text-foreground-secondary leading-relaxed">
+                  {t(`items.${key}.description`)}
+                </p>
+              </>
+            );
+
+            return (
+              <motion.article
+                key={key}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06, duration: 0.4 }}
+                className="rounded-xl border border-edge-secondary bg-surface-overlay-large p-5 hover:border-edge-primary hover:bg-surface-overlay-small transition-colors"
+              >
+                {urls[key] ? (
+                  <a
+                    href={urls[key]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block h-full"
+                  >
+                    {content}
+                  </a>
+                ) : (
+                  content
+                )}
+              </motion.article>
+            );
+          })}
+        </div>
+
+        <p className="mt-6 text-sm text-foreground-secondary leading-relaxed max-w-3xl">
+          {t("closing")}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function ProjectsDark() {
   const t = useTranslations("Projects");
   const featured = projects.filter((p) => p.featured);
   const anchor = featured.find((p) => p.id === ANCHOR_PROJECT_ID);
@@ -134,7 +257,7 @@ export default function Projects() {
 
         {/* Other featured — 3-column tight grid (visually distinct from anchor) */}
         {otherFeatured.length > 0 && (
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3 mb-12">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 mb-12">
             {otherFeatured.map((project, i) => (
               <motion.article
                 key={project.id}
@@ -142,7 +265,7 @@ export default function Projects() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06, duration: 0.45 }}
-                className="group relative p-5 rounded-xl border border-edge-secondary bg-surface-overlay-large hover:border-edge-primary hover:bg-surface-overlay-small transition-all duration-200"
+                className="group relative p-6 rounded-xl border border-edge-secondary bg-surface-overlay-large hover:border-edge-primary hover:bg-surface-overlay-small transition-all duration-200"
               >
                 <div className="flex items-center justify-between mb-3">
                   <span

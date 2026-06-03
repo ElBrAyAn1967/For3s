@@ -47,7 +47,8 @@ export default function Navbar() {
   const pathname = usePathname();
   const { show: showConnectModal } = useConnectModal();
   const theme = useTheme();
-  const linkKeys = theme === "dark" ? darkLinkKeys : lightLinkKeys;
+  const isDark = theme === "dark";
+  const linkKeys = isDark ? darkLinkKeys : lightLinkKeys;
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -58,6 +59,8 @@ export default function Navbar() {
   // Outside /docs the context is null and we fall back to the regular nav links.
   const docsCtx = useDocsSearchOptional();
   const showDocsSearch = inDocs && docsCtx !== null;
+  const linkLabel = (key: LinkKey) =>
+    isDark ? t(`links.${key}`) : t(`light.links.${key}`);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -112,7 +115,7 @@ export default function Navbar() {
                 onClick={() => track("nav_link_clicked", { link: key })}
                 className="px-3.5 py-1.5 text-sm text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover rounded-md transition-colors"
               >
-                {t(`links.${key}`)}
+                {linkLabel(key)}
               </Link>
             ))}
           </nav>
@@ -122,13 +125,19 @@ export default function Navbar() {
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <LanguageSwitcher />
           <ThemeToggle />
-          <button
-            type="button"
-            onClick={showConnectModal}
-            className="btn-pill btn-pill-primary hidden sm:inline-flex"
-          >
-            {t("cta")}
-          </button>
+          {isDark ? (
+            <button
+              type="button"
+              onClick={showConnectModal}
+              className="btn-pill btn-pill-primary hidden sm:inline-flex"
+            >
+              {t("cta")}
+            </button>
+          ) : (
+            <Link href="/demo" className="btn-pill btn-pill-primary hidden sm:inline-flex">
+              {t("light.cta")}
+            </Link>
+          )}
 
           {/* Mobile hamburger — solo fuera de docs (en docs no hay nav links que mostrar) */}
           {!showDocsSearch && (
@@ -192,19 +201,29 @@ export default function Navbar() {
                 }}
                 className="px-4 py-3 text-base text-foreground-primary hover:text-foreground-active hover:bg-surface-primary-hover rounded-lg transition-colors"
               >
-                {t(`links.${key}`)}
+                {linkLabel(key)}
               </Link>
             ))}
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                showConnectModal();
-              }}
-              className="btn-pill btn-pill-primary mt-4 self-start"
-            >
-              {t("cta")}
-            </button>
+            {isDark ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  showConnectModal();
+                }}
+                className="btn-pill btn-pill-primary mt-4 self-start"
+              >
+                {t("cta")}
+              </button>
+            ) : (
+              <Link
+                href="/demo"
+                onClick={() => setOpen(false)}
+                className="btn-pill btn-pill-primary mt-4 self-start"
+              >
+                {t("light.cta")}
+              </Link>
+            )}
           </nav>
         </div>
       )}

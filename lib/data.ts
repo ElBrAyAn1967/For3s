@@ -4,7 +4,7 @@
  */
 
 export const siteConfig = {
-  name: "Brian Aguilar",
+  name: "Brian López",
   handle: "brianweb3",
   email: "brian@frutero.club",
   github: "https://github.com/brianweb3",
