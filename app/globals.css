@@ -10,7 +10,7 @@
   /* Fonts */
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-heading-face), "Aeonik", var(--font-sans);
 
   /* Brand scale (amarillo For3s — sigue patrón Modal c-*) */
   --color-c-brand-5:   var(--c-brand-5);
@@ -411,6 +411,16 @@
     @apply font-sans scroll-smooth;
   }
 
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    font-weight: 650;
+  }
+
   body {
     background-color: var(--surface-primary);
     color: var(--foreground-primary);
@@ -428,6 +438,23 @@
 .theme-transitioning *::after {
   transition: background-color 320ms ease, border-color 320ms ease,
     color 320ms ease, fill 320ms ease, stroke 320ms ease !important;
+}
+
+@keyframes projects-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.projects-marquee-track {
+  animation: projects-marquee 34s linear infinite;
+}
+
+.projects-marquee-track:hover {
+  animation-play-state: paused;
 }
 
 /* =============================================================

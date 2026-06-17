@@ -52,11 +52,12 @@ function ProjectsLight() {
     paykit: "https://paykit-sigma.vercel.app/",
     ateneaio: "https://app.ateneaio.com/",
   };
+  const pillars = ["product", "community", "operation"] as const;
 
   return (
     <section
       id="projects"
-      className="section-blend py-16 sm:py-24 bg-surface-primary"
+      className="section-blend py-14 sm:py-20 lg:py-24 bg-surface-primary overflow-hidden"
       style={{ ["--blend-from" as string]: "var(--surface-overlay-large)" }}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -65,93 +66,125 @@ function ProjectsLight() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mb-10 sm:mb-12"
+          className="mb-9 sm:mb-12 grid lg:grid-cols-[minmax(0,0.78fr)_minmax(22rem,1fr)] gap-6 lg:gap-12 items-end"
         >
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent font-mono">
-            {t("overline")}
-          </p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground-active">
-            {t("headline")}
-          </h2>
-          <p className="mt-3 text-foreground-secondary max-w-2xl">
+          <div>
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent font-mono">
+              {t("overline")}
+            </p>
+            <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-semibold leading-tight text-foreground-active">
+              {t("headline")}
+            </h2>
+          </div>
+          <p className="text-base sm:text-lg text-foreground-secondary leading-relaxed max-w-2xl lg:pb-1">
             {t("subheadline")}
           </p>
         </motion.div>
 
-        <motion.article
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="relative mb-5 p-6 sm:p-8 rounded-xl border border-edge-secondary bg-surface-overlay-large overflow-hidden"
+          className="mb-9 sm:mb-12 grid md:grid-cols-3 gap-3 sm:gap-4"
         >
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-[0.05] pointer-events-none"
-            style={{ background: "var(--marketing-gradient)" }}
-          />
-          <div className="relative grid md:grid-cols-[0.85fr_1.15fr] gap-5 md:gap-8 items-start">
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-accent mb-3">
-                {t("contextLabel")}
+          {pillars.map((key, i) => (
+            <motion.article
+              key={key}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.06, duration: 0.35 }}
+              className="min-w-0 border-t border-edge-primary pt-4"
+            >
+              <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-accent">
+                {t(`pillars.${key}.label`)}
               </p>
-              <h3 className="text-xl sm:text-2xl font-semibold text-foreground-active leading-tight">
-                {t("contextTitle")}
+              <h3 className="mt-2 text-xl sm:text-2xl font-semibold leading-tight text-foreground-active">
+                {t(`pillars.${key}.title`)}
               </h3>
-            </div>
-            <p className="text-foreground-secondary leading-relaxed">
-              {t("contextDescription")}
-            </p>
-          </div>
-        </motion.article>
+              <p className="mt-2 text-sm sm:text-base text-foreground-secondary leading-relaxed">
+                {t(`pillars.${key}.description`)}
+              </p>
+            </motion.article>
+          ))}
+        </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {ecosystemKeys.map((key, i) => {
-            const content = (
-              <>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-accent mb-3">
-                  {t(`items.${key}.type`)}
-                </p>
-                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-foreground-active">
-                  {t(`items.${key}.name`)}
-                </h3>
-                <p className="text-sm text-foreground-secondary leading-relaxed">
-                  {t(`items.${key}.description`)}
-                </p>
-              </>
-            );
-
-            return (
-              <motion.article
-                key={key}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06, duration: 0.4 }}
-                className="rounded-xl border border-edge-secondary bg-surface-overlay-large p-5 hover:border-edge-primary hover:bg-surface-overlay-small transition-colors"
-              >
-                {urls[key] ? (
-                  <a
-                    href={urls[key]}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block h-full"
-                  >
-                    {content}
-                  </a>
-                ) : (
-                  content
-                )}
-              </motion.article>
-            );
-          })}
-        </div>
+        <ProjectMarquee keys={ecosystemKeys} urls={urls} t={(key) => t(key)} />
 
         <p className="mt-6 text-sm text-foreground-secondary leading-relaxed max-w-3xl">
           {t("closing")}
         </p>
       </div>
     </section>
+  );
+}
+
+function ProjectMarquee({
+  keys,
+  urls,
+  t,
+}: {
+  keys: readonly [
+    "godinezAi",
+    "agentcamp",
+    "vibecodingBootcamp",
+    "miPase",
+    "paykit",
+    "ateneaio",
+  ];
+  urls: Partial<Record<(typeof keys)[number], string>>;
+  t: (key: string) => string;
+}) {
+  const track = [...keys, ...keys];
+
+  return (
+    <div className="relative -mx-4 sm:-mx-6">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-surface-primary to-transparent sm:w-24"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-surface-primary to-transparent sm:w-24"
+      />
+      <div className="overflow-hidden py-2">
+        <div className="projects-marquee-track flex w-max gap-3 sm:gap-4 px-4 sm:px-6">
+          {track.map((key, i) => {
+            const card = (
+              <div className="h-full w-[15rem] sm:w-[18rem] rounded-xl border border-edge-secondary bg-surface-overlay-large p-4 sm:p-5 transition-colors hover:border-edge-primary hover:bg-surface-overlay-small">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-accent">
+                    {t(`items.${key}.type`)}
+                  </p>
+                  <span className="size-2 rounded-full bg-brand-bold" />
+                </div>
+                <h3 className="mt-4 text-xl sm:text-2xl font-semibold leading-tight text-foreground-active">
+                  {t(`items.${key}.name`)}
+                </h3>
+                <p className="mt-3 line-clamp-3 text-sm text-foreground-secondary leading-relaxed">
+                  {t(`items.${key}.description`)}
+                </p>
+              </div>
+            );
+
+            return urls[key] ? (
+              <a
+                key={`${key}-${i}`}
+                href={urls[key]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                {card}
+              </a>
+            ) : (
+              <div key={`${key}-${i}`}>{card}</div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -31,7 +31,6 @@ const lightLinkKeys: LinkKey[] = [
   "about",
   "projects",
   "timeline",
-  "contact",
   "demo",
 ];
 const darkLinkKeys: LinkKey[] = [
@@ -53,7 +52,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   // Determine if we're on /docs (handles both `/docs` and `/en/docs`)
-  const inDocs = pathname.startsWith("/docs") || /^\/[a-z]{2}\/docs/.test(pathname);
+  const inDocs =
+    pathname.startsWith("/docs") || /^\/[a-z]{2}\/docs/.test(pathname);
 
   // Only render the search if the DocsSearchProvider is mounted (i.e. inside /docs).
   // Outside /docs the context is null and we fall back to the regular nav links.
@@ -90,7 +90,7 @@ export default function Navbar() {
       <div
         className={`${
           inDocs ? "max-w-7xl" : "max-w-6xl"
-        } mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4`}
+        } mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-3 lg:gap-4`}
       >
         <Link
           href="/"
@@ -107,13 +107,13 @@ export default function Navbar() {
             <DocsSearchInput className="w-full" />
           </div>
         ) : (
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1">
             {linkKeys.map((key) => (
               <Link
                 key={key}
                 href={linkHrefs[key]}
                 onClick={() => track("nav_link_clicked", { link: key })}
-                className="px-3.5 py-1.5 text-sm text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover rounded-md transition-colors"
+                className="whitespace-nowrap px-2.5 xl:px-3.5 py-1.5 text-sm text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover rounded-md transition-colors"
               >
                 {linkLabel(key)}
               </Link>
@@ -122,21 +122,25 @@ export default function Navbar() {
         )}
 
         {/* Right cluster — always visible */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 flex-shrink-0">
           <LanguageSwitcher />
           <ThemeToggle />
           {isDark ? (
-            <button
-              type="button"
-              onClick={showConnectModal}
-              className="btn-pill btn-pill-primary hidden sm:inline-flex"
-            >
-              {t("cta")}
-            </button>
+            <span className="hidden lg:inline-flex">
+              <button
+                type="button"
+                onClick={showConnectModal}
+                className="btn-pill btn-pill-primary"
+              >
+                {t("cta")}
+              </button>
+            </span>
           ) : (
-            <Link href="/demo" className="btn-pill btn-pill-primary hidden sm:inline-flex">
-              {t("light.cta")}
-            </Link>
+            <span className="hidden lg:inline-flex">
+              <Link href="/demo" className="btn-pill btn-pill-primary">
+                {t("light.cta")}
+              </Link>
+            </span>
           )}
 
           {/* Mobile hamburger — solo fuera de docs (en docs no hay nav links que mostrar) */}
@@ -146,7 +150,7 @@ export default function Navbar() {
               onClick={() => setOpen((v) => !v)}
               aria-label={open ? t("menu.close") : t("menu.open")}
               aria-expanded={open}
-              className="md:hidden size-11 inline-flex items-center justify-center rounded-md text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover transition-colors"
+              className="lg:hidden size-11 inline-flex items-center justify-center rounded-md text-foreground-secondary hover:text-foreground-active hover:bg-surface-primary-hover transition-colors"
             >
               <svg
                 width="20"
@@ -186,7 +190,7 @@ export default function Navbar() {
       {/* Mobile menu drawer — solo fuera de docs */}
       {!showDocsSearch && (
         <div
-          className={`md:hidden overflow-hidden transition-[max-height,opacity] duration-300 ease-out ${
+          className={`lg:hidden overflow-hidden transition-[max-height,opacity] duration-300 ease-out ${
             open ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
           }`}
         >

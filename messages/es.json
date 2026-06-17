@@ -27,7 +27,7 @@
         "timeline": "Confianza",
         "contact": "Demo",
         "docs": "Docs",
-        "demo": "Agendar demo"
+        "demo": "Demo"
       },
       "cta": "Agendar demo"
     },
@@ -43,7 +43,7 @@
     }
   },
   "Hero": {
-    "overline": "For3s QA · B2B Light",
+    "overline": "For3s QA",
     "headline": {
       "line1": "Convierte contexto desordenado",
       "line2": "en QA claro."
@@ -52,6 +52,27 @@
     "cta": {
       "primary": "Agendar demo",
       "secondary": "Ver ecosistema"
+    },
+    "productPreview": {
+      "status": "Pack activo",
+      "contextLabel": "Contexto de entrada",
+      "packLabel": "QA Execution Pack",
+      "sources": {
+        "ticket": {
+          "label": "Ticket",
+          "value": "Flujo de recuperación"
+        },
+        "docs": {
+          "label": "Docs",
+          "value": "Reglas de negocio"
+        },
+        "chat": {
+          "label": "Chat",
+          "value": "Notas de release"
+        }
+      },
+      "review": "Revisión humana requerida",
+      "traceability": "Contexto trazable"
     },
     "badge": {
       "version": "For3s",
@@ -81,6 +102,41 @@
     },
     "problem": "QA no se rompe solo por falta de testers o automatización. Muchas veces se rompe antes: cuando el contexto del producto vive repartido entre tickets, chats, documentos, decisiones no escritas y cambios de último minuto.",
     "solution": "For3s QA organiza ese contexto y lo convierte en una base clara para revisar, completar y ejecutar pruebas con más confianza.",
+    "short": "El problema no empieza cuando QA prueba. Empieza antes, cuando el equipo trabaja con contexto incompleto.",
+    "fracture": {
+      "problem": "Cuando el contexto llega roto, QA ejecuta con dudas.",
+      "solution": "For3s QA conecta las piezas antes de que el equipo empiece a probar.",
+      "legend": "No es falta de pruebas. Es falta de contexto compartido.",
+      "centerLabel": "Ordena contexto",
+      "centerText": "De información dispersa a material QA revisable.",
+      "fragments": {
+        "ticket": {
+          "label": "Ticket",
+          "value": "Historia incompleta"
+        },
+        "chat": {
+          "label": "Chat",
+          "value": "Cambio de último minuto"
+        },
+        "docs": {
+          "label": "Docs",
+          "value": "Reglas de negocio"
+        },
+        "rules": {
+          "label": "Criterios",
+          "value": "Ambigüedad"
+        },
+        "bug": {
+          "label": "Bug",
+          "value": "Caso límite"
+        }
+      },
+      "outputs": {
+        "cases": "Casos claros",
+        "criteria": "Criterios revisables",
+        "gaps": "Vacíos visibles"
+      }
+    },
     "signalsLabel": "Señales del problema",
     "signals": {
       "requirements": "Requisitos incompletos.",
@@ -94,7 +150,8 @@
       "title": "El cliente no tiene que volverse experto en agentes.",
       "description": "Usamos agentes especializados para leer contexto, ordenar información, detectar vacíos y generar entregables QA revisables. El equipo mantiene el criterio; For3s aporta estructura para decidir mejor.",
       "principle": "El agente es el mecanismo. La mejora del workflow es el producto."
-    }
+    },
+    "close": "For3s QA entra antes de que el caos se convierta en pruebas incompletas."
   },
   "About": {
     "overline": "Sobre mí",
@@ -133,11 +190,28 @@
   },
   "ProjectsLight": {
     "overline": "Ecosistema",
-    "headline": "Experiencia desde workflows reales",
-    "subheadline": "For3s nace de proyectos, comunidades y productos donde los agentes tuvieron que operar fuera del demo: con usuarios, contexto, herramientas, decisiones y fricción operativa real.",
+    "headline": "Un ecosistema antes que una promesa",
+    "subheadline": "For3s QA nace de productos, comunidades y workflows donde la IA tuvo que convivir con usuarios, contexto y fricción real.",
     "contextLabel": "Experiencia acumulada",
     "contextTitle": "No estamos copiando un mercado. Estamos abriendo otro.",
     "contextDescription": "Aprendemos de infraestructura, producto, comunidades y operaciones reales para construir agentes que mejoran workflows concretos. For3s QA es el primer punto de entrada B2B.",
+    "pillars": {
+      "product": {
+        "label": "Producto",
+        "title": "Herramientas en uso",
+        "description": "Proyectos con flujos, decisiones y experiencia de usuario real."
+      },
+      "community": {
+        "label": "Comunidad",
+        "title": "Builders alrededor",
+        "description": "Espacios donde las ideas se prueban, se explican y se vuelven prácticas."
+      },
+      "operation": {
+        "label": "Operación",
+        "title": "Contexto fuera del demo",
+        "description": "Aprendizaje desde tickets, usuarios, negocio y cambios en movimiento."
+      }
+    },
     "items": {
       "godinezAi": {
         "type": "Producto",
@@ -170,7 +244,7 @@
         "description": "Plataforma aplicada donde la IA debe convivir con procesos, usuarios y decisiones de producto reales."
       }
     },
-    "closing": "Esa experiencia nos ayuda a construir For3s desde una idea simple: los agentes solo importan cuando mejoran un workflow real."
+    "closing": "Esa experiencia se convierte en For3s QA: agentes aplicados a un workflow concreto, con contexto real y revisión humana."
   },
   "Projects": {
     "overline": "Proyectos",
@@ -209,9 +283,15 @@
     }
   },
   "SkillsLight": {
-    "overline": "Entregables",
-    "headline": "De contexto disperso a entregables útiles",
-    "subheadline": "For3s QA convierte información de producto en activos que producto, ingeniería y QA pueden revisar juntos.",
+    "overline": "QA Pack generado",
+    "headline": "De contexto roto a entregables QA",
+    "subheadline": "For3s QA transforma información dispersa en un paquete concreto que producto, ingeniería y QA pueden revisar juntos.",
+    "pack": {
+      "label": "Output central",
+      "title": "QA Execution Pack",
+      "description": "Un set revisable de entregables para pasar de duda operativa a ejecución clara.",
+      "status": "Listo para revisión humana"
+    },
     "outputs": {
       "testCases": {
         "title": "Casos de prueba",
@@ -228,9 +308,17 @@
       "edgeCases": {
         "title": "Edge cases relevantes",
         "description": "Casos límite que suelen aparecer tarde y pueden romper la experiencia o el release."
+      },
+      "traceability": {
+        "title": "Trazabilidad",
+        "description": "Conexión visible entre el output QA y el contexto que lo originó."
+      },
+      "humanReview": {
+        "title": "Revisión humana",
+        "description": "El equipo conserva criterio final antes de aprobar o ejecutar."
       }
     },
-    "closing": "Cada entregable está pensado para ser revisado por humanos, ajustado al contexto del proyecto y usado dentro del flujo real del equipo."
+    "closing": "No son skills abstractas. Son entregables que reducen dudas antes de probar."
   },
   "Skills": {
     "overline": "Stack & Skills",
@@ -238,21 +326,42 @@
   },
   "TimelineLight": {
     "overline": "Confianza e infraestructura",
-    "headline": "Diseñado para trabajo sensible de producto",
-    "subheadline": "For3s QA está pensado para equipos que necesitan probar mejor sin perder control sobre su información, sus decisiones y su proceso.",
+    "headline": "Control para trabajo sensible de producto",
+    "subheadline": "For3s QA está diseñado para mejorar QA sin perder control sobre contexto, decisiones ni revisión humana.",
+    "closing": "Automatización con control, no automatización ciega.",
     "trustLabel": "Principios de operación",
+    "model": {
+      "label": "Operating model",
+      "title": "Controlled agent workflow",
+      "description": "Agentes útiles dentro de límites claros, trazables y revisables."
+    },
     "trust": {
-      "privateWorkspaces": "Workspaces privados para separar el contexto de cada equipo o proyecto.",
-      "humanReview": "Entregables revisables por humanos antes de aprobarse o ejecutarse.",
-      "training": "Datos del cliente no usados para entrenamiento sin permiso.",
-      "traceability": "Trazabilidad del contexto usado para generar outputs.",
-      "pilots": "Pilotos acompañados, no automatización sin control."
+      "privateWorkspaces": {
+        "title": "Workspaces privados",
+        "description": "Contexto separado por equipo o proyecto."
+      },
+      "humanReview": {
+        "title": "Revisión humana",
+        "description": "Outputs revisables antes de aprobar o ejecutar."
+      },
+      "training": {
+        "title": "Sin entrenamiento sin permiso",
+        "description": "Datos del cliente bajo control explícito."
+      },
+      "traceability": {
+        "title": "Contexto trazable",
+        "description": "Cada output conserva origen y señales."
+      },
+      "pilots": {
+        "title": "Pilotos acompañados",
+        "description": "Implementación guiada, no automatización suelta."
+      }
     },
     "os": {
       "overline": "For3s OS",
-      "title": "For3s QA es el primer módulo de For3s OS.",
-      "description": "For3s OS es la infraestructura más amplia que estamos construyendo para agentes seguros, trazables y enfocados en workflows reales de negocio. Empezamos por QA porque ahí el contexto, la memoria, la revisión humana y la trazabilidad tienen valor inmediato.",
-      "closing": "QA no es toda la visión. Es el primer punto de prueba."
+      "title": "QA es el primer módulo",
+      "description": "For3s OS es la infraestructura más amplia para agentes seguros, trazables y enfocados en workflows reales de negocio.",
+      "closing": "Contexto, memoria y revisión humana como base."
     }
   },
   "Timeline": {
@@ -627,6 +736,96 @@
     "overline": "Demo",
     "headline": "Demo",
     "description": "",
+    "general": {
+      "label": "Demo en vivo",
+      "title": "Prueba For3s QA",
+      "description": "Conecta tu cuenta y prueba For3s con tu propio contexto. Capacidad limitada: si está lleno, te ponemos en lista de espera."
+    },
+    "specialized": {
+      "label": "Demo dedicada",
+      "title": "Bienvenido, {name}",
+      "description": "Esta es tu demo dedicada de For3s QA. Conecta tu cuenta para empezar.",
+      "jazz": { "name": "Jazz" },
+      "mashe": { "name": "Mashe" },
+      "brian": { "name": "Brian" }
+    },
+    "connect": {
+      "button": "Conectar con For3s",
+      "title": "Conecta tu cuenta",
+      "description": "Pega tu API key de Anthropic. For3s la usa para correr con tu propio plan — tú controlas el consumo.",
+      "placeholder": "API key de Anthropic",
+      "submit": "Conectar",
+      "saving": "Guardando…",
+      "error": "Formato de API key no válido. Debe empezar con sk-ant-.",
+      "reassurance": "Tu key se cifra y solo se usa para tu sesión. Nunca la vemos en claro ni la compartimos.",
+      "getKey": "Obtener mi API key"
+    },
+    "claude": {
+      "description": "Inicia sesión con tu suscripción de Claude (Pro, Max o Team). Solo usa tu plan para inferencia — no crea API keys ni cobra por tokens.",
+      "button": "Vincular con Claude",
+      "pasteInstructions": "Se abrió Claude en otra pestaña. Elige “Claude.ai Subscription”, autoriza, copia el código que te muestra y pégalo aquí:",
+      "pastePlaceholder": "Pega el código de autorización",
+      "confirm": "Confirmar",
+      "exchanging": "Verificando…",
+      "reopen": "Volver a abrir Claude",
+      "connected": "Conectado con Claude",
+      "error": "No se pudo vincular. Revisa el código e inténtalo de nuevo."
+    },
+    "register": {
+      "title": "Entra a la demo",
+      "description": "Déjanos tu nombre y correo para empezar. Si vuelves con el mismo correo, continúas donde te quedaste.",
+      "namePlaceholder": "Tu nombre",
+      "emailPlaceholder": "Tu correo",
+      "submit": "Conectar con For3s",
+      "submitting": "Conectando…",
+      "error": "Revisa tu nombre y correo e inténtalo de nuevo.",
+      "mismatch": "Ese correo ya está registrado con otro nombre. Usa el mismo nombre con el que entraste la primera vez.",
+      "denied": "Este correo no tiene acceso a esta demo.",
+      "disclaimer": "Usamos tu correo solo para tu sesión y para avisarte si hay cupo."
+    },
+    "waitlist": {
+      "label": "Lista de espera",
+      "title": "La demo está llena ahora mismo",
+      "description": "Te enviaremos una notificación a tu correo en cuanto haya cupos disponibles. No necesitas hacer nada más.",
+      "capacity": "{max} lugares simultáneos",
+      "position": "Posición en la fila: #{position}"
+    },
+    "experience": {
+      "joining": "Buscando un lugar disponible…",
+      "logout": "Cerrar sesión",
+      "ready": {
+        "title": "Conectado y listo",
+        "description": "Tienes un lugar activo. Aquí podrás pegar tu contexto y generar un QA Pack.",
+        "connectedAs": "Conectado como"
+      }
+    },
+    "shell": {
+      "nav": {
+        "profile": "Perfil",
+        "connectors": "Conectores",
+        "logout": "Cerrar sesión"
+      },
+      "profile": {
+        "title": "Tu perfil",
+        "subtitle": "Datos de tu cuenta en For3s.",
+        "name": "Nombre",
+        "email": "Correo",
+        "apiKey": "API key",
+        "noKey": "Sin conectar",
+        "connected": "Conectado"
+      },
+      "connectors": {
+        "title": "Conectores",
+        "subtitle": "Conecta tus herramientas para que For3s trabaje con ellas.",
+        "connect": "Conectar"
+      }
+    },
+    "waiting": {
+      "label": "Lista de espera",
+      "title": "Eres el #{position} en la fila",
+      "description": "La demo general está llena. En cuanto se libere un lugar entrarás automáticamente — deja esta pestaña abierta.",
+      "capacity": "{max} lugares simultáneos"
+    },
     "comingSoon": {
       "label": "En preparación",
       "title": "Esta página está en construcción",

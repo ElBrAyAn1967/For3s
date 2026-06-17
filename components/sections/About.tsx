@@ -2,6 +2,7 @@
 
 import { m as motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { CheckCircle2 } from "lucide-react";
 import { collaboratorIds } from "@/lib/data";
 import { useTheme } from "@/lib/useTheme";
 
@@ -12,12 +13,13 @@ export default function About() {
 
 function AboutLight() {
   const t = useTranslations("AboutLight");
-  const problemKeys = ["requirements", "criteria", "edgeCases", "fragmented", "release"] as const;
+  const fragmentKeys = ["ticket", "chat", "docs", "rules", "bug"] as const;
+  const outputKeys = ["cases", "criteria", "gaps"] as const;
 
   return (
     <section
       id="about"
-      className="section-blend py-16 sm:py-24 bg-surface-overlay-large"
+      className="section-blend py-14 sm:py-20 lg:py-24 bg-surface-overlay-large overflow-hidden"
       style={{ ["--blend-from" as string]: "var(--surface-primary)" }}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -26,69 +28,89 @@ function AboutLight() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 md:gap-14 items-start"
+          className="grid lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,1.1fr)] gap-9 sm:gap-12 lg:gap-16 items-center"
         >
-          <div>
+          <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] mb-4 text-foreground-accent font-mono">
               {t("overline")}
             </p>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-5 sm:mb-6 leading-tight text-foreground-active">
+            <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-semibold mb-5 leading-tight text-foreground-active">
               {t("headline.prefix")}{" "}
-              <span className="text-foreground-accent">{t("headline.accent")}</span>
+              <span className="text-foreground-accent">
+                {t("headline.accent")}
+              </span>
             </h2>
-            <p className="text-foreground-secondary leading-relaxed mb-5">
-              {t("problem")}
-            </p>
-            <p className="text-foreground-secondary leading-relaxed">
-              {t("solution")}
+            <div className="max-w-2xl space-y-3 text-base sm:text-lg text-foreground-secondary leading-relaxed">
+              <p>{t("fracture.problem")}</p>
+              <p className="font-medium text-foreground-accent">
+                {t("fracture.solution")}
+              </p>
+            </div>
+            <p className="mt-6 max-w-xl border-l border-brand-bold/30 pl-4 text-sm sm:text-base font-medium text-foreground-active">
+              {t("fracture.legend")}
             </p>
           </div>
 
-          <div className="rounded-xl border border-edge-secondary bg-surface-primary p-5 sm:p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-tertiary mb-5">
-              {t("signalsLabel")}
-            </p>
-            <ul className="space-y-4">
-              {problemKeys.map((key, i) => (
-                <motion.li
+          <div className="relative min-h-[23rem] sm:min-h-[27rem] lg:min-h-[30rem]">
+            <div
+              aria-hidden
+              className="absolute inset-x-8 top-1/2 h-px -translate-y-1/2 bg-edge-primary"
+            />
+            <div
+              aria-hidden
+              className="absolute left-1/2 top-8 bottom-8 w-px -translate-x-1/2 bg-edge-secondary"
+            />
+
+            <div className="absolute left-1/2 top-1/2 z-10 w-[11rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-brand-bold/30 bg-surface-primary px-4 py-4 text-center shadow-[0_18px_55px_rgba(0,0,0,0.08)] sm:w-[12.5rem] sm:px-5 sm:py-5">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-tertiary">
+                {t("fracture.centerLabel")}
+              </p>
+              <p className="mt-2 text-xl sm:text-2xl font-semibold text-foreground-active">
+                For3s QA
+              </p>
+              <p className="mt-3 text-xs sm:text-sm leading-relaxed text-foreground-secondary">
+                {t("fracture.centerText")}
+              </p>
+            </div>
+
+            {fragmentKeys.map((key, i) => (
+              <motion.div
+                key={key}
+                initial={{ opacity: 0, scale: 0.96, y: 10 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08, duration: 0.38 }}
+                className={`absolute min-w-[7.5rem] rounded-xl border border-edge-secondary bg-surface-primary px-3.5 py-3 shadow-[0_12px_38px_rgba(0,0,0,0.05)] sm:min-w-[8.5rem] sm:px-4 ${
+                  i === 0
+                    ? "left-0 top-0 rotate-[-4deg]"
+                    : i === 1
+                      ? "right-1 top-5 rotate-[3deg]"
+                      : i === 2
+                        ? "left-3 bottom-10 rotate-[2deg]"
+                        : i === 3
+                          ? "right-0 bottom-0 rotate-[-3deg]"
+                          : "left-[31%] top-[72%] -translate-x-1/2 rotate-[-1deg]"
+                }`}
+              >
+                <p className="text-[10px] font-mono uppercase tracking-widest text-foreground-tertiary">
+                  {t(`fracture.fragments.${key}.label`)}
+                </p>
+                <p className="mt-1 truncate text-sm sm:text-base font-semibold text-foreground-active">
+                  {t(`fracture.fragments.${key}.value`)}
+                </p>
+              </motion.div>
+            ))}
+
+            <div className="absolute inset-x-0 bottom-[-0.75rem] z-20 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+              {outputKeys.map((key) => (
+                <div
                   key={key}
-                  initial={{ opacity: 0, x: 16 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08, duration: 0.4 }}
-                  className="flex items-start gap-3"
+                  className="flex min-w-0 items-center gap-2 rounded-full border border-brand-bold/20 bg-brand-bold/10 px-3 py-2 text-sm font-medium text-foreground-accent"
                 >
-                  <span className="mt-2 size-1.5 rounded-full bg-brand-bold flex-shrink-0" />
-                  <span className="text-sm sm:text-base text-foreground-secondary leading-relaxed">
-                    {t(`signals.${key}`)}
-                  </span>
-                </motion.li>
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  <span className="truncate">{t(`fracture.outputs.${key}`)}</span>
+                </div>
               ))}
-            </ul>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mt-10 md:mt-14 rounded-xl border border-edge-secondary bg-surface-primary p-5 sm:p-6 md:p-8"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-accent font-mono mb-4">
-            {t("agents.overline")}
-          </p>
-          <div className="grid md:grid-cols-[0.85fr_1.15fr] gap-5 md:gap-8 items-start">
-            <h3 className="text-xl sm:text-2xl font-semibold text-foreground-active leading-tight">
-              {t("agents.title")}
-            </h3>
-            <div>
-              <p className="text-foreground-secondary leading-relaxed mb-4">
-                {t("agents.description")}
-              </p>
-              <p className="text-sm font-medium text-foreground-accent">
-                {t("agents.principle")}
-              </p>
             </div>
           </div>
         </motion.div>
