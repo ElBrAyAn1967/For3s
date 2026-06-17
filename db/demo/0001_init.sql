@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS demo_users (
   notified      boolean NOT NULL DEFAULT false, -- si se le notificó cupo disponible
   api_key_enc   text,                            -- API key del usuario CIFRADA (AES-256-GCM), nunca en claro
   api_key_hint  text,                            -- últimos 4 chars para mostrar "…x9f2"
+  agent_on      boolean NOT NULL DEFAULT true,   -- estado del agente For3s OS (contenedor Docker: on/off)
   created_at    timestamptz NOT NULL DEFAULT now(),
   last_seen_at  timestamptz NOT NULL DEFAULT now()
 );

@@ -84,9 +84,10 @@ async function buildResult(
       position: number | null;
       api_key_enc: string | null;
       api_key_hint: string | null;
+      agent_on: boolean;
     }[]
   >`
-    SELECT status, position, api_key_enc, api_key_hint
+    SELECT status, position, api_key_enc, api_key_hint, agent_on
     FROM demo_users WHERE kind = ${kind} AND lower(email) = ${email}
   `;
   const active = await activeCount(sql, kind);
@@ -98,6 +99,7 @@ async function buildResult(
     maxConcurrent: MAX_CONCURRENT[kind],
     hasApiKey: !!u?.api_key_enc,
     apiKeyHint: u?.api_key_hint ?? null,
+    agentOn: u?.agent_on ?? true,
   };
 }
 
@@ -206,6 +208,33 @@ export async function saveApiKey(
   `;
 }
 
+// Actualiza el NOMBRE del perfil (se refleja en BD). El correo es la identidad
+// y no se cambia (cambiarlo sería otra sesión).
+export async function updateName(
+  kind: DemoKind,
+  email: string,
+  newName: string,
+): Promise<void> {
+  const sql = db();
+  await sql`
+    UPDATE demo_users SET name = ${newName}
+    WHERE kind = ${kind} AND lower(email) = ${email}
+  `;
+}
+
+// Enciende/apaga el agente (estado del contenedor Docker). Solo demos 1:1.
+export async function setAgentState(
+  kind: DemoKind,
+  email: string,
+  on: boolean,
+): Promise<void> {
+  const sql = db();
+  await sql`
+    UPDATE demo_users SET agent_on = ${on}
+    WHERE kind = ${kind} AND lower(email) = ${email}
+  `;
+}
+
 // --- Lectura para el dashboard admin (todas las demos) ---
 export async function listUsers(now: number): Promise<DemoUser[]> {
   const sql = db();
@@ -222,11 +251,12 @@ export async function listUsers(now: number): Promise<DemoUser[]> {
       status: string;
       position: number | null;
       notified: boolean;
+      agent_on: boolean;
       created_at: Date;
       last_seen_at: Date;
     }[]
   >`
-    SELECT id, kind, name, email, status, position, notified, created_at, last_seen_at
+    SELECT id, kind, name, email, status, position, notified, agent_on, created_at, last_seen_at
     FROM demo_users ORDER BY created_at DESC
   `;
   return rows.map((r) => ({
@@ -237,6 +267,7 @@ export async function listUsers(now: number): Promise<DemoUser[]> {
     status: r.status as DemoUser["status"],
     position: r.position,
     notified: r.notified,
+    agentOn: r.agent_on,
     createdAt: r.created_at.getTime(),
     lastSeenAt: r.last_seen_at.getTime(),
   }));

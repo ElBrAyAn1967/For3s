@@ -64,6 +64,7 @@ export interface DemoUser {
   status: SessionStatus;
   position: number | null; // posición en cola si waiting
   notified: boolean; // si ya se le "notificó" cupo disponible (stub email)
+  agentOn: boolean; // estado del agente For3s OS (contenedor on/off)
   createdAt: number; // primera vez que se registró
   lastSeenAt: number; // último heartbeat (detecta cierre de pestaña)
 }
@@ -77,6 +78,7 @@ export interface RegisterResult {
   maxConcurrent: number;
   hasApiKey: boolean; // true si este correo ya tiene su SK guardada (entra directo)
   apiKeyHint: string | null; // últimos 4 de la SK guardada (para mostrar sin descifrar)
+  agentOn: boolean; // estado del agente For3s OS (contenedor on/off) — relevante en 1:1
 }
 
 // Error de acceso: correo existe pero el nombre no coincide.

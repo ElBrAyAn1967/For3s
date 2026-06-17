@@ -37,6 +37,7 @@ export default function GeneralExperience({
   // Si el usuario ya tenía su SK guardada, el shell entra directo (sin pedirla).
   const [hasApiKey, setHasApiKey] = useState(false);
   const [keyHint, setKeyHint] = useState<string | null>(null);
+  const [agentOn, setAgentOn] = useState(true);
 
   const apply = useCallback(
     (r: RegisterResult, who?: { name: string; email: string }) => {
@@ -46,6 +47,7 @@ export default function GeneralExperience({
       }
       if (typeof r.hasApiKey === "boolean") setHasApiKey(r.hasApiKey);
       if (r.apiKeyHint !== undefined) setKeyHint(r.apiKeyHint);
+      if (typeof r.agentOn === "boolean") setAgentOn(r.agentOn);
       setMaxConcurrent(r.maxConcurrent);
       if (r.status === "waiting") {
         setPhase("waitlist");
@@ -102,9 +104,11 @@ export default function GeneralExperience({
   // si no, la primera petición dentro del shell es conectar la API key.
   return (
     <DemoShell
+      kind={kind}
       name={name}
       email={email}
       initialKeyHint={hasApiKey ? keyHint : null}
+      agentOn={agentOn}
       onLogout={logout}
     />
   );

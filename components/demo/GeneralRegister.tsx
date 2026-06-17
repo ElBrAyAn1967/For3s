@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { m as motion } from "framer-motion";
 import { UserPlus, KeyRound } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -42,10 +42,24 @@ export default function GeneralRegister({
   ) => void;
 }) {
   const t = useTranslations("Demo.register");
-  // Inicializador lazy: pre-rellena con el último acceso guardado (solo cliente).
-  const [name, setName] = useState(() => readLast(kind).name);
-  const [email, setEmail] = useState(() => readLast(kind).email);
+  // Arrancamos VACÍO para que el HTML del servidor y el del cliente coincidan
+  // (evita hydration mismatch). El pre-relleno desde localStorage se aplica
+  // tras montar, en el effect de abajo (solo cliente).
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Pre-rellena con el último acceso guardado, ya hidratado el componente.
+  // queueMicrotask evita el setState síncrono dentro del cuerpo del effect.
+  useEffect(() => {
+    const last = readLast(kind);
+    if (last.name || last.email) {
+      queueMicrotask(() => {
+        if (last.name) setName(last.name);
+        if (last.email) setEmail(last.email);
+      });
+    }
+  }, [kind]);
   // null = sin error; "invalid" = datos mal; "mismatch" = correo+otro nombre;
   // "denied" = correo no autorizado para esta demo 1:1.
   const [error, setError] = useState<null | "invalid" | "mismatch" | "denied">(

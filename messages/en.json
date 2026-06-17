@@ -812,7 +812,15 @@
         "email": "Email",
         "apiKey": "API key",
         "noKey": "Not connected",
-        "connected": "Connected"
+        "connected": "Connected",
+        "edit": "Edit profile",
+        "save": "Save",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "changePhoto": "Change photo",
+        "agentOn": "Agent on",
+        "agentOff": "Agent off",
+        "paidOnly": "This feature is only available for paid users."
       },
       "connectors": {
         "title": "Connectors",

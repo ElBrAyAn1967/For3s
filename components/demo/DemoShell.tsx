@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import ConnectApiKey from "./ConnectApiKey";
 import ProfilePanel from "./ProfilePanel";
 import ConnectorsPanel from "./ConnectorsPanel";
+import type { DemoKind } from "@/lib/demo/types";
 
 /**
  * Shell de la app del demo, para usuarios YA registrados y con cupo activo.
@@ -20,14 +21,18 @@ import ConnectorsPanel from "./ConnectorsPanel";
 type Section = "profile" | "connectors";
 
 export default function DemoShell({
+  kind,
   name,
   email,
   initialKeyHint = null,
+  agentOn = true,
   onLogout,
 }: {
+  kind: DemoKind;
   name: string;
   email: string;
   initialKeyHint?: string | null; // si ya tenía SK guardada, entra directo
+  agentOn?: boolean;
   onLogout: () => void;
 }) {
   const t = useTranslations("Demo.shell");
@@ -110,7 +115,13 @@ export default function DemoShell({
                 <ConnectApiKey onConnected={setKeyHint} persist defaultOpen />
               </div>
             ) : section === "profile" ? (
-              <ProfilePanel name={name} email={email} keyHint={keyHint} />
+              <ProfilePanel
+                kind={kind}
+                name={name}
+                email={email}
+                keyHint={keyHint}
+                agentOn={agentOn}
+              />
             ) : (
               <ConnectorsPanel />
             )}

@@ -9,6 +9,7 @@ import {
   HardDrive,
   Monitor,
   Send,
+  Palette,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ComponentType } from "react";
@@ -21,6 +22,7 @@ const CONNECTORS: { key: string; label: string; Icon: ComponentType<{ className?
   { key: "vercel", label: "Vercel", Icon: Triangle },
   { key: "premiere", label: "Adobe Premiere", Icon: Clapperboard },
   { key: "illustrator", label: "Adobe Illustrator", Icon: PenTool },
+  { key: "canva", label: "Canva", Icon: Palette },
   { key: "drive", label: "Google Drive", Icon: HardDrive },
   { key: "pc", label: "PC", Icon: Monitor },
   { key: "telegram", label: "Telegram", Icon: Send },

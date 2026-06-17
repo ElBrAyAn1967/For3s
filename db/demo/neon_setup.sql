@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS demo_users (
   notified      boolean NOT NULL DEFAULT false,
   api_key_enc   text,
   api_key_hint  text,
+  agent_on      boolean NOT NULL DEFAULT true,  -- estado del agente (contenedor Docker)
   created_at    timestamptz NOT NULL DEFAULT now(),
   last_seen_at  timestamptz NOT NULL DEFAULT now()
 );
