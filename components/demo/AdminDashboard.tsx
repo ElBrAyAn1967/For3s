@@ -46,24 +46,31 @@ export default function AdminDashboard() {
     }
   }, [password]);
 
-  const refresh = useCallback(async () => {
-    const res = await fetch("/api/demo/admin/users", {
-      headers: { "x-admin-password": password },
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { users: DemoUser[]; counts: Counts };
-      setUsers(data.users);
-      setCounts(data.counts);
-    }
-  }, [password]);
-
-  // Auto-refresca la tabla cada 5s mientras esté autenticado.
+  // Auto-refresca la tabla mientras esté autenticado. La función de carga vive
+  // dentro del effect (no es setState síncrono: el estado se actualiza tras el
+  // await del fetch), y se cancela con un flag al desmontar.
   useEffect(() => {
     if (!authed) return;
-    refresh();
-    const id = window.setInterval(refresh, 5000);
-    return () => window.clearInterval(id);
-  }, [authed, refresh]);
+    let alive = true;
+
+    const load = async () => {
+      const res = await fetch("/api/demo/admin/users", {
+        headers: { "x-admin-password": password },
+      });
+      if (!alive || !res.ok) return;
+      const data = (await res.json()) as { users: DemoUser[]; counts: Counts };
+      if (!alive) return;
+      setUsers(data.users);
+      setCounts(data.counts);
+    };
+
+    void load();
+    const id = window.setInterval(() => void load(), 5000);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, [authed, password]);
 
   if (!authed) {
     return (

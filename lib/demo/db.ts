@@ -1,15 +1,25 @@
-// Cliente Postgres de la demo (BD dedicada for3s_demo en el server for3s).
+// Cliente Postgres de la demo (BD `for3s_demo`).
 //
-// Conexión vía Tailscale (DEMO_DATABASE_URL en .env.local). Un único cliente
-// reutilizado por proceso (colgado de globalThis para sobrevivir hot-reload en
-// dev). Si no hay DEMO_DATABASE_URL, las funciones que lo usan deben degradar
-// con gracia (el caller decide) — aquí solo exponemos el handle.
+// La URL viene de DEMO_DATABASE_URL. Funciona con:
+//   - Postgres del server for3s (vía Tailscale) en desarrollo local.
+//   - Una BD gestionada (Neon/Supabase) en producción (Vercel).
+// Un único cliente por proceso (globalThis para sobrevivir hot-reload en dev).
+//
+// SSL: las BD gestionadas exigen TLS. Lo activamos automáticamente cuando la URL
+// lo pide (sslmode=require) o cuando el host no es local — sin romper la conexión
+// al server local que no usa SSL.
 
 import postgres from "postgres";
 
 const g = globalThis as unknown as {
   __for3sDemoSql?: ReturnType<typeof postgres>;
 };
+
+function needsSsl(url: string): boolean {
+  if (/sslmode=require|sslmode=verify/.test(url)) return true;
+  // Hosts locales / Tailscale no usan SSL; cualquier otro host (Neon, Supabase) sí.
+  return !/@(localhost|127\.0\.0\.1|100\.\d+\.\d+\.\d+)/.test(url);
+}
 
 function create() {
   const url = process.env.DEMO_DATABASE_URL;
@@ -20,6 +30,7 @@ function create() {
     max: 10, // pool pequeño, suficiente para la demo
     idle_timeout: 20,
     connect_timeout: 10,
+    ssl: needsSsl(url) ? "require" : false,
   });
 }
 
