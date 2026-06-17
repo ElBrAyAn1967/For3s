@@ -6,6 +6,26 @@ import { UserPlus, KeyRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { RegisterResult, DemoKind } from "@/lib/demo/types";
 
+// Clave de localStorage para recordar el último acceso (por demo).
+const lastKey = (kind: DemoKind) => `for3s_demo_last_${kind}`;
+
+// Lee el último acceso guardado en el navegador (para pre-rellenar). Devuelve
+// {name, email} o vacío. Se usa como inicializador de useState (lazy init),
+// que corre solo en cliente al montar — sin setState en effects.
+function readLast(kind: DemoKind): { name: string; email: string } {
+  if (typeof window === "undefined") return { name: "", email: "" };
+  try {
+    const raw = window.localStorage.getItem(lastKey(kind));
+    if (raw) {
+      const s = JSON.parse(raw) as { name?: string; email?: string };
+      return { name: s.name ?? "", email: s.email ?? "" };
+    }
+  } catch {
+    // localStorage no disponible / JSON inválido
+  }
+  return { name: "", email: "" };
+}
+
 /**
  * Formulario de registro de la demo GENERAL: nombre + correo.
  * Al enviar, crea o continúa la sesión (el server normaliza a minúsculas).
@@ -22,8 +42,9 @@ export default function GeneralRegister({
   ) => void;
 }) {
   const t = useTranslations("Demo.register");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  // Inicializador lazy: pre-rellena con el último acceso guardado (solo cliente).
+  const [name, setName] = useState(() => readLast(kind).name);
+  const [email, setEmail] = useState(() => readLast(kind).email);
   const [submitting, setSubmitting] = useState(false);
   // null = sin error; "invalid" = datos mal; "mismatch" = correo+otro nombre;
   // "denied" = correo no autorizado para esta demo 1:1.
@@ -51,11 +72,18 @@ export default function GeneralRegister({
       return;
     }
     const result = (await res.json()) as RegisterResult;
-    // Pasamos los datos normalizados (igual que en BD) al shell.
-    onRegistered(result, {
-      name: name.trim().toLowerCase().replace(/\s+/g, " "),
-      email: email.trim().toLowerCase(),
-    });
+    const normName = name.trim().toLowerCase().replace(/\s+/g, " ");
+    const normEmail = email.trim().toLowerCase();
+    // Recuerda este acceso en el navegador para pre-rellenar la próxima vez.
+    try {
+      window.localStorage.setItem(
+        lastKey(kind),
+        JSON.stringify({ name: normName, email: normEmail }),
+      );
+    } catch {
+      // localStorage no disponible → se ignora
+    }
+    onRegistered(result, { name: normName, email: normEmail });
   };
 
   return (
@@ -80,8 +108,11 @@ export default function GeneralRegister({
 
       <div className="space-y-3">
         <input
+          id="demo-name"
+          name="name"
           type="text"
           autoComplete="name"
+          enterKeyHint="next"
           value={name}
           onChange={(e) => {
             setName(e.target.value);
@@ -92,12 +123,19 @@ export default function GeneralRegister({
           className="w-full rounded-lg bg-surface-primary border border-edge-primary px-4 py-3 text-sm text-foreground-active placeholder:text-foreground-tertiary outline-none focus:border-brand-bold transition-colors"
         />
         <input
+          id="demo-email"
+          name="email"
           type="email"
+          inputMode="email"
           autoComplete="email"
+          enterKeyHint="go"
           value={email}
           onChange={(e) => {
             setEmail(e.target.value);
             if (error) setError(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") submit();
           }}
           placeholder={t("emailPlaceholder")}
           aria-label={t("emailPlaceholder")}
