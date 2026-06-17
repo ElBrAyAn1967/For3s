@@ -231,6 +231,247 @@ Esto significa que el modo claro debe sentirse menos como consultoría genérica
 
 **Regla de avance:** antes de ejecutar cambios visuales, discutir la dirección con Brian. Una vez aprobada, modificar solo el modo claro y verificar con `bun run build`.
 
+### Avance aplicado — HeroLight estilo v1
+
+Brian aprobó mover el modo claro hacia:
+
+> Más tecnología, más del estilo OpenClaw/Hermes, con toques de AaaS y vista a producto QA.
+
+Primera modificación ejecutada:
+
+- Archivo principal: `components/sections/HeroLight.tsx`.
+- Se mantuvo el copy principal del hero.
+- Se cambió la composición editorial pura a layout con columna izquierda + preview visual de producto.
+- Se agregó un mockup visual de **QA Execution Pack** con contexto de entrada, outputs QA, estado de revisión humana y trazabilidad.
+- Las etiquetas visibles nuevas se agregaron vía i18n en `messages/es.json` y `messages/en.json`.
+- No se tocó modo oscuro.
+
+Corrección posterior de Brian:
+
+- El overline del hero debía decir solo **For3s QA**, no `For3s QA · B2B Light`.
+- El preview visual no debía forzar scroll ni fricción responsive.
+- Ajuste aplicado: el preview de producto ahora tiene dos comportamientos:
+  - Mobile/tablet: preview compacto debajo del CTA.
+  - Laptop/desktop desde `lg`: texto y preview compacto lado a lado.
+- Se cambió el hero a `items-start` por defecto y `2xl:items-center` para evitar el gran vacío superior en pantallas pequeñas.
+- Se compactó el ritmo vertical del hero para que los botones queden visibles sin micro-scroll en resoluciones medianas.
+- Se limpió `.next/dev` para resolver `ChunkLoadError`/404 de Turbopack dev cache.
+
+Validación posterior:
+
+```bash
+bun run lint   # pass
+bun run build  # pass
+```
+
+Verificación visual local:
+
+- Dev server limpio en `http://localhost:3000/`.
+- Capturas revisadas con Chromium headless en 390x844 y 1366x768 tras el ajuste final.
+- Resultado: mobile conserva preview abajo; laptop muestra texto y preview lado a lado; CTAs visibles.
+
+### Avance aplicado — Navbar responsive v1
+
+Problema reportado por Brian:
+
+- El nav no era responsive y se veía desalineado.
+- En pantallas medianas/tablet se amontonaba la navegación central con el cluster derecho.
+
+Ajuste ejecutado:
+
+- Archivo principal: `components/shared/Navbar.tsx`.
+- Se corrigió el breakpoint del nav: la navegación central aparece desde `lg`, no desde `md`.
+- El hamburger permanece visible hasta `lg`, para que tablets y pantallas medianas usen drawer en lugar de nav apretado.
+- El CTA derecho se envolvió en un contenedor `hidden lg:inline-flex` porque `btn-pill` usa `display: inline-flex` y estaba anulando `hidden`.
+- Los links centrales usan `whitespace-nowrap` para evitar saltos de línea en desktop.
+- En modo claro se quitó `demo` del grupo central de links para no duplicar `Book demo`; la acción principal queda solo como CTA derecho.
+- No se cambió el contenido del modo oscuro; solo se mejoró el comportamiento responsive compartido del navbar.
+
+Validación posterior:
+
+```bash
+bun run lint   # pass
+bun run build  # pass
+```
+
+Verificación visual local:
+
+- Capturas revisadas con Chromium headless en 390x844, 768x900 y 1366x768.
+- Resultado: mobile/tablet muestran logo + idioma + tema + hamburger sin CTA apretado; desktop muestra links centrados y CTA derecho alineado.
+
+### Avance aplicado — AboutLight / Problem v3
+
+Dirección aprobada:
+
+- Después de Hero/Nav, avanzar con `AboutLight`, correspondiente al link **Problema**.
+- Convertir la sección en una composición visual de alto impacto, no en una sección editorial genérica.
+- Mantener responsivo para cualquier dispositivo y aplicar criterios de Impeccable: jerarquía clara, ritmo espacial, adaptación real por breakpoint y no solo escalado.
+- Brian pidió evitar que se viera igual al hero y reducir lectura: debe enganchar con la mirada.
+
+Ajuste ejecutado:
+
+- Archivo principal: `components/sections/About.tsx`.
+- Solo se modificó `AboutLight`; `AboutDark` se mantuvo intacto.
+- La versión inicial tipo `Problem scan` fue reemplazada porque repetía demasiado el lenguaje visual del hero.
+- La versión **Antes / Con For3s QA** también fue descartada por sentirse demasiado card/comparativa.
+- La sección ahora usa formato **Fractura de contexto**:
+  - piezas sueltas: Ticket, Chat, Docs, Criterios, Bug;
+  - nodo central: For3s QA ordena contexto;
+  - outputs visuales: Casos claros, Criterios revisables, Vacíos visibles.
+- Se redujo el copy a dos frases cortas.
+- Se agregó una leyenda para recuperar el matiz original: no es falta de pruebas, es falta de contexto compartido.
+- Se quitaron paneles tipo dashboard, columnas comparativas y pasos largos.
+- Se mantuvo un icono mínimo de `lucide-react` para outputs.
+- Se actualizaron textos en `messages/es.json` y `messages/en.json`.
+
+Validación posterior:
+
+```bash
+bun run lint   # pass
+bun run build  # pass
+git diff --check # pass
+```
+
+Nota de verificación visual:
+
+- El build de producción pasó.
+- En este entorno, las capturas headless previas salieron en blanco aunque Next respondía; no usarlas como evidencia visual.
+
+### Decisión de tipografía — Aeonik-like legal
+
+Referencia aprobada por Brian:
+
+- `https://core.app/tools`
+- Lo que gustó: fuente tipo Aeonik, sensación de producto serio, ecosistema organizado, herramienta útil, claridad sin sobreexplicar y tecnología accesible.
+
+Estado real:
+
+- Core usa `Aeonik` para títulos/cards e `Inter` para texto secundario.
+- `Aeonik` es una fuente comercial de CoType Foundry; no se debe copiar desde Core ni descargar de fuentes no oficiales.
+- En el repo no hay archivos `Aeonik .woff2/.woff`.
+
+Ajuste ejecutado:
+
+- Archivo: `app/[locale]/layout.tsx`.
+- Se integró `Space_Grotesk` desde `next/font/google` como alternativa legal cercana a Aeonik para headings.
+- Archivo: `app/globals.css`.
+- `--font-heading` usa `var(--font-heading-face), "Aeonik", var(--font-sans)`.
+- `h1`-`h6` usan `var(--font-heading)`.
+- Brian pidió un trazo un poco más grueso; se aplicó `font-weight: 650` global para headings.
+- Resultado esperado: headings con sensación más geométrica/producto, cuerpo mantiene Inter para legibilidad.
+
+Para activar Aeonik real:
+
+- Comprar/usar licencia web válida.
+- Agregar archivos `.woff2` licenciados al repo.
+- Integrar con `next/font/local` o `@font-face` apuntando a esos archivos.
+
+Validación:
+
+```bash
+bun run lint   # pass
+bun run build  # pass
+```
+
+### Avance aplicado — ProjectsLight / Ecosystem v1
+
+Dirección aprobada:
+
+- Brian pidió convertir Godinez AI, AgentCamp, Vibecoding Bootcamp, Mi Pase, Paykit, AteneaIO y otros en un carrete automático tipo sponsors/logos, pero usando proyectos realizados.
+- La sección debía sentirse más cercana a Core Tools: producto serio, ecosistema organizado, herramienta útil y claridad sin sobreexplicar.
+
+Ajuste ejecutado:
+
+- Archivo principal: `components/sections/Projects.tsx`.
+- Solo se modificó `ProjectsLight`; `ProjectsDark` se mantuvo intacto.
+- El header cambió a una idea más directa: **Un ecosistema antes que una promesa**.
+- Se reemplazó el bloque contextual grande por tres módulos compactos:
+  - Producto;
+  - Comunidad;
+  - Operación.
+- Los proyectos ahora aparecen en un carrusel horizontal automático e infinito:
+  - duplica items para loop continuo;
+  - pausa en hover;
+  - mantiene links externos para Paykit y AteneaIO;
+  - usa cards compactas con tipo, nombre y descripción corta.
+- Se agregó animación CSS `projects-marquee`.
+- Se actualizaron textos en `messages/es.json` y `messages/en.json`.
+
+Validación:
+
+```bash
+bun run lint   # pass
+bun run build  # pass
+```
+
+### Avance aplicado — SkillsLight / QA Pack v1
+
+Dirección aprobada:
+
+- Brian pidió que la sección posterior a Ecosystem fuera visualmente fuerte porque ya había suficiente texto.
+- La idea aprobada fue convertir `SkillsLight` en **QA Pack generado**, no una lista de skills genéricas.
+
+Ajuste ejecutado:
+
+- Archivo principal: `components/sections/Skills.tsx`.
+- Solo se modificó `SkillsLight`; `SkillsDark` se mantuvo intacto.
+- La sección ahora tiene:
+  - headline y explicación breve a la izquierda;
+  - panel central **QA Execution Pack**;
+  - seis nodos visuales alrededor: Casos de prueba, Criterios de aceptación, Preguntas faltantes, Edge cases, Trazabilidad, Revisión humana.
+- Se agregaron iconos de `lucide-react` para que cada output sea reconocible sin leer demasiado.
+- Se actualizaron textos en `messages/es.json` y `messages/en.json`.
+
+Validación:
+
+```bash
+bun run lint   # pass
+bun run build  # pass
+```
+
+### Avance aplicado — TimelineLight / Operating Model v1
+
+Dirección aprobada:
+
+- Convertir `TimelineLight` en una sección de confianza/infraestructura.
+- Responder visualmente: cómo For3s QA mejora QA sin quitar control sobre contexto, decisiones ni revisión humana.
+
+Ajuste ejecutado:
+
+- Archivo principal: `components/sections/Timeline.tsx`.
+- Solo se modificó `TimelineLight`; `TimelineDark` se mantuvo intacto.
+- La sección ahora usa formato **Operating Model**:
+  - izquierda: headline, subcopy y frase de cierre;
+  - derecha: panel central **Controlled agent workflow**;
+  - alrededor: Workspaces privados, Revisión humana, Sin entrenamiento sin permiso, Contexto trazable, Pilotos acompañados.
+- El bloque **For3s OS** se convirtió en una banda compacta bajo el panel.
+- Se agregaron iconos de `lucide-react` para reforzar seguridad, revisión, control y trazabilidad.
+- Se actualizaron textos en `messages/es.json` y `messages/en.json`.
+
+Validación:
+
+```bash
+bun run lint   # pass
+bun run build  # pass
+```
+
+### Decisión — FaqLight se conserva como estaba
+
+Se probó una dirección `Buyer Questions` para `FaqLight`, pero Brian pidió regresar al formato anterior.
+
+Estado final:
+
+- `FaqLight` volvió a usar `FaqLayout`.
+- Se restauró el copy anterior en `messages/es.json` y `messages/en.json`.
+- `FaqDark` no fue modificado.
+
+Validación posterior:
+
+```bash
+bun run lint   # pass
+bun run build  # pass
+```
+
 ---
 
 ## 5. Audiencias (4 contextos co-primarios)
