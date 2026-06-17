@@ -33,7 +33,7 @@ export default function GeneralPageShell({
       <main
         className={
           inShell
-            ? "min-h-svh flex items-center justify-center px-4 py-8 bg-surface-primary"
+            ? "min-h-svh flex items-start md:items-center justify-center px-3 py-4 sm:px-4 sm:py-8 bg-surface-primary"
             : "flex-1 min-h-[calc(100svh-4rem)] flex items-center pt-16"
         }
       >

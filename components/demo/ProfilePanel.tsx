@@ -137,8 +137,8 @@ export default function ProfilePanel({
       <p className="text-sm text-foreground-secondary mb-6">{t("subtitle")}</p>
 
       {/* Cabecera de perfil con avatar (foto o inicial) */}
-      <div className="flex items-center gap-4 rounded-2xl border border-edge-primary bg-surface-overlay-large p-5 mb-4">
-        <div className="relative">
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-edge-primary bg-surface-overlay-large p-4 sm:p-5 mb-4">
+        <div className="relative flex-shrink-0">
           {photo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -191,7 +191,7 @@ export default function ProfilePanel({
 
         {/* Estado del agente: toggle (1:1) o badge conectado (general) */}
         {!editing && (
-          <div className="ml-auto flex flex-col items-end gap-1">
+          <div className="flex flex-col items-start sm:items-end gap-1 w-full sm:w-auto sm:ml-auto">
             {isPaid ? (
               <button
                 type="button"
@@ -232,9 +232,9 @@ export default function ProfilePanel({
       <div className="rounded-2xl border border-edge-primary bg-surface-overlay-large divide-y divide-edge-secondary">
         <Row Icon={User} label={t("name")} value={name || "—"} />
         <Row Icon={Mail} label={t("email")} value={email} />
-        <div className="flex items-center gap-3 px-5 py-4">
+        <div className="flex items-center gap-3 px-4 sm:px-5 py-4">
           <KeyRound className="size-4 text-foreground-tertiary flex-shrink-0" />
-          <span className="text-sm text-foreground-secondary w-32 flex-shrink-0">
+          <span className="text-sm text-foreground-secondary w-20 sm:w-32 flex-shrink-0">
             {t("apiKey")}
           </span>
           {editing ? (
@@ -291,9 +291,9 @@ function Row({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-3 px-5 py-4">
+    <div className="flex items-center gap-3 px-4 sm:px-5 py-4">
       <Icon className="size-4 text-foreground-tertiary flex-shrink-0" />
-      <span className="text-sm text-foreground-secondary w-32 flex-shrink-0">
+      <span className="text-sm text-foreground-secondary w-20 sm:w-32 flex-shrink-0">
         {label}
       </span>
       <span className="text-sm text-foreground-active truncate capitalize">

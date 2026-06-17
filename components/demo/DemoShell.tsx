@@ -51,11 +51,12 @@ export default function DemoShell({
 
   return (
     <div className="w-full max-w-6xl mx-auto rounded-2xl border border-edge-primary bg-surface-primary overflow-hidden shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-      <div className="grid grid-cols-[200px_1fr] min-h-[560px]">
-        {/* Sidebar izquierdo */}
-        <aside className="border-r border-edge-secondary bg-surface-overlay-large p-4 flex flex-col">
+      {/* En móvil: una sola columna (sin sidebar). En md+: sidebar + contenido. */}
+      <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] min-h-[520px] sm:min-h-[560px]">
+        {/* Sidebar izquierdo — solo md+ */}
+        <aside className="hidden md:flex border-r border-edge-secondary bg-surface-overlay-large p-4 flex-col">
           <div className="flex items-center gap-2 px-2 py-2 mb-4">
-            <PanelsTopLeft className="size-4 text-brand-bold" />
+            <PanelsTopLeft className="size-4 text-brand-bold flex-shrink-0" />
             <span className="text-[11px] font-mono uppercase tracking-widest text-foreground-accent">
               For3s
             </span>
@@ -82,33 +83,36 @@ export default function DemoShell({
 
         {/* Columna derecha: topbar + contenido */}
         <div className="flex flex-col min-w-0">
-          <header className="flex items-center justify-end gap-1 border-b border-edge-secondary px-4 py-3">
-            {nav.map(({ key, label }) => (
+          {/* Topbar: en móvil es la navegación principal (con íconos);
+              en md+ complementa al sidebar. Hace wrap si no cabe. */}
+          <header className="flex flex-wrap items-center justify-center md:justify-end gap-1 border-b border-edge-secondary px-3 py-2.5 sm:px-4 sm:py-3">
+            {nav.map(({ key, label, Icon }) => (
               <button
                 key={key}
                 type="button"
                 disabled={!connected}
                 onClick={() => setSection(key)}
-                className={`rounded-md px-3 py-1.5 text-xs font-mono uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] sm:text-xs font-mono uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                   connected && section === key
                     ? "text-foreground-accent"
                     : "text-foreground-tertiary hover:text-foreground-active"
                 }`}
               >
+                <Icon className="size-3.5 md:hidden" />
                 {label}
               </button>
             ))}
             <button
               type="button"
               onClick={onLogout}
-              className="ml-2 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-mono uppercase tracking-widest text-foreground-tertiary hover:text-danger transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] sm:text-xs font-mono uppercase tracking-widest text-foreground-tertiary hover:text-danger transition-colors"
             >
               <LogOut className="size-3.5" />
-              {t("nav.logout")}
+              <span className="hidden sm:inline">{t("nav.logout")}</span>
             </button>
           </header>
 
-          <div className="flex-1 p-6 sm:p-8 overflow-auto">
+          <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto">
             {!connected ? (
               // Primera petición dentro de la demo: conectar la API key de Claude.
               <div className="flex justify-center pt-6">
