@@ -3,7 +3,6 @@
 import { m as motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { CheckCircle2 } from "lucide-react";
-import { collaboratorIds } from "@/lib/data";
 import { useTheme } from "@/lib/useTheme";
 
 export default function About() {
@@ -158,37 +157,6 @@ function AboutDark() {
             <p className="text-foreground-secondary leading-relaxed mb-8">
               {t("p2")}
             </p>
-
-            {/* Collaborators — editorial list (no individual cards) */}
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-tertiary mb-5">
-                {t("collaboratorsLabel")}
-              </p>
-              <ul className="divide-y divide-edge-secondary border-t border-b border-edge-secondary">
-                {collaboratorIds.map((c, i) => (
-                  <motion.li
-                    key={c.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1, duration: 0.4 }}
-                    className="py-4 flex flex-col gap-1"
-                  >
-                    <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                      <span className="font-semibold text-base text-foreground-active">
-                        {c.name}
-                      </span>
-                      <span className="text-[10px] font-mono uppercase tracking-widest text-foreground-accent">
-                        {t(`collaborators.${i}.role`)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-foreground-secondary leading-relaxed max-w-prose">
-                      {t(`collaborators.${i}.description`)}
-                    </p>
-                  </motion.li>
-                ))}
-              </ul>
-            </div>
           </div>
 
           {/* Right — values */}

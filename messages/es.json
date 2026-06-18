@@ -161,17 +161,6 @@
     },
     "p1": "Soy Brian, CEO de <strong>For3s</strong> — empresa nueva de infraestructura para agentes de IA en LATAM. El nombre viene del latín: <em>las puertas</em>. Cada proyecto que construyo es una puerta que abrimos juntos.",
     "p2": "No construyo features — construyo plataformas. Mi enfoque está en la capa de infraestructura: orquestación de agentes, sistemas de memoria, y los protocolos que hacen posible la siguiente generación de software.",
-    "collaboratorsLabel": "En colaboración con",
-    "collaborators": {
-      "0": {
-        "role": "Comunidad y ecosistema",
-        "description": "Comunidad de builders y founders en LATAM. Frutero Club es el ecosistema donde nace la visión, se prueban ideas y se conectan las personas que construyen el futuro."
-      },
-      "1": {
-        "role": "Producto y tecnología",
-        "description": "Studio de producto y desarrollo. Godinez Studio es la máquina creativa detrás de las herramientas, agentes y experiencias digitales que da vida a los proyectos."
-      }
-    },
     "valuesLabel": "Cómo opero",
     "values": {
       "0": {
@@ -213,11 +202,6 @@
       }
     },
     "items": {
-      "godinezAi": {
-        "type": "Producto",
-        "name": "Godinez AI",
-        "description": "Herramientas de IA para trabajo moderno, productividad y adopción práctica en usuarios no técnicos."
-      },
       "agentcamp": {
         "type": "Comunidad",
         "name": "AgentCamp",
@@ -227,11 +211,6 @@
         "type": "Programa",
         "name": "Vibecoding Bootcamp",
         "description": "Experiencia formativa para llevar ideas a productos usando IA, criterio de producto y ejecución."
-      },
-      "miPase": {
-        "type": "Producto",
-        "name": "Mi Pase",
-        "description": "Proyecto con operación, usuarios y flujos reales donde el contexto del negocio importa tanto como el código."
       },
       "paykit": {
         "type": "Producto",
@@ -258,11 +237,7 @@
     "items": {
       "for3s": {
         "tagline": "Infraestructura para agentes en LATAM",
-        "description": "CEO y co-fundador. For3s (del latín 'las puertas') es una empresa nueva que construye la capa de infraestructura para desplegar, orquestar y escalar agentes de IA en producción — creada en colaboración con Frutero Club y Godinez Studio."
-      },
-      "godinez-ai": {
-        "tagline": "Herramientas de IA para el trabajador moderno",
-        "description": "Suite de herramientas de IA orientada al trabajador latinoamericano. Automatización accesible, prompts prácticos y flujos de trabajo inteligentes para el día a día profesional."
+        "description": "CEO y co-fundador. For3s (del latín 'las puertas') es una empresa nueva que construye la capa de infraestructura para desplegar, orquestar y escalar agentes de IA en producción."
       },
       "kukulcan-brain": {
         "tagline": "Sistema de memoria y conocimiento para agentes",
@@ -378,8 +353,8 @@
         "description": "Inicio de arquitectura de memoria para agentes. Profundización en grafos de conocimiento y sistemas multi-agente."
       },
       "2024": {
-        "title": "Godinez AI & Acompañante",
-        "description": "Lanzamiento de herramientas de IA para el trabajador moderno y agente de compañía para adultos mayores."
+        "title": "Acompañante",
+        "description": "Lanzamiento de agente de compañía para adultos mayores, con foco en impacto social."
       },
       "2023": {
         "title": "TrustDrop & Web3",
@@ -713,11 +688,6 @@
         "label": "Acompañante",
         "title": "Acompañante — caso de estudio",
         "summary": "Agente de IA para acompañar adultos mayores. Cómo se diseñó, qué aprendimos y qué hicimos diferente."
-      },
-      "godinez-ai": {
-        "label": "Godinez AI",
-        "title": "Godinez AI — caso de estudio",
-        "summary": "Suite de productividad para el trabajador latinoamericano. Decisiones de producto y arquitectura."
       },
       "for3s-internal": {
         "label": "For3s Internal",

@@ -6,15 +6,12 @@
 export const siteConfig = {
   name: "Brian López",
   handle: "brianweb3",
-  email: "brian@frutero.club",
+  email: "brayan002150@gmail.com",
   github: "https://github.com/brianweb3",
   twitter: "https://x.com/brianweb3",
 };
 
-export const collaboratorIds = [
-  { id: "frutero-club", name: "Frutero Club", url: "https://frutero.club" },
-  { id: "godinez-studio", name: "Godinez Studio", url: "https://godinez.studio" },
-] as const;
+export const collaboratorIds = [] as const;
 
 export type ProjectStatus = "activo" | "desarrollo" | "pausado";
 
@@ -22,17 +19,9 @@ export const projects = [
   {
     id: "for3s",
     name: "For3s",
-    tags: ["CEO", "AI Infra", "Agentes", "LATAM", "Frutero Club", "Godinez Studio"],
+    tags: ["CEO", "AI Infra", "Agentes", "LATAM"],
     status: "activo" as ProjectStatus,
     year: "2025",
-    featured: true,
-  },
-  {
-    id: "godinez-ai",
-    name: "Godinez AI",
-    tags: ["AI Tools", "Productividad", "LATAM"],
-    status: "activo" as ProjectStatus,
-    year: "2024",
     featured: true,
   },
   {

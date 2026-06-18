@@ -161,17 +161,6 @@
     },
     "p1": "I'm Brian, CEO of <strong>For3s</strong> — a new agent infrastructure company for AI agents in LATAM. The name comes from Latin: <em>the doors</em>. Every project I build is a door we open together.",
     "p2": "I don't build features — I build platforms. My focus is the infrastructure layer: agent orchestration, memory systems, and the protocols that make the next generation of software possible.",
-    "collaboratorsLabel": "In collaboration with",
-    "collaborators": {
-      "0": {
-        "role": "Community & ecosystem",
-        "description": "A community of builders and founders in LATAM. Frutero Club is the ecosystem where vision is born, ideas get tested, and the people building the future connect."
-      },
-      "1": {
-        "role": "Product & technology",
-        "description": "A product and development studio. Godinez Studio is the creative engine behind the tools, agents, and digital experiences that bring projects to life."
-      }
-    },
     "valuesLabel": "How I operate",
     "values": {
       "0": {
@@ -213,11 +202,6 @@
       }
     },
     "items": {
-      "godinezAi": {
-        "type": "Product",
-        "name": "Godinez AI",
-        "description": "AI tools for modern work, productivity, and practical adoption by non-technical users."
-      },
       "agentcamp": {
         "type": "Community",
         "name": "AgentCamp",
@@ -227,11 +211,6 @@
         "type": "Program",
         "name": "Vibecoding Bootcamp",
         "description": "A training experience for turning ideas into products using AI, product judgment, and execution."
-      },
-      "miPase": {
-        "type": "Product",
-        "name": "Mi Pase",
-        "description": "A project with operations, users, and real flows where business context matters as much as code."
       },
       "paykit": {
         "type": "Product",
@@ -258,11 +237,7 @@
     "items": {
       "for3s": {
         "tagline": "Agent infrastructure for LATAM",
-        "description": "CEO and co-founder. For3s (Latin for 'the doors') is a new company building the infrastructure layer to deploy, orchestrate, and scale AI agents in production — created in collaboration with Frutero Club and Godinez Studio."
-      },
-      "godinez-ai": {
-        "tagline": "AI tools for the modern worker",
-        "description": "AI tool suite designed for the Latin American worker. Accessible automation, practical prompts, and intelligent workflows for the day-to-day."
+        "description": "CEO and co-founder. For3s (Latin for 'the doors') is a new company building the infrastructure layer to deploy, orchestrate, and scale AI agents in production."
       },
       "kukulcan-brain": {
         "tagline": "Memory and knowledge system for agents",
@@ -378,8 +353,8 @@
         "description": "Memory architecture for agents kicks off. Deep dive into knowledge graphs and multi-agent systems."
       },
       "2024": {
-        "title": "Godinez AI & Acompañante",
-        "description": "Launch of AI tools for the modern worker and an AI companion for older adults."
+        "title": "Acompañante",
+        "description": "Launch of an AI companion for older adults, focused on social impact."
       },
       "2023": {
         "title": "TrustDrop & Web3",
@@ -713,11 +688,6 @@
         "label": "Acompañante",
         "title": "Acompañante — case study",
         "summary": "AI agent built to keep older adults company. How we designed it, what we learned, what we did differently."
-      },
-      "godinez-ai": {
-        "label": "Godinez AI",
-        "title": "Godinez AI — case study",
-        "summary": "Productivity suite for the Latin American worker. Product and architecture decisions."
       },
       "for3s-internal": {
         "label": "For3s Internal",

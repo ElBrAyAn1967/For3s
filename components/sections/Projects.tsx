@@ -41,10 +41,8 @@ export default function Projects() {
 function ProjectsLight() {
   const t = useTranslations("ProjectsLight");
   const ecosystemKeys = [
-    "godinezAi",
     "agentcamp",
     "vibecodingBootcamp",
-    "miPase",
     "paykit",
     "ateneaio",
   ] as const;
@@ -125,15 +123,8 @@ function ProjectMarquee({
   urls,
   t,
 }: {
-  keys: readonly [
-    "godinezAi",
-    "agentcamp",
-    "vibecodingBootcamp",
-    "miPase",
-    "paykit",
-    "ateneaio",
-  ];
-  urls: Partial<Record<(typeof keys)[number], string>>;
+  keys: readonly string[];
+  urls: Partial<Record<string, string>>;
   t: (key: string) => string;
 }) {
   const track = [...keys, ...keys];

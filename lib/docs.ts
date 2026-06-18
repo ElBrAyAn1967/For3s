@@ -36,7 +36,6 @@ import {
   Bot as BotIcon,
   GitMerge,
   HeartHandshake,
-  Sparkle,
   Building2,
 } from "lucide-react";
 
@@ -130,7 +129,6 @@ export const DOC_STRUCTURE: DocCategory[] = [
     id: "casos-estudio",
     items: [
       { id: "acompanante", icon: HeartHandshake },
-      { id: "godinez-ai", icon: Sparkle },
       { id: "for3s-internal", icon: Building2 },
     ],
   },
