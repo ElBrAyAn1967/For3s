@@ -159,7 +159,7 @@
       "prefix": "For3s — Las puertas hacia",
       "accent": "la nueva era"
     },
-    "p1": "Soy Brian, CEO de <strong>For3s</strong> — empresa nueva de infraestructura para agentes de IA en LATAM. El nombre viene del latín: <em>las puertas</em>. Cada proyecto que construyo es una puerta que abrimos juntos.",
+    "p1": "<strong>For3s</strong> es una empresa nueva de infraestructura para agentes de IA en LATAM. El nombre viene del latín: <em>las puertas</em>. Cada proyecto que construimos es una puerta que abrimos juntos.",
     "p2": "No construyo features — construyo plataformas. Mi enfoque está en la capa de infraestructura: orquestación de agentes, sistemas de memoria, y los protocolos que hacen posible la siguiente generación de software.",
     "valuesLabel": "Cómo opero",
     "values": {
@@ -237,7 +237,7 @@
     "items": {
       "for3s": {
         "tagline": "Infraestructura para agentes en LATAM",
-        "description": "CEO y co-fundador. For3s (del latín 'las puertas') es una empresa nueva que construye la capa de infraestructura para desplegar, orquestar y escalar agentes de IA en producción."
+        "description": "For3s (del latín 'las puertas') es una empresa nueva que construye la capa de infraestructura para desplegar, orquestar y escalar agentes de IA en producción."
       },
       "kukulcan-brain": {
         "tagline": "Sistema de memoria y conocimiento para agentes",
@@ -362,7 +362,7 @@
       },
       "2022": {
         "title": "Primeros pasos como builder",
-        "description": "Comienzo del journey como founder. Primeros proyectos, comunidades y aprendizajes en tecnología."
+        "description": "Comienzo del journey como builder. Primeros proyectos, comunidades y aprendizajes en tecnología."
       }
     }
   },

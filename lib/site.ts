@@ -16,11 +16,10 @@ export const SITE = {
   /** PNG version of the brand mark for JSON-LD (Google requires raster). */
   logo: "/logo-mark-512.png",
   logoSize: 512,
-  /** Founder identity for Person schema. */
+  /** Author identity for Person schema (no role/title — this is For3s' site). */
   founder: {
     name: "Brian López",
     url: "https://www.linkedin.com/in/brianweb3",
-    jobTitle: "Founder & CEO",
   },
   /** Social profiles for Organization.sameAs (entity-graph signal). */
   social: [

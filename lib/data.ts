@@ -19,7 +19,7 @@ export const projects = [
   {
     id: "for3s",
     name: "For3s",
-    tags: ["CEO", "AI Infra", "Agentes", "LATAM"],
+    tags: ["AI Infra", "Agentes", "LATAM"],
     status: "activo" as ProjectStatus,
     year: "2025",
     featured: true,

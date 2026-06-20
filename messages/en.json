@@ -159,7 +159,7 @@
       "prefix": "For3s — The doors into",
       "accent": "the new era"
     },
-    "p1": "I'm Brian, CEO of <strong>For3s</strong> — a new agent infrastructure company for AI agents in LATAM. The name comes from Latin: <em>the doors</em>. Every project I build is a door we open together.",
+    "p1": "<strong>For3s</strong> is a new agent infrastructure company for AI agents in LATAM. The name comes from Latin: <em>the doors</em>. Every project we build is a door we open together.",
     "p2": "I don't build features — I build platforms. My focus is the infrastructure layer: agent orchestration, memory systems, and the protocols that make the next generation of software possible.",
     "valuesLabel": "How I operate",
     "values": {
@@ -237,7 +237,7 @@
     "items": {
       "for3s": {
         "tagline": "Agent infrastructure for LATAM",
-        "description": "CEO and co-founder. For3s (Latin for 'the doors') is a new company building the infrastructure layer to deploy, orchestrate, and scale AI agents in production."
+        "description": "For3s (Latin for 'the doors') is a new company building the infrastructure layer to deploy, orchestrate, and scale AI agents in production."
       },
       "kukulcan-brain": {
         "tagline": "Memory and knowledge system for agents",
@@ -362,7 +362,7 @@
       },
       "2022": {
         "title": "First steps as a builder",
-        "description": "Start of the founder journey. First projects, communities, and lessons in technology."
+        "description": "Start of the builder journey. First projects, communities, and lessons in technology."
       }
     }
   },

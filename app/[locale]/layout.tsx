@@ -171,8 +171,6 @@ export default async function LocaleLayout({
         "@id": founderId,
         name: SITE.founder.name,
         url: SITE.founder.url,
-        jobTitle: SITE.founder.jobTitle,
-        worksFor: { "@id": orgId },
         sameAs: SITE.social.filter((s) => s.includes("brianweb3")),
       },
     ],
