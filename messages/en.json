@@ -773,6 +773,7 @@
       "nav": {
         "profile": "Profile",
         "connectors": "Connectors",
+        "brain": "Brain",
         "logout": "Log out"
       },
       "profile": {
@@ -796,6 +797,36 @@
         "title": "Connectors",
         "subtitle": "Connect your tools so For3s can work with them.",
         "connect": "Connect"
+      },
+      "brain": {
+        "title": "Brain",
+        "subtitle": "How For3s thinks inside: a graph of brain nodes that remember, consolidate and forget. Tap a node to see what it does.",
+        "hint": "Tap a node in the graph to see its role.",
+        "legend": {
+          "live": "Live",
+          "design": "Designed"
+        },
+        "nodes": {
+          "talamo": { "short": "Thalamus", "name": "Thalamus · Router", "desc": "Decides which subsystems to activate based on what comes in: the routing of each request." },
+          "amigdala": { "short": "Amygdala", "name": "Amygdala · Fast appraisal", "desc": "Instant criticality triage: is this urgent, sensitive, or routine?" },
+          "pfc": { "short": "PFC", "name": "PFC · Orchestrator", "desc": "Executive control: plans, decides the strategy and coordinates the other nodes." },
+          "skills": { "short": "Skills", "name": "Basal Ganglia · Skills", "desc": "Procedural memory: how to solve each kind of task it has already learned." },
+          "hipocampo": { "short": "Hippocampus", "name": "Hippocampus · Episodic memory", "desc": "Stores every interaction and recalls it by meaning (semantic search with pgvector). LIVE." },
+          "kg": { "short": "Graph", "name": "Knowledge Graph", "desc": "Structured knowledge: navigable entities, concepts and relations (Apache AGE). LIVE." },
+          "cls": { "short": "CLS", "name": "Consolidation · CLS", "desc": "At night it groups repeated episodes and promotes them to concepts in the graph. LIVE." },
+          "microglia": { "short": "Microglia", "name": "Microglia · Forgetting", "desc": "Prunes old, already-consolidated noise, with a recoverable safety net. LIVE." },
+          "dmn": { "short": "DMN", "name": "DMN · Offline reflection", "desc": "Processes at rest: anticipates, simulates and proposes improvements when no one is using it." },
+          "dual": { "short": "Dual", "name": "Dual-Process Check", "desc": "Decides between a fast answer or deep analysis, based on confidence." },
+          "neuromod": { "short": "Neuromod.", "name": "Neuromodulators", "desc": "Global modes that adjust all nodes' parameters at once (exploration, attention, rest)." }
+        },
+        "h5": {
+          "label": "H5 · Real memory",
+          "desc": "For3s remembers by meaning: each interaction is embedded and can be recalled semantically, and it populates the knowledge graph."
+        },
+        "h6": {
+          "label": "H6 · Self-care",
+          "desc": "At night, For3s maintains itself: it consolidates what matters into the graph and forgets old noise, with no human intervention."
+        }
       }
     },
     "waiting": {

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { User, Plug, LogOut, PanelsTopLeft } from "lucide-react";
+import { User, Plug, Brain, LogOut, PanelsTopLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import ConnectApiKey from "./ConnectApiKey";
 import ProfilePanel from "./ProfilePanel";
 import ConnectorsPanel from "./ConnectorsPanel";
+import BrainPanel from "./BrainPanel";
 import type { DemoKind } from "@/lib/demo/types";
 
 /**
@@ -18,7 +19,7 @@ import type { DemoKind } from "@/lib/demo/types";
  *
  * Recibe los datos de la sesión (name/email) y el callback de cerrar sesión.
  */
-type Section = "profile" | "connectors";
+type Section = "profile" | "connectors" | "brain";
 
 export default function DemoShell({
   kind,
@@ -47,6 +48,7 @@ export default function DemoShell({
   const nav: { key: Section; label: string; Icon: typeof User }[] = [
     { key: "profile", label: t("nav.profile"), Icon: User },
     { key: "connectors", label: t("nav.connectors"), Icon: Plug },
+    { key: "brain", label: t("nav.brain"), Icon: Brain },
   ];
 
   return (
@@ -126,8 +128,10 @@ export default function DemoShell({
                 keyHint={keyHint}
                 agentOn={agentOn}
               />
-            ) : (
+            ) : section === "connectors" ? (
               <ConnectorsPanel />
+            ) : (
+              <BrainPanel />
             )}
           </div>
         </div>
