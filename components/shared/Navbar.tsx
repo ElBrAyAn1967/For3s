@@ -16,9 +16,10 @@ import { track } from "@/lib/analytics";
 // Two link sets — one per audience mode.
 // Light (B2B): commercial trail ending in `demo` (lead-capture surface).
 // Dark (B2C): builder trail ending in `docs` (technical reference).
-type LinkKey = "about" | "projects" | "timeline" | "contact" | "docs" | "demo";
+type LinkKey = "for3sOS" | "about" | "projects" | "timeline" | "contact" | "docs" | "demo";
 
 const linkHrefs: Record<LinkKey, string> = {
+  for3sOS: "/for3s-os",
   about: "/#about",
   projects: "/#projects",
   timeline: "/#timeline",
@@ -34,6 +35,7 @@ const lightLinkKeys: LinkKey[] = [
   "demo",
 ];
 const darkLinkKeys: LinkKey[] = [
+  "for3sOS",
   "about",
   "projects",
   "timeline",

@@ -18,7 +18,8 @@
       "timeline": "Trayectoria",
       "contact": "Contacto",
       "docs": "Docs",
-      "demo": "Demo"
+      "demo": "Demo",
+      "for3sOS": "For3s OS"
     },
     "light": {
       "links": {
@@ -27,7 +28,8 @@
         "timeline": "Confianza",
         "contact": "Demo",
         "docs": "Docs",
-        "demo": "Demo"
+        "demo": "Demo",
+        "for3sOS": "For3s OS"
       },
       "cta": "Agendar demo"
     },
@@ -715,9 +717,15 @@
       "label": "Demo dedicada",
       "title": "Bienvenido, {name}",
       "description": "Esta es tu demo dedicada de For3s QA. Conecta tu cuenta para empezar.",
-      "jazz": { "name": "Jazz" },
-      "mashe": { "name": "Mashe" },
-      "brian": { "name": "Brian" }
+      "jazz": {
+        "name": "Jazz"
+      },
+      "mashe": {
+        "name": "Mashe"
+      },
+      "brian": {
+        "name": "Brian"
+      }
     },
     "connect": {
       "button": "Conectar con For3s",
@@ -807,17 +815,61 @@
           "design": "Diseñado"
         },
         "nodes": {
-          "talamo": { "short": "Tálamo", "name": "Tálamo · Router", "desc": "Decide qué subsistemas activar según lo que llega: el ruteo de cada petición." },
-          "amigdala": { "short": "Amígdala", "name": "Amígdala · Valoración rápida", "desc": "Triaje instantáneo de criticidad: ¿esto es urgente, sensible, o rutinario?" },
-          "pfc": { "short": "PFC", "name": "PFC · Orquestador", "desc": "El control ejecutivo: planifica, decide la estrategia y coordina a los demás nodos." },
-          "skills": { "short": "Skills", "name": "Ganglios Basales · Skills", "desc": "Memoria de procedimientos: cómo se resuelve cada tipo de tarea que ya aprendió." },
-          "hipocampo": { "short": "Hipocampo", "name": "Hipocampo · Memoria episódica", "desc": "Guarda cada interacción y la recupera por significado (búsqueda semántica con pgvector). EN PRODUCCIÓN." },
-          "kg": { "short": "Grafo", "name": "Knowledge Graph", "desc": "Conocimiento estructurado: entidades, conceptos y relaciones navegables (Apache AGE). EN PRODUCCIÓN." },
-          "cls": { "short": "CLS", "name": "Consolidación · CLS", "desc": "De noche agrupa episodios repetidos y los promueve a conceptos en el grafo. EN PRODUCCIÓN." },
-          "microglia": { "short": "Microglía", "name": "Microglía · Olvido", "desc": "Poda el ruido viejo ya consolidado, con red de seguridad recuperable. EN PRODUCCIÓN." },
-          "dmn": { "short": "DMN", "name": "DMN · Reflexión offline", "desc": "Procesa en reposo: anticipa, simula y propone mejoras cuando no hay nadie usando." },
-          "dual": { "short": "Dual", "name": "Dual-Process Check", "desc": "Decide entre respuesta rápida o análisis profundo, según la confianza." },
-          "neuromod": { "short": "Neuromod.", "name": "Neuromoduladores", "desc": "Modos globales que ajustan a la vez los parámetros de todos los nodos (exploración, atención, reposo)." }
+          "talamo": {
+            "short": "Tálamo",
+            "name": "Tálamo · Router",
+            "desc": "Decide qué subsistemas activar según lo que llega: el ruteo de cada petición."
+          },
+          "amigdala": {
+            "short": "Amígdala",
+            "name": "Amígdala · Valoración rápida",
+            "desc": "Triaje instantáneo de criticidad: ¿esto es urgente, sensible, o rutinario?"
+          },
+          "pfc": {
+            "short": "PFC",
+            "name": "PFC · Orquestador",
+            "desc": "El control ejecutivo: planifica, decide la estrategia y coordina a los demás nodos."
+          },
+          "skills": {
+            "short": "Skills",
+            "name": "Ganglios Basales · Skills",
+            "desc": "Memoria de procedimientos: cómo se resuelve cada tipo de tarea que ya aprendió."
+          },
+          "hipocampo": {
+            "short": "Hipocampo",
+            "name": "Hipocampo · Memoria episódica",
+            "desc": "Guarda cada interacción y la recupera por significado (búsqueda semántica con pgvector). EN PRODUCCIÓN."
+          },
+          "kg": {
+            "short": "Grafo",
+            "name": "Knowledge Graph",
+            "desc": "Conocimiento estructurado: entidades, conceptos y relaciones navegables (Apache AGE). EN PRODUCCIÓN."
+          },
+          "cls": {
+            "short": "CLS",
+            "name": "Consolidación · CLS",
+            "desc": "De noche agrupa episodios repetidos y los promueve a conceptos en el grafo. EN PRODUCCIÓN."
+          },
+          "microglia": {
+            "short": "Microglía",
+            "name": "Microglía · Olvido",
+            "desc": "Poda el ruido viejo ya consolidado, con red de seguridad recuperable. EN PRODUCCIÓN."
+          },
+          "dmn": {
+            "short": "DMN",
+            "name": "DMN · Reflexión offline",
+            "desc": "Procesa en reposo: anticipa, simula y propone mejoras cuando no hay nadie usando."
+          },
+          "dual": {
+            "short": "Dual",
+            "name": "Dual-Process Check",
+            "desc": "Decide entre respuesta rápida o análisis profundo, según la confianza."
+          },
+          "neuromod": {
+            "short": "Neuromod.",
+            "name": "Neuromoduladores",
+            "desc": "Modos globales que ajustan a la vez los parámetros de todos los nodos (exploración, atención, reposo)."
+          }
         },
         "h5": {
           "label": "H5 · Memoria real",
@@ -839,6 +891,102 @@
       "label": "En preparación",
       "title": "Esta página está en construcción",
       "description": "Estamos trabajando en este contenido. Vuelve pronto."
+    }
+  },
+  "For3sOS": {
+    "meta": {
+      "title": "For3s OS — The self-hosted AI agent that remembers, learns & works in a team",
+      "description": "For3s OS is a self-hosted AI agent (a second brain) built on Claude: real semantic memory, a knowledge graph, a living identity that adapts to you, multi-agent teamwork, self-modification, and enterprise-grade trust. Your data, your server."
+    },
+    "badge": {
+      "version": "v0.15.0",
+      "label": "Living Identity"
+    },
+    "hero": {
+      "headline": {
+        "line1": "The self-hosted AI agent that",
+        "line2": "remembers, learns & works in a team"
+      },
+      "description": "For3s OS is a second brain built on Claude — not a stateless chatbot. Real semantic memory, a knowledge graph, a living identity that adapts to you, and enterprise-grade trust. Your data, your server.",
+      "ctaPrimary": "Star on GitHub",
+      "ctaSecondary": "Read the docs"
+    },
+    "why": {
+      "overline": "Why For3s?",
+      "text": "Most \"AI agents\" are a chatbot with extra steps. For3s goes deep: a knowledge graph (Apache AGE) + semantic memory (pgvector), an identity that adapts to you on its own, self-modification (it edits its own code in a sandbox), and verifiable trust (immutable audit, signed releases, SBOM). Self-hosted — your data never leaves your machine."
+    },
+    "features": {
+      "overline": "What it does",
+      "title": "A real agent, not a chatbot",
+      "items": [
+        {
+          "icon": "brain",
+          "title": "Real memory",
+          "text": "Remembers by meaning, not just the last messages. A knowledge graph that consolidates itself at night."
+        },
+        {
+          "icon": "sparkles",
+          "title": "Living identity",
+          "text": "A layered persona that adapts to your style on its own — with a blinded, non-negotiable core."
+        },
+        {
+          "icon": "wrench",
+          "title": "Does real work",
+          "text": "Runs code in a sandbox, reads & writes GitHub, reads the web, processes PDFs and images."
+        },
+        {
+          "icon": "users",
+          "title": "Multi-agent team",
+          "text": "For complex tasks it coordinates specialists in parallel and synthesizes one report."
+        },
+        {
+          "icon": "moon",
+          "title": "Works while you're away",
+          "text": "Maintains and improves itself unattended — backups, consolidation, learning."
+        },
+        {
+          "icon": "shield",
+          "title": "Enterprise trust",
+          "text": "Immutable audit, offline key management, signed releases, SBOM. Self-hosted."
+        }
+      ]
+    },
+    "install": {
+      "overline": "Install",
+      "text": "One command sets up everything in containers. When it's done, you talk to it on Telegram.",
+      "command": "curl -fsSL https://install.for3s.dev | sh"
+    },
+    "faq": {
+      "overline": "FAQ",
+      "title": "Frequently asked",
+      "items": [
+        {
+          "q": "What is For3s OS?",
+          "a": "For3s OS is a self-hosted AI agent — a second brain built on Claude with real semantic memory, a knowledge graph, a living identity that adapts to you, multi-agent teamwork, and enterprise-grade trust. You run it on your own server, so your data never leaves."
+        },
+        {
+          "q": "How is it different from a chatbot?",
+          "a": "A chatbot responds and forgets. For3s remembers by meaning (semantic memory + knowledge graph), works on its own while you're away, executes real code in a sandbox, reads and writes GitHub, and even edits its own code — all with immutable audit and offline key management."
+        },
+        {
+          "q": "Is it self-hosted and open source?",
+          "a": "Yes. For3s OS is open source (AGPL-3.0) and fully self-hosted. Install it with a single command on your own Linux machine; your data stays on your server."
+        },
+        {
+          "q": "What is it built with?",
+          "a": "Python, PostgreSQL with Apache AGE (knowledge graph) and pgvector (semantic memory), Claude, Docker, MCP, and Telegram. BGE-M3 embeddings power the semantic search."
+        }
+      ]
+    },
+    "compare": {
+      "overline": "Compare",
+      "text": "Curious how For3s stacks up against other self-hosted agents?",
+      "link": "For3s OS vs Hermes →"
+    },
+    "footer": {
+      "tagline": "A self-hosted AI agent that remembers, learns, works in a team, and improves itself.",
+      "license": "Open source under AGPL-3.0",
+      "repo": "github.com/for3slabs/for3s"
     }
   }
 }
