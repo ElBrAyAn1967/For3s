@@ -39,6 +39,7 @@ import {
   instanciaOrden,
   parseScopes,
   rotarKey,
+  setCtlToken,
   setToken,
   validarToken,
   waitlistEstado,
@@ -75,14 +76,18 @@ async function flujoA_auth() {
   console.log("\n— FLUJO A · autenticación —");
   ok("token malo rechazado", (await validarToken("token-falso-123456789012345")) === false);
   ok("token bueno aceptado", (await validarToken(ADMIN_TOKEN)) === true);
-  setToken(ADMIN_TOKEN); // como el login de la UI
-  // el /ctl usa OTRO token: getInstancias con el token admin debe dar 401
+  setToken(ADMIN_TOKEN); // como el login de la UI (campo 1)
+  // BUG cazado post-suite: /ctl usa OTRO token. Sin el token ctl guardado,
+  // el fallback (token admin) debe dar 401 — llaves distintas a propósito.
   try {
     await getInstancias();
     ok("ctl exige SU token (admin≠ctl)", false, "aceptó el token equivocado");
   } catch (e) {
     ok("ctl exige SU token (admin≠ctl)", e instanceof PanelError && e.kind === "auth");
   }
+  setCtlToken(CTL_TOKEN); // como el login de la UI (campo 2, opcional)
+  const flota = await getInstancias();
+  ok("con el token ctl guardado, /ctl responde", flota.instancias.length > 0);
 }
 
 async function flujoB_prospecto() {
@@ -176,8 +181,7 @@ async function flujoC_cliente(waitlistId: number | null) {
 }
 
 async function flujoD_instancias() {
-  console.log("\n— FLUJO D · instancias (token ctl) —");
-  setToken(CTL_TOKEN);
+  console.log("\n— FLUJO D · instancias (token ctl, camino REAL de la UI) —");
   const flota = await getInstancias();
   ok("flota completa", flota.instancias.length >= 5, `${flota.instancias.length} instancias`);
   const foresito = flota.instancias.find((i) => i.nombre === "foresito");
@@ -199,7 +203,6 @@ async function flujoD_instancias() {
     const apa = await instanciaOrden("mashe", "apagar");
     ok("apagar mashe (devuelta a su estado)", apa.ok && !apa.encendida, `${(apa.ms / 1000).toFixed(1)}s`);
   }
-  setToken(ADMIN_TOKEN);
 }
 
 async function flujoE_errores() {

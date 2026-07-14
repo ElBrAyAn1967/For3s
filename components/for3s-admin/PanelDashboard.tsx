@@ -5,6 +5,7 @@ import {
   PanelError,
   clearToken,
   getToken,
+  setCtlToken,
   setToken,
   validarToken,
 } from "@/lib/for3sAdmin";
@@ -31,6 +32,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function PanelDashboard() {
   const [tokenInput, setTokenInput] = useState("");
+  const [ctlInput, setCtlInput] = useState("");
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
   const [loginError, setLoginError] = useState("");
@@ -69,8 +71,10 @@ export default function PanelDashboard() {
       const ok = await validarToken(tok);
       if (ok) {
         setToken(tok);
+        setCtlToken(ctlInput.trim()); // el de instancias es OTRO token (opcional)
         setAuthed(true);
         setTokenInput("");
+        setCtlInput("");
       } else {
         setLoginError("Token inválido.");
       }
@@ -81,7 +85,7 @@ export default function PanelDashboard() {
           : "Error inesperado validando el token.",
       );
     }
-  }, [tokenInput]);
+  }, [tokenInput, ctlInput]);
 
   const logout = useCallback(() => {
     clearToken();
@@ -132,10 +136,22 @@ export default function PanelDashboard() {
               loginError ? "border-danger" : "border-edge-primary focus:border-brand-bold"
             }`}
           />
+          <input
+            type="password"
+            value={ctlInput}
+            onChange={(e) => setCtlInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && login()}
+            placeholder="Token de instancias (opcional)"
+            autoComplete="off"
+            className="w-full rounded-lg bg-surface-primary border border-edge-primary focus:border-brand-bold px-4 py-3 text-sm text-foreground-active outline-none transition-colors mt-3"
+          />
           {loginError && <p className="mt-2 text-xs text-danger">{loginError}</p>}
           <button type="button" onClick={login} className="btn-pill btn-pill-primary w-full mt-4">
             Entrar
           </button>
+          <p className="text-[11px] text-foreground-tertiary mt-3">
+            Sin el token de instancias, la pestaña Instancias no opera (son llaves distintas a propósito).
+          </p>
         </div>
       </div>
     );

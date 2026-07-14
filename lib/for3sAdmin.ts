@@ -13,6 +13,7 @@ export const FOR3S_PUBLIC =
   process.env.NEXT_PUBLIC_FOR3S_PUBLIC_BASE ?? "https://for3s.tail6749e5.ts.net";
 
 const TOKEN_KEY = "for3s_admin_token";
+const CTL_TOKEN_KEY = "for3s_ctl_token";
 
 export function getToken(): string {
   if (typeof window === "undefined") return "";
@@ -21,8 +22,18 @@ export function getToken(): string {
 export function setToken(token: string): void {
   window.localStorage.setItem(TOKEN_KEY, token);
 }
+// /ctl (instancias) usa SU PROPIO token (defensa en capas: si el de admin se
+// filtra, nadie apaga instancias). Opcional: sin él, Instancias avisa.
+export function getCtlToken(): string {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(CTL_TOKEN_KEY) ?? "";
+}
+export function setCtlToken(token: string): void {
+  if (token) window.localStorage.setItem(CTL_TOKEN_KEY, token);
+}
 export function clearToken(): void {
   window.localStorage.removeItem(TOKEN_KEY);
+  window.localStorage.removeItem(CTL_TOKEN_KEY);
 }
 
 /** Error tipado: distingue "token malo" (401) de "no llego al server" (tailnet). */
@@ -246,14 +257,19 @@ export const waitlistEstado = (id: number, estado: string) =>
   });
 
 // ───────────────────────── control de instancias (/ctl) ─────────────────────────
+// BUG cazado post-suite: /ctl exige SU token, no el de admin — sin esto la
+// sección Instancias daría 401 en el navegador. Usa el token ctl si existe.
+
+const tokenCtl = () => getCtlToken() || getToken();
 
 export const getInstancias = () =>
-  llamar<{ instancias: Instancia[] }>("/ctl/instancias");
+  llamar<{ instancias: Instancia[] }>("/ctl/instancias", {}, tokenCtl());
 
 export const instanciaOrden = (nombre: string, accion: "encender" | "apagar") =>
   llamar<{ ok: boolean; instancia: string; encendida: boolean; ms: number }>(
     `/ctl/instancias/${encodeURIComponent(nombre)}/${accion}`,
     { method: "POST" },
+    tokenCtl(),
   );
 
 // ───────────────────────── waitlist pública (Funnel) ─────────────────────────
