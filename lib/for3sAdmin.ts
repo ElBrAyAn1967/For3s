@@ -1,0 +1,279 @@
+// Panel For3s OS (Frente B F4.c) — capa de datos del panel admin.
+//
+// TODO el tráfico va del NAVEGADOR de Brian directo al server for3s por el
+// tailnet (Tailscale Serve, tailnet-only): /adm = admin API (clientes/consumo/
+// waitlist) y /ctl = control de instancias. Vercel NUNCA ve el token ni los
+// datos — esta página es un cascarón público; sin tailnet + token no pinta nada.
+// El token vive SOLO en localStorage del navegador de Brian (logout lo borra).
+
+export const FOR3S_BASE =
+  process.env.NEXT_PUBLIC_FOR3S_ADMIN_BASE ?? "https://for3s.tail6749e5.ts.net:8443";
+// URL pública (Funnel) — la usa el formulario público de waitlist del sitio.
+export const FOR3S_PUBLIC =
+  process.env.NEXT_PUBLIC_FOR3S_PUBLIC_BASE ?? "https://for3s.tail6749e5.ts.net";
+
+const TOKEN_KEY = "for3s_admin_token";
+
+export function getToken(): string {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(TOKEN_KEY) ?? "";
+}
+export function setToken(token: string): void {
+  window.localStorage.setItem(TOKEN_KEY, token);
+}
+export function clearToken(): void {
+  window.localStorage.removeItem(TOKEN_KEY);
+}
+
+/** Error tipado: distingue "token malo" (401) de "no llego al server" (tailnet). */
+export class PanelError extends Error {
+  constructor(
+    message: string,
+    public readonly kind: "auth" | "red" | "api",
+    public readonly status?: number,
+  ) {
+    super(message);
+  }
+}
+
+async function llamar<T>(
+  path: string,
+  init: RequestInit = {},
+  token?: string,
+): Promise<T> {
+  const tok = token ?? getToken();
+  let res: Response;
+  try {
+    res = await fetch(`${FOR3S_BASE}${path}`, {
+      ...init,
+      headers: {
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        Authorization: `Bearer ${tok}`,
+        "X-Admin-Actor": "panel-brian",
+        ...init.headers,
+      },
+    });
+  } catch {
+    throw new PanelError(
+      "No llego al server. ¿Estás en el tailnet (Tailscale encendido)?",
+      "red",
+    );
+  }
+  if (res.status === 401) {
+    throw new PanelError("Token inválido o vencido.", "auth", 401);
+  }
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    throw new PanelError(`Respuesta rara del server (HTTP ${res.status}).`, "api", res.status);
+  }
+  if (!res.ok) {
+    const msg =
+      typeof data === "object" && data !== null && "error" in data
+        ? String((data as { error?: unknown }).error)
+        : typeof data === "object" && data !== null && "mensaje" in data
+          ? String((data as { mensaje?: unknown }).mensaje)
+          : `HTTP ${res.status}`;
+    throw new PanelError(msg, "api", res.status);
+  }
+  return data as T;
+}
+
+// ───────────────────────── tipos (espejo del backend) ─────────────────────────
+
+export interface UsoCliente {
+  llamadas: number;
+  tokens: number;
+  costo: string; // NUMERIC llega como string
+  errores: number;
+  ultimo: string | null;
+}
+
+export interface Cliente {
+  client_id: string;
+  nombre: string | null;
+  estado: "activo" | "suspendido" | "revocado";
+  byok: boolean;
+  scopes: string; // jsonb llega serializado
+  con_key: boolean;
+  key_expira_at: string | null;
+  estado_motivo: string | null;
+  ultimo_uso: string;
+  creado_at: string;
+  cuota_dia_requests: number | null;
+  cuota_dia_tokens: number | null;
+  uso: UsoCliente | null;
+}
+
+export interface PuntoSerie {
+  dia: string;
+  llamadas: number;
+  tokens: number;
+  costo: string;
+  errores: number;
+}
+
+export interface Latencias {
+  global: { llamadas?: number; p50?: number | null; p95?: number | null; max?: number | null };
+  clientes: { client_id: string; llamadas: number; p50: number | null; p95: number | null; max: number | null }[];
+  dias: number;
+}
+
+export interface LogLlamada {
+  creado_at: string;
+  tema: string | null;
+  tokens_in: number;
+  tokens_out: number;
+  costo_usd: string;
+  byok: boolean;
+  ms: number;
+  estado: "ok" | "error" | "timeout";
+}
+
+export interface Prospecto {
+  id: number;
+  nombre: string;
+  email: string;
+  mensaje: string | null;
+  origen: string;
+  estado: "nuevo" | "contactado" | "convertido" | "descartado";
+  estado_por: string | null;
+  estado_at: string | null;
+  creado_at: string;
+  actualizado_at: string;
+}
+
+export interface Instancia {
+  nombre: string;
+  proyecto: string;
+  encendida: boolean;
+  control: boolean;
+  critica: boolean;
+}
+
+export function parseScopes(raw: string | string[] | null | undefined): string[] {
+  if (Array.isArray(raw)) return raw.map(String);
+  if (!raw) return [];
+  try {
+    const v: unknown = JSON.parse(raw);
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+// ───────────────────────── admin API (/adm) ─────────────────────────
+
+/** Valida un token contra un endpoint CON auth (el /ping no exige token). */
+export async function validarToken(token: string): Promise<boolean> {
+  try {
+    await llamar("/adm/consumo/resumen?dias=1", {}, token);
+    return true;
+  } catch (e) {
+    if (e instanceof PanelError && e.kind === "auth") return false;
+    throw e; // red/api: que la UI lo distinga de "token malo"
+  }
+}
+
+export const getClientes = (dias = 30) =>
+  llamar<{ clientes: Cliente[]; dias: number }>(`/adm/clientes?dias=${dias}`);
+
+export const altaCliente = (datos: {
+  client_id: string;
+  nombre?: string;
+  dias?: number;
+  scopes?: string[];
+}) =>
+  llamar<{ ok: boolean; client_id: string; key: string }>("/adm/clientes", {
+    method: "POST",
+    body: JSON.stringify(datos),
+  });
+
+export const cambiarEstado = (
+  clientId: string,
+  accion: "suspender" | "reactivar" | "revocar",
+  motivo: string,
+) =>
+  llamar<{ ok: boolean; mensaje: string }>(
+    `/adm/clientes/${encodeURIComponent(clientId)}/estado`,
+    { method: "POST", body: JSON.stringify({ accion, motivo }) },
+  );
+
+export const rotarKey = (clientId: string) =>
+  llamar<{ ok: boolean; key: string }>(
+    `/adm/clientes/${encodeURIComponent(clientId)}/rotar`,
+    { method: "POST", body: JSON.stringify({}) },
+  );
+
+export const editarCliente = (
+  clientId: string,
+  datos: {
+    cuota_dia_requests: number | null;
+    cuota_dia_tokens: number | null;
+    scopes?: string[];
+  },
+) =>
+  llamar<{ ok: boolean; mensaje: string }>(
+    `/adm/clientes/${encodeURIComponent(clientId)}`,
+    { method: "PATCH", body: JSON.stringify(datos) },
+  );
+
+export const getLogs = (clientId: string, limit = 100) =>
+  llamar<{ logs: LogLlamada[] }>(
+    `/adm/clientes/${encodeURIComponent(clientId)}/logs?limit=${limit}`,
+  );
+
+export const getResumen = (dias = 30) =>
+  llamar<{ resumen: UsoCliente[] & { client_id?: string }[]; dias: number }>(
+    `/adm/consumo/resumen?dias=${dias}`,
+  );
+
+export const getSeries = (dias = 30) =>
+  llamar<{ series: PuntoSerie[]; dias: number }>(`/adm/consumo/series?dias=${dias}`);
+
+export const getLatencias = (dias = 7) => llamar<Latencias>(`/adm/latencias?dias=${dias}`);
+
+export const getWaitlist = (estado?: string) =>
+  llamar<{ waitlist: Prospecto[] }>(
+    `/adm/waitlist${estado ? `?estado=${encodeURIComponent(estado)}` : ""}`,
+  );
+
+export const waitlistEstado = (id: number, estado: string) =>
+  llamar<{ ok: boolean; mensaje: string }>(`/adm/waitlist/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ estado }),
+  });
+
+// ───────────────────────── control de instancias (/ctl) ─────────────────────────
+
+export const getInstancias = () =>
+  llamar<{ instancias: Instancia[] }>("/ctl/instancias");
+
+export const instanciaOrden = (nombre: string, accion: "encender" | "apagar") =>
+  llamar<{ ok: boolean; instancia: string; encendida: boolean; ms: number }>(
+    `/ctl/instancias/${encodeURIComponent(nombre)}/${accion}`,
+    { method: "POST" },
+  );
+
+// ───────────────────────── waitlist pública (Funnel) ─────────────────────────
+
+/** Alta pública de prospecto — SIN token (endpoint público del canal). */
+export async function waitlistPublica(datos: {
+  nombre: string;
+  email: string;
+  mensaje?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${FOR3S_PUBLIC}/v1/waitlist`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...datos, origen: "sitio" }),
+    });
+    const data = (await res.json()) as { ok?: boolean; error?: string };
+    if (res.ok && data.ok) return { ok: true };
+    return { ok: false, error: data.error ?? `HTTP ${res.status}` };
+  } catch {
+    return { ok: false, error: "sin conexión" };
+  }
+}
