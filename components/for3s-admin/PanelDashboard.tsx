@@ -13,6 +13,7 @@ import SeccionResumen from "./SeccionResumen";
 import SeccionClientes from "./SeccionClientes";
 import SeccionWaitlist from "./SeccionWaitlist";
 import SeccionInstancias from "./SeccionInstancias";
+import SeccionServidor from "./SeccionServidor";
 
 /**
  * Panel de administración de For3s OS (Frente B F4.c). Página interna, solo
@@ -21,13 +22,14 @@ import SeccionInstancias from "./SeccionInstancias";
  * token esta página es un cascarón vacío.
  */
 
-type Tab = "resumen" | "clientes" | "waitlist" | "instancias";
+type Tab = "resumen" | "clientes" | "waitlist" | "instancias" | "servidor";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "resumen", label: "Resumen" },
   { id: "clientes", label: "Clientes" },
   { id: "waitlist", label: "Waitlist" },
   { id: "instancias", label: "Instancias" },
+  { id: "servidor", label: "Servidor" },
 ];
 
 export default function PanelDashboard() {
@@ -174,7 +176,7 @@ export default function PanelDashboard() {
             onClick={logout}
             className="text-xs font-mono text-foreground-tertiary hover:text-foreground-active transition-colors border border-edge-primary rounded-full px-4 py-2"
           >
-            Salir (borra el token)
+            Salir
           </button>
         </div>
 
@@ -204,6 +206,7 @@ export default function PanelDashboard() {
         )}
         {tab === "waitlist" && <SeccionWaitlist onConvertir={convertirProspecto} />}
         {tab === "instancias" && <SeccionInstancias />}
+        {tab === "servidor" && <SeccionServidor />}
       </div>
     </div>
   );

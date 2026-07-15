@@ -272,6 +272,31 @@ export const instanciaOrden = (nombre: string, accion: "encender" | "apagar") =>
     tokenCtl(),
   );
 
+export interface ServidorFoto {
+  ts: string;
+  sistema: {
+    uptime_s?: number;
+    carga?: number[];
+    cpus?: number;
+    ram_total_mb?: number;
+    ram_libre_mb?: number;
+    swap_total_mb?: number;
+    swap_libre_mb?: number;
+    disco_total_gb?: number;
+    disco_usado_gb?: number;
+    disco_libre_gb?: number;
+    host?: string;
+    kernel?: string;
+    temp_c?: number;
+  };
+  servicios: { servicio: string; activo: boolean; estado: string }[];
+  contenedores: { nombre: string; estado: string; detalle: string; imagen: string }[];
+  consumo: { nombre: string; cpu: string; ram: string }[];
+}
+
+/** Foto completa del host (pestaña Servidor). Puede tardar ~3-6s (docker stats). */
+export const getServidor = () => llamar<ServidorFoto>("/ctl/servidor", {}, tokenCtl());
+
 // ───────────────────────── waitlist pública (Funnel) ─────────────────────────
 
 /** Alta pública de prospecto — SIN token (endpoint público del canal). */
