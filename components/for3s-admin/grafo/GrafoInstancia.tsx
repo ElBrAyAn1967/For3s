@@ -10,9 +10,10 @@ import {
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import type { ServidorFoto } from "@/lib/for3sAdmin";
+import { CONT_INTOCABLES, PanelError, type ServidorFoto, contenedorOrden } from "@/lib/for3sAdmin";
 import { labelInstancia, nombreCorto } from "@/lib/servidorLabels";
 import NodoContenedor, { type DatosContenedor } from "./NodoContenedor";
+import ConfirmModal from "../ConfirmModal";
 
 /**
  * Grafo interno de UN For3s (Capa 2, estilo Railway): sus contenedores como
@@ -29,13 +30,36 @@ export default function GrafoInstancia({
   inst,
   foto,
   onVolver,
+  onRefrescar,
 }: {
   inst: string;
   foto: ServidorFoto;
   onVolver: () => void;
+  onRefrescar?: () => void;
 }) {
   const [sel, setSel] = useState<string | null>(null);
+  const [accion, setAccion] = useState<{ nombre: string; op: "reiniciar" | "parar" | "arrancar" } | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  const [aviso, setAviso] = useState("");
+  const [errAcc, setErrAcc] = useState("");
   const li = labelInstancia(inst);
+
+  const ejecutar = async () => {
+    if (!accion) return;
+    setOcupado(true);
+    setAviso("");
+    setErrAcc("");
+    try {
+      const r = await contenedorOrden(accion.nombre, accion.op);
+      setAviso(`${accion.op} ✓ (${(r.ms / 1000).toFixed(1)}s · ${r.corriendo ? "corriendo" : "parado"})`);
+      onRefrescar?.();
+    } catch (e) {
+      setErrAcc(e instanceof PanelError ? e.message : "La acción falló.");
+    } finally {
+      setOcupado(false);
+      setAccion(null);
+    }
+  };
 
   const conts = useMemo(() => foto.contenedores.filter((c) => c.instancia === inst), [foto, inst]);
   const statsPor = useMemo(() => {
@@ -149,10 +173,67 @@ export default function GrafoInstancia({
               <Fila k="Imagen" v={detalle.imagen} />
               <Fila k="Red" v={detalle.red || "—"} />
               <Fila k="Puertos" v={detalle.puertos || "—"} />
+
+              <div className="pt-2 border-t border-edge-secondary">
+                {CONT_INTOCABLES.has(detalle.nombre) ? (
+                  <p className="text-xs text-foreground-tertiary">
+                    Protegido — la nave nodriza no se controla desde aquí (solo terminal).
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={ocupado}
+                      className="btn-pill"
+                      onClick={() => setAccion({ nombre: detalle.nombre, op: "reiniciar" })}
+                    >
+                      Reiniciar
+                    </button>
+                    {detalle.estado === "running" ? (
+                      <button
+                        type="button"
+                        disabled={ocupado}
+                        className="btn-pill text-danger"
+                        onClick={() => setAccion({ nombre: detalle.nombre, op: "parar" })}
+                      >
+                        Parar
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={ocupado}
+                        className="btn-pill btn-pill-primary"
+                        onClick={() => setAccion({ nombre: detalle.nombre, op: "arrancar" })}
+                      >
+                        Arrancar
+                      </button>
+                    )}
+                  </div>
+                )}
+                {aviso && <p className="text-xs text-brand-bold mt-2">{aviso}</p>}
+                {errAcc && <p className="text-xs text-danger mt-2">{errAcc}</p>}
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        abierto={accion !== null}
+        peligro={accion?.op !== "arrancar"}
+        titulo={`${accion?.op === "reiniciar" ? "Reiniciar" : accion?.op === "parar" ? "Parar" : "Arrancar"} este contenedor`}
+        mensaje={
+          accion?.op === "parar"
+            ? "El contenedor se detiene hasta que lo arranques. Si es una pieza activa de este For3s, esa función deja de responder mientras esté parado."
+            : accion?.op === "reiniciar"
+              ? "El contenedor se reinicia (unos segundos sin servicio). Útil si se quedó pegado. No se pierde su volumen/datos."
+              : "El contenedor vuelve a arrancar."
+        }
+        textoConfirmar={accion?.op === "reiniciar" ? "Reiniciar" : accion?.op === "parar" ? "Parar" : "Arrancar"}
+        ocupado={ocupado}
+        onConfirmar={ejecutar}
+        onCancelar={() => setAccion(null)}
+      />
     </div>
   );
 }

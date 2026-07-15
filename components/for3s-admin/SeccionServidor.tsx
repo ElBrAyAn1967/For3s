@@ -145,7 +145,14 @@ export default function SeccionServidor() {
 
   // vista grafo (Capa 2): entramos a UN For3s y vemos su cableado
   if (zoomInst) {
-    return <GrafoInstancia inst={zoomInst} foto={foto} onVolver={() => setZoomInst(null)} />;
+    return (
+      <GrafoInstancia
+        inst={zoomInst}
+        foto={foto}
+        onVolver={() => setZoomInst(null)}
+        onRefrescar={() => setTick((t) => t + 1)}
+      />
+    );
   }
 
   const s = foto.sistema;

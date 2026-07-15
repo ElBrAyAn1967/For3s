@@ -272,6 +272,21 @@ export const instanciaOrden = (nombre: string, accion: "encender" | "apagar") =>
     tokenCtl(),
   );
 
+// Capa 3: control de UN contenedor (reiniciar/parar/arrancar). Lista negra dura
+// en el server: los intocables (nave nodriza) responden 403.
+export const contenedorOrden = (
+  nombre: string,
+  accion: "reiniciar" | "parar" | "arrancar",
+) =>
+  llamar<{ ok: boolean; contenedor: string; corriendo: boolean; ms: number }>(
+    `/ctl/contenedores/${encodeURIComponent(nombre)}/${accion}`,
+    { method: "POST" },
+    tokenCtl(),
+  );
+
+// Contenedores que el panel NO deja tocar (espejo de la lista del server).
+export const CONT_INTOCABLES = new Set(["for3s-agent-1", "for3s-worker-1", "for3s-postgres-1"]);
+
 export interface ServidorFoto {
   ts: string;
   sistema: {
