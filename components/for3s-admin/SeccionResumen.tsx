@@ -2,12 +2,29 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  type Granularidad,
   type Latencias,
   type PuntoSerie,
   PanelError,
   getLatencias,
   getSeries,
 } from "@/lib/for3sAdmin";
+
+// Presets de temporalidad: cada uno define el rango (días) y el bucket.
+const PRESETS: { id: string; label: string; dias: number; gran: Granularidad }[] = [
+  { id: "24h", label: "24 horas", dias: 1, gran: "hora" },
+  { id: "7d", label: "7 días", dias: 7, gran: "dia" },
+  { id: "30d", label: "30 días", dias: 30, gran: "dia" },
+  { id: "90d", label: "90 días", dias: 90, gran: "semana" },
+];
+
+// Etiqueta del eje según granularidad: hora→"14:00", día→"07-15", semana→"07-15".
+function etiqueta(iso: string, gran: Granularidad): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso).slice(5, 10);
+  if (gran === "hora") return `${String(d.getHours()).padStart(2, "0")}:00`;
+  return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 /**
  * Resumen: KPIs (30 días) + serie diaria de llamadas + latencias.
@@ -29,7 +46,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 
 /** Barras SVG de una serie (llamadas/día). Marcas delgadas, punta redondeada
  * anclada a la base, hueco de 2px, hover con tooltip. */
-function BarrasSerie({ puntos }: { puntos: PuntoSerie[] }) {
+function BarrasSerie({ puntos, gran }: { puntos: PuntoSerie[]; gran: Granularidad }) {
   const [hover, setHover] = useState<number | null>(null);
   const W = 720;
   const H = 160;
@@ -37,6 +54,8 @@ function BarrasSerie({ puntos }: { puntos: PuntoSerie[] }) {
   const max = Math.max(1, ...puntos.map((p) => p.llamadas));
   const bw = Math.max(4, Math.min(28, (W - PAD * 2) / Math.max(puntos.length, 1) - 2));
   const paso = (W - PAD * 2) / Math.max(puntos.length, 1);
+  // cuántas etiquetas del eje mostrar (no encimar): ~8 repartidas
+  const cadaN = Math.max(1, Math.ceil(puntos.length / 8));
 
   if (puntos.length === 0) {
     return (
@@ -77,7 +96,7 @@ function BarrasSerie({ puntos }: { puntos: PuntoSerie[] }) {
                 className={hover === i ? "fill-brand-bold" : "fill-brand"}
                 style={{ pointerEvents: "none" }}
               />
-              {(i === 0 || i === puntos.length - 1) && (
+              {(i % cadaN === 0 || i === puntos.length - 1) && (
                 <text
                   x={x + bw / 2}
                   y={H + 16}
@@ -86,7 +105,7 @@ function BarrasSerie({ puntos }: { puntos: PuntoSerie[] }) {
                   fontSize="10"
                   fontFamily="var(--font-mono)"
                 >
-                  {p.dia.slice(5)}
+                  {etiqueta(p.dia, gran)}
                 </text>
               )}
             </g>
@@ -95,7 +114,7 @@ function BarrasSerie({ puntos }: { puntos: PuntoSerie[] }) {
       </svg>
       {hover !== null && puntos[hover] && (
         <div className="absolute top-0 left-1/2 -translate-x-1/2 rounded-lg border border-edge-primary bg-surface-overlay-large px-3 py-2 text-xs text-foreground-active shadow-sm pointer-events-none">
-          <span className="font-mono text-foreground-tertiary">{puntos[hover].dia}</span>{" "}
+          <span className="font-mono text-foreground-tertiary">{etiqueta(puntos[hover].dia, gran)}</span>{" "}
           · {puntos[hover].llamadas} llamadas · {puntos[hover].tokens.toLocaleString()} tokens
           {puntos[hover].errores > 0 && (
             <span className="text-danger"> · {puntos[hover].errores} errores</span>
@@ -110,12 +129,16 @@ export default function SeccionResumen() {
   const [series, setSeries] = useState<PuntoSerie[] | null>(null);
   const [lat, setLat] = useState<Latencias | null>(null);
   const [error, setError] = useState("");
+  const [preset, setPreset] = useState(PRESETS[2]); // 30 días por default
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const [s, l] = await Promise.all([getSeries(30), getLatencias(7)]);
+        const [s, l] = await Promise.all([
+          getSeries(preset.dias, preset.gran),
+          getLatencias(Math.min(preset.dias, 90) || 7),
+        ]);
         if (!alive) return;
         setSeries(s.series);
         setLat(l);
@@ -126,7 +149,7 @@ export default function SeccionResumen() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [preset]);
 
   const kpis = useMemo(() => {
     if (!series) return null;
@@ -137,11 +160,41 @@ export default function SeccionResumen() {
     return { llamadas, tokens, costo, errores };
   }, [series]);
 
+  // el selector SIEMPRE visible (no desaparece al recargar al cambiar de rango)
+  const selector = (
+    <div className="flex gap-2 mb-5 flex-wrap">
+      {PRESETS.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          onClick={() => setPreset(p)}
+          className={`text-xs font-mono rounded-full border px-3 py-1.5 transition-colors ${
+            preset.id === p.id
+              ? "border-brand-bold text-brand-bold"
+              : "border-edge-primary text-foreground-tertiary hover:text-foreground-secondary"
+          }`}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  );
+
   if (error) {
-    return <p className="text-sm text-danger">{error}</p>;
+    return (
+      <div>
+        {selector}
+        <p className="text-sm text-danger">{error}</p>
+      </div>
+    );
   }
   if (!series || !kpis) {
-    return <p className="text-sm text-foreground-tertiary font-mono">Cargando…</p>;
+    return (
+      <div>
+        {selector}
+        <p className="text-sm text-foreground-tertiary font-mono">Cargando…</p>
+      </div>
+    );
   }
 
   const p50 = lat?.global?.p50;
@@ -149,21 +202,25 @@ export default function SeccionResumen() {
 
   return (
     <div>
+      {selector}
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        <Stat label="Llamadas · 30d" value={kpis.llamadas.toLocaleString()} />
-        <Stat label="Tokens · 30d" value={kpis.tokens.toLocaleString()} />
-        <Stat label="Costo · 30d" value={`$${kpis.costo.toFixed(4)}`} sub="USD (sin BYOK aparte)" />
+        <Stat label={`Llamadas · ${preset.label}`} value={kpis.llamadas.toLocaleString()} />
+        <Stat label={`Tokens · ${preset.label}`} value={kpis.tokens.toLocaleString()} />
+        <Stat label={`Costo · ${preset.label}`} value={`$${kpis.costo.toFixed(4)}`} sub="USD (sin BYOK aparte)" />
         <Stat
-          label="Latencia · 7d"
+          label="Latencia"
           value={p50 != null ? `${Math.round(Number(p50))} ms` : "—"}
           sub={p95 != null ? `p95: ${Math.round(Number(p95))} ms` : "sin tráfico"}
         />
       </div>
 
       <div className="rounded-2xl border border-edge-primary bg-surface-overlay-large p-5 mb-6">
-        <h2 className="text-sm font-medium text-foreground-active mb-1">Llamadas por día</h2>
-        <p className="text-xs text-foreground-tertiary mb-4">Últimos 30 días · canal API</p>
-        <BarrasSerie puntos={series} />
+        <h2 className="text-sm font-medium text-foreground-active mb-1">
+          {preset.gran === "hora" ? "Llamadas por hora" : preset.gran === "semana" ? "Llamadas por semana" : "Llamadas por día"}
+        </h2>
+        <p className="text-xs text-foreground-tertiary mb-4">{preset.label} · canal API</p>
+        <BarrasSerie puntos={series} gran={preset.gran} />
       </div>
 
       {kpis.errores > 0 && (

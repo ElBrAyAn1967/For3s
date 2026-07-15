@@ -244,8 +244,11 @@ export const getResumen = (dias = 30) =>
     `/adm/consumo/resumen?dias=${dias}`,
   );
 
-export const getSeries = (dias = 30) =>
-  llamar<{ series: PuntoSerie[]; dias: number }>(`/adm/consumo/series?dias=${dias}`);
+export type Granularidad = "hora" | "dia" | "semana";
+export const getSeries = (dias = 30, gran: Granularidad = "dia") =>
+  llamar<{ series: PuntoSerie[]; dias: number; gran: Granularidad }>(
+    `/adm/consumo/series?dias=${dias}&gran=${gran}`,
+  );
 
 export const getLatencias = (dias = 7) => llamar<Latencias>(`/adm/latencias?dias=${dias}`);
 
