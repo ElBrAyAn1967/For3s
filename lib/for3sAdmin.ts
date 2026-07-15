@@ -340,6 +340,28 @@ export interface ServidorFoto {
 /** Foto completa del host (pestaña Servidor). Puede tardar ~3-6s (docker stats). */
 export const getServidor = () => llamar<ServidorFoto>("/ctl/servidor", {}, tokenCtl());
 
+// For3s Trace — alertas de trazabilidad con su punto exacto.
+export interface TraceAlerta {
+  id: number;
+  client_id: string;
+  clave: string;
+  severidad: "alta" | "media";
+  detalle: string;
+  numeros: string; // jsonb
+  paso: string | null; // "registro→pago"
+  componente: string | null; // "pago"
+  afectados: string; // jsonb: [{entidad, ubicacion}]
+  n_afectados: number;
+  dia: string;
+  creado_at: string;
+}
+
+export const getAlertas = () =>
+  llamar<{ alertas: TraceAlerta[]; instancia: string }>("/adm/alertas");
+
+export const marcarAlertaVista = (id: number) =>
+  llamar<{ ok: boolean }>(`/adm/alertas/${id}/vista`, { method: "POST", body: JSON.stringify({}) });
+
 // ───────────────────────── waitlist pública (Funnel) ─────────────────────────
 
 /** Alta pública de prospecto — SIN token (endpoint público del canal). */

@@ -14,6 +14,7 @@ import SeccionClientes from "./SeccionClientes";
 import SeccionWaitlist from "./SeccionWaitlist";
 import SeccionInstancias from "./SeccionInstancias";
 import SeccionServidor from "./SeccionServidor";
+import SeccionAlertas from "./SeccionAlertas";
 
 /**
  * Panel de administración de For3s OS (Frente B F4.c). Página interna, solo
@@ -22,7 +23,7 @@ import SeccionServidor from "./SeccionServidor";
  * token esta página es un cascarón vacío.
  */
 
-type Tab = "resumen" | "clientes" | "waitlist" | "instancias" | "servidor";
+type Tab = "resumen" | "clientes" | "waitlist" | "instancias" | "servidor" | "alertas";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "resumen", label: "Resumen" },
@@ -30,6 +31,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "waitlist", label: "Waitlist" },
   { id: "instancias", label: "Instancias" },
   { id: "servidor", label: "Servidor" },
+  { id: "alertas", label: "Alertas" },
 ];
 
 export default function PanelDashboard() {
@@ -207,6 +209,7 @@ export default function PanelDashboard() {
         {tab === "waitlist" && <SeccionWaitlist onConvertir={convertirProspecto} />}
         {tab === "instancias" && <SeccionInstancias />}
         {tab === "servidor" && <SeccionServidor />}
+        {tab === "alertas" && <SeccionAlertas />}
       </div>
     </div>
   );
