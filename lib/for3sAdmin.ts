@@ -287,6 +287,21 @@ export const contenedorOrden = (
 // Contenedores que el panel NO deja tocar (espejo de la lista del server).
 export const CONT_INTOCABLES = new Set(["for3s-agent-1", "for3s-worker-1", "for3s-postgres-1"]);
 
+// Capa 4: control de un servicio del HOST (arrancar/parar/reiniciar). Lista
+// BLANCA en el server (SVC_CONTROLABLES); todo lo demás → 403.
+export const servicioOrden = (
+  nombre: string,
+  accion: "arrancar" | "parar" | "reiniciar",
+) =>
+  llamar<{ ok: boolean; servicio: string; activo: boolean; ms: number }>(
+    `/ctl/servicios/${encodeURIComponent(nombre)}/${accion}`,
+    { method: "POST" },
+    tokenCtl(),
+  );
+
+// Servicios que el panel puede controlar (espejo de la whitelist del server).
+export const SVC_CONTROLABLES = new Set(["postgresql", "valkey-server"]);
+
 export interface ServidorFoto {
   ts: string;
   sistema: {
