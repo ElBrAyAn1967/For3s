@@ -290,8 +290,17 @@ export interface ServidorFoto {
     temp_c?: number;
   };
   servicios: { servicio: string; activo: boolean; estado: string }[];
-  contenedores: { nombre: string; estado: string; detalle: string; imagen: string }[];
-  consumo: { nombre: string; cpu: string; ram: string }[];
+  contenedores: {
+    nombre: string;
+    estado: string;
+    detalle: string;
+    imagen: string;
+    red: string;
+    puertos: string;
+    instancia: string;
+    rol: string;
+  }[];
+  consumo: { nombre: string; cpu: number; ram_pct: number; ram: string }[];
 }
 
 /** Foto completa del host (pestaña Servidor). Puede tardar ~3-6s (docker stats). */

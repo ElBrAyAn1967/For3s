@@ -1,13 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { type ServidorFoto, PanelError, getServidor } from "@/lib/for3sAdmin";
+import {
+  ORDEN_INSTANCIAS,
+  labelInstancia,
+  labelServicio,
+  nombreCorto,
+} from "@/lib/servidorLabels";
 
 /**
- * Servidor (F4.d): la foto COMPLETA del host físico — sistema, servicios,
- * TODOS los contenedores (con CPU/RAM en vivo). El dato lo levanta for3s-ctl
- * directamente del host; nada es estimado. `docker stats` tarda unos segundos.
+ * Servidor (F4.e Capa 1): la foto COMPLETA del host, legible y VIVA.
+ * - auto-refresh cada 10s (con foco latiendo) + botón manual.
+ * - lenguaje humano (servicios y contenedores con nombre + qué hacen).
+ * - contenedores agrupados por For3s, con barras de CPU/RAM en vivo.
+ * El dato lo levanta for3s-ctl del host; nada estimado. (El grafo tipo Railway
+ * llega en la Capa 2.)
  */
+
+const REFRESH_MS = 10_000;
 
 function fmtUptime(s?: number): string {
   if (!s) return "—";
@@ -17,17 +28,23 @@ function fmtUptime(s?: number): string {
   return d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m`;
 }
 
-function Barra({ usado, total, unidad }: { usado: number; total: number; unidad: string }) {
-  const pct = total > 0 ? Math.min(100, Math.round((usado / total) * 100)) : 0;
-  const alto = pct >= 90;
+function Barra({ pct, alto = 90 }: { pct: number; alto?: number }) {
+  const v = Math.min(100, Math.max(0, pct));
+  return (
+    <div className="h-1.5 rounded-full bg-surface-primary border border-edge-secondary overflow-hidden">
+      <div
+        className={`h-full rounded-full ${v >= alto ? "bg-danger" : "bg-brand-bold"}`}
+        style={{ width: `${v}%` }}
+      />
+    </div>
+  );
+}
+
+function BarraLabel({ usado, total, unidad }: { usado: number; total: number; unidad: string }) {
+  const pct = total > 0 ? Math.round((usado / total) * 100) : 0;
   return (
     <div>
-      <div className="h-2 rounded-full bg-surface-primary border border-edge-secondary overflow-hidden">
-        <div
-          className={`h-full rounded-full ${alto ? "bg-danger" : "bg-brand-bold"}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      <Barra pct={pct} />
       <p className="text-xs text-foreground-tertiary mt-1">
         {usado.toLocaleString()} / {total.toLocaleString()} {unidad} · {pct}%
       </p>
@@ -50,35 +67,64 @@ export default function SeccionServidor() {
   const [foto, setFoto] = useState<ServidorFoto | null>(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [auto, setAuto] = useState(true);
   const [tick, setTick] = useState(0);
+  const [latido, setLatido] = useState(false);
+  const montado = useRef(true);
 
+  // carga (manual por tick, o automática por intervalo)
   useEffect(() => {
-    let alive = true;
+    montado.current = true;
     const load = async () => {
       setCargando(true);
       try {
         const f = await getServidor();
-        if (!alive) return;
+        if (!montado.current) return;
         setFoto(f);
         setError("");
+        setLatido(true);
+        setTimeout(() => montado.current && setLatido(false), 600);
       } catch (e) {
-        if (alive)
+        if (montado.current)
           setError(
             e instanceof PanelError && e.kind === "auth"
-              ? "Esta pestaña usa el token de instancias (vuelve a entrar y pégalo en el 2º campo)."
+              ? "Esta pestaña usa el token de instancias (sal y pégalo en el 2º campo del login)."
               : e instanceof PanelError
                 ? e.message
                 : "Error leyendo el servidor.",
           );
       } finally {
-        if (alive) setCargando(false);
+        if (montado.current) setCargando(false);
       }
     };
     void load();
     return () => {
-      alive = false;
+      montado.current = false;
     };
   }, [tick]);
+
+  // el latido del auto-refresh: cada REFRESH_MS incrementa el tick
+  useEffect(() => {
+    if (!auto) return;
+    const id = setInterval(() => setTick((t) => t + 1), REFRESH_MS);
+    return () => clearInterval(id);
+  }, [auto]);
+
+  const grupos = useMemo(() => {
+    if (!foto) return [];
+    const statsPor: Record<string, { cpu: number; ram_pct: number; ram: string }> = {};
+    for (const c of foto.consumo) statsPor[c.nombre] = c;
+    const porInst: Record<string, typeof foto.contenedores> = {};
+    for (const c of foto.contenedores) (porInst[c.instancia] ??= []).push(c);
+    const orden = [
+      ...ORDEN_INSTANCIAS.filter((i) => porInst[i]),
+      ...Object.keys(porInst).filter((i) => !ORDEN_INSTANCIAS.includes(i)),
+    ];
+    return orden.map((inst) => ({
+      inst,
+      contenedores: porInst[inst].map((c) => ({ ...c, stats: statsPor[c.nombre] })),
+    }));
+  }, [foto]);
 
   if (error && !foto) return <p className="text-sm text-danger">{error}</p>;
   if (!foto)
@@ -90,108 +136,140 @@ export default function SeccionServidor() {
 
   const s = foto.sistema;
   const ramUsada = (s.ram_total_mb ?? 0) - (s.ram_libre_mb ?? 0);
-  const statsPor: Record<string, { cpu: string; ram: string }> = {};
-  for (const c of foto.consumo) statsPor[c.nombre] = { cpu: c.cpu, ram: c.ram };
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-foreground-secondary">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <p className="text-sm text-foreground-secondary flex items-center gap-2">
+          <span
+            className={`inline-block w-2 h-2 rounded-full transition-colors ${
+              latido ? "bg-brand-bold" : "bg-edge-primary"
+            }`}
+          />
           <span className="font-mono text-foreground-active">{s.host ?? "server"}</span> · kernel{" "}
-          {s.kernel ?? "—"} · foto de {foto.ts.slice(11, 19)}
+          {s.kernel ?? "—"} · {foto.ts.slice(11, 19)}
         </p>
-        <button
-          type="button"
-          disabled={cargando}
-          onClick={() => setTick((t) => t + 1)}
-          className="btn-pill"
-        >
-          {cargando ? "Leyendo…" : "Actualizar"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setAuto((v) => !v)}
+            className={`text-xs font-mono rounded-full border px-3 py-1.5 transition-colors ${
+              auto ? "border-brand-bold text-brand-bold" : "border-edge-primary text-foreground-tertiary"
+            }`}
+          >
+            {auto ? "● En vivo (10s)" : "○ En vivo apagado"}
+          </button>
+          <button type="button" disabled={cargando} onClick={() => setTick((t) => t + 1)} className="btn-pill">
+            {cargando ? "Leyendo…" : "Actualizar"}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <Card label="Encendido desde hace">
           <p className="text-xl font-semibold text-foreground-active">{fmtUptime(s.uptime_s)}</p>
-          {s.temp_c != null && (
-            <p className="text-xs text-foreground-tertiary mt-1">temperatura {s.temp_c}°C</p>
-          )}
+          {s.temp_c != null && <p className="text-xs text-foreground-tertiary mt-1">temperatura {s.temp_c}°C</p>}
         </Card>
-        <Card label={`Carga (${s.cpus ?? "?"} CPUs)`}>
-          <p className="text-xl font-semibold text-foreground-active">
-            {s.carga ? s.carga[0].toFixed(2) : "—"}
-          </p>
+        <Card label={`Carga (${s.cpus ?? "?"} núcleos)`}>
+          <p className="text-xl font-semibold text-foreground-active">{s.carga ? s.carga[0].toFixed(2) : "—"}</p>
           <p className="text-xs text-foreground-tertiary mt-1">
             5m: {s.carga?.[1]?.toFixed(2) ?? "—"} · 15m: {s.carga?.[2]?.toFixed(2) ?? "—"}
           </p>
         </Card>
-        <Card label="RAM">
-          <Barra usado={ramUsada} total={s.ram_total_mb ?? 0} unidad="MB" />
-          {(s.swap_total_mb ?? 0) > 0 && (
-            <p className="text-[11px] text-foreground-tertiary mt-2">
-              swap: {((s.swap_total_mb ?? 0) - (s.swap_libre_mb ?? 0)).toLocaleString()} /{" "}
-              {(s.swap_total_mb ?? 0).toLocaleString()} MB
-            </p>
-          )}
+        <Card label="Memoria RAM">
+          <BarraLabel usado={ramUsada} total={s.ram_total_mb ?? 0} unidad="MB" />
         </Card>
-        <Card label="Disco (/)">
-          <Barra usado={s.disco_usado_gb ?? 0} total={s.disco_total_gb ?? 0} unidad="GB" />
+        <Card label="Disco">
+          <BarraLabel usado={s.disco_usado_gb ?? 0} total={s.disco_total_gb ?? 0} unidad="GB" />
         </Card>
       </div>
 
       <div className="rounded-2xl border border-edge-primary bg-surface-overlay-large p-5 mb-6">
         <p className="text-[11px] font-mono uppercase tracking-widest text-foreground-tertiary mb-3">
-          Servicios del host
+          Servicios base del sistema
         </p>
-        <div className="flex flex-wrap gap-3">
-          {foto.servicios.map((sv) => (
-            <span
-              key={sv.servicio}
-              className="text-sm text-foreground-secondary border border-edge-primary rounded-full px-4 py-1.5"
-            >
-              <span className={sv.activo ? "text-brand-bold" : "text-danger"}>●</span>{" "}
-              <span className="font-mono">{sv.servicio}</span>
-              {!sv.activo && <span className="text-danger text-xs"> ({sv.estado})</span>}
-            </span>
-          ))}
+        <div className="grid sm:grid-cols-2 gap-2">
+          {foto.servicios.map((sv) => {
+            const h = labelServicio(sv.servicio);
+            return (
+              <div key={sv.servicio} className="flex items-start gap-2 text-sm">
+                <span className={`mt-0.5 ${sv.activo ? "text-brand-bold" : "text-danger"}`}>●</span>
+                <div>
+                  <span className="text-foreground-active">{h.nombre}</span>
+                  {!sv.activo && <span className="text-danger text-xs"> · {sv.estado}</span>}
+                  <span className="block text-xs text-foreground-tertiary">{h.que}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-edge-primary bg-surface-overlay-large">
-        <div className="px-4 pt-4">
-          <p className="text-[11px] font-mono uppercase tracking-widest text-foreground-tertiary">
-            Contenedores ({foto.contenedores.length} totales ·{" "}
-            {foto.contenedores.filter((c) => c.estado === "running").length} corriendo)
-          </p>
-        </div>
-        <table className="w-full text-left text-sm mt-2">
-          <thead className="border-b border-edge-secondary text-[11px] font-mono uppercase tracking-widest text-foreground-tertiary">
-            <tr>
-              <th className="px-4 py-2">Contenedor</th>
-              <th className="px-4 py-2">Estado</th>
-              <th className="px-4 py-2">CPU</th>
-              <th className="px-4 py-2">RAM</th>
-              <th className="px-4 py-2">Imagen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {foto.contenedores.map((c) => {
-              const st = statsPor[c.nombre];
-              const vivo = c.estado === "running";
-              return (
-                <tr key={c.nombre} className="border-b border-edge-secondary/40">
-                  <td className="px-4 py-2 font-mono text-foreground-active">{c.nombre}</td>
-                  <td className={`px-4 py-2 ${vivo ? "text-brand-bold" : "text-foreground-tertiary"}`}>
-                    ● {c.detalle}
-                  </td>
-                  <td className="px-4 py-2 text-foreground-secondary">{st?.cpu ?? "—"}</td>
-                  <td className="px-4 py-2 text-foreground-secondary">{st?.ram ?? "—"}</td>
-                  <td className="px-4 py-2 text-foreground-tertiary text-xs">{c.imagen}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <p className="text-[11px] font-mono uppercase tracking-widest text-foreground-tertiary mb-3">
+        Tus For3s y sus piezas ({foto.contenedores.filter((c) => c.estado === "running").length} de{" "}
+        {foto.contenedores.length} corriendo)
+      </p>
+      <div className="space-y-4">
+        {grupos.map(({ inst, contenedores }) => {
+          const li = labelInstancia(inst);
+          const vivos = contenedores.filter((c) => c.estado === "running").length;
+          return (
+            <div key={inst} className="rounded-2xl border border-edge-primary bg-surface-overlay-large overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-edge-secondary">
+                <div>
+                  <span className="text-sm font-semibold text-foreground-active">{li.nombre}</span>
+                  <span className="text-xs text-foreground-tertiary ml-2">{li.sub}</span>
+                </div>
+                <span className="text-xs font-mono text-foreground-tertiary">
+                  {vivos}/{contenedores.length} activos
+                </span>
+              </div>
+              <div className="divide-y divide-edge-secondary/40">
+                {contenedores.map((c) => {
+                  const vivo = c.estado === "running";
+                  return (
+                    <div key={c.nombre} className="px-5 py-3 grid grid-cols-12 gap-3 items-center">
+                      <div className="col-span-5 min-w-0">
+                        <p className="text-sm text-foreground-active flex items-center gap-2">
+                          <span className={vivo ? "text-brand-bold" : "text-foreground-tertiary"}>●</span>
+                          <span className="truncate">{c.rol}</span>
+                        </p>
+                        <p className="text-xs font-mono text-foreground-tertiary truncate">
+                          {nombreCorto(c.nombre, c.instancia)}
+                        </p>
+                      </div>
+                      <div className="col-span-3">
+                        {vivo && c.stats ? (
+                          <>
+                            <Barra pct={c.stats.cpu} />
+                            <p className="text-[11px] text-foreground-tertiary mt-1">CPU {c.stats.cpu}%</p>
+                          </>
+                        ) : (
+                          <span className="text-xs text-foreground-tertiary">—</span>
+                        )}
+                      </div>
+                      <div className="col-span-3">
+                        {vivo && c.stats ? (
+                          <>
+                            <Barra pct={c.stats.ram_pct} />
+                            <p className="text-[11px] text-foreground-tertiary mt-1">RAM {c.stats.ram}</p>
+                          </>
+                        ) : (
+                          <span className="text-xs text-foreground-tertiary">apagado</span>
+                        )}
+                      </div>
+                      <div className="col-span-1 text-right">
+                        <span className="text-[10px] font-mono text-foreground-tertiary">
+                          {vivo ? "on" : "off"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
