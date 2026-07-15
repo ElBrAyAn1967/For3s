@@ -14,6 +14,7 @@ import {
   rotarKey,
   waitlistEstado,
 } from "@/lib/for3sAdmin";
+import ConfirmModal from "./ConfirmModal";
 
 /**
  * Clientes del canal API: tabla con uso + TODAS las acciones de api_admin
@@ -92,6 +93,10 @@ export default function SeccionClientes({
   const [cuotaTok, setCuotaTok] = useState("");
   const [logs, setLogs] = useState<Record<string, LogLlamada[]>>({});
   const [ocupado, setOcupado] = useState(false);
+  // confirmación integrada (nada de window.confirm) para acciones delicadas
+  const [confirmar, setConfirmar] = useState<{ tipo: "revocar" | "rotar"; clientId: string; motivo: string } | null>(
+    null,
+  );
 
   const [tick, setTick] = useState(0);
   const [prefillVisto, setPrefillVisto] = useState<number | null>(null);
@@ -299,16 +304,13 @@ export default function SeccionClientes({
                     setError("La transición necesita un motivo (queda en el audit).");
                     return;
                   }
-                  if (a === "revocar" && !window.confirm(`REVOCAR a «${c.client_id}» es TERMINAL (no hay vuelta). ¿Seguro?`)) return;
+                  if (a === "revocar") {
+                    setConfirmar({ tipo: "revocar", clientId: c.client_id, motivo: motivo.trim() });
+                    return;
+                  }
                   void accion(() => cambiarEstado(c.client_id, a, motivo.trim()), `${c.client_id}: ${a} ✓`);
                 }}
-                onRotar={() => {
-                  if (!window.confirm(`Rotar la key de «${c.client_id}» mata la anterior AL INSTANTE. ¿Seguro?`)) return;
-                  void accion(async () => {
-                    const r = await rotarKey(c.client_id);
-                    setKeyNueva({ clientId: c.client_id, key: r.key });
-                  }, `${c.client_id}: key rotada ✓`);
-                }}
+                onRotar={() => setConfirmar({ tipo: "rotar", clientId: c.client_id, motivo: "" })}
                 onCuotas={() => {
                   void accion(
                     () =>
@@ -324,6 +326,36 @@ export default function SeccionClientes({
           </tbody>
         </table>
       </div>
+      <ConfirmModal
+        abierto={confirmar !== null}
+        peligro
+        titulo={
+          confirmar?.tipo === "revocar"
+            ? `Revocar a «${confirmar.clientId}»`
+            : `Rotar la key de «${confirmar?.clientId ?? ""}»`
+        }
+        mensaje={
+          confirmar?.tipo === "revocar"
+            ? "Revocar es TERMINAL: no hay reactivación posible (si el cliente vuelve, se da de alta con otro id y otra key). La transición queda en el audit con tu motivo."
+            : "La key anterior muere AL INSTANTE — cualquier integración que la use dejará de funcionar hasta poner la nueva. La nueva se muestra UNA sola vez."
+        }
+        textoConfirmar={confirmar?.tipo === "revocar" ? "Revocar (terminal)" : "Rotar key"}
+        ocupado={ocupado}
+        onConfirmar={() => {
+          if (!confirmar) return;
+          const { tipo, clientId, motivo: m } = confirmar;
+          setConfirmar(null);
+          if (tipo === "revocar") {
+            void accion(() => cambiarEstado(clientId, "revocar", m), `${clientId}: revocar ✓`);
+          } else {
+            void accion(async () => {
+              const r = await rotarKey(clientId);
+              setKeyNueva({ clientId, key: r.key });
+            }, `${clientId}: key rotada ✓`);
+          }
+        }}
+        onCancelar={() => setConfirmar(null)}
+      />
     </div>
   );
 }

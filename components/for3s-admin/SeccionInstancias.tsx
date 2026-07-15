@@ -7,6 +7,7 @@ import {
   getInstancias,
   instanciaOrden,
 } from "@/lib/for3sAdmin";
+import ConfirmModal from "./ConfirmModal";
 
 /**
  * Flota de instancias (for3s-ctl, MI-EXTRA-2 ⭐): foco verde/gris + botón
@@ -20,6 +21,7 @@ export default function SeccionInstancias() {
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
   const [operando, setOperando] = useState<string | null>(null);
+  const [confirmando, setConfirmando] = useState<Instancia | null>(null);
 
   const [tick, setTick] = useState(0);
 
@@ -43,16 +45,9 @@ export default function SeccionInstancias() {
   }, [tick]);
   const cargar = useCallback(() => setTick((t) => t + 1), []);
 
-  const orden = useCallback(
+  const ejecutar = useCallback(
     async (inst: Instancia) => {
       const accion = inst.encendida ? "apagar" : "encender";
-      if (inst.critica && accion === "apagar") {
-        const ok = window.confirm(
-          `«${inst.nombre}» es CRÍTICA: apagarla tumba la demo pública y la API de clientes ` +
-            `(este control sigue vivo y puedes reencenderla desde aquí). ¿Apagar de todos modos?`,
-        );
-        if (!ok) return;
-      }
       setOperando(inst.nombre);
       setAviso("");
       setError("");
@@ -67,6 +62,18 @@ export default function SeccionInstancias() {
       }
     },
     [cargar],
+  );
+
+  // las críticas (general) piden confirmación en el modal integrado; el resto va directo
+  const orden = useCallback(
+    (inst: Instancia) => {
+      if (inst.critica && inst.encendida) {
+        setConfirmando(inst);
+        return;
+      }
+      void ejecutar(inst);
+    },
+    [ejecutar],
   );
 
   if (error && !flota) return <p className="text-sm text-danger">{error}</p>;
@@ -98,7 +105,7 @@ export default function SeccionInstancias() {
               <button
                 type="button"
                 disabled={operando !== null}
-                onClick={() => void orden(inst)}
+                onClick={() => orden(inst)}
                 className={`btn-pill ${inst.encendida ? "" : "btn-pill-primary"}`}
               >
                 {operando === inst.nombre ? "…" : inst.encendida ? "Apagar" : "Encender"}
@@ -113,6 +120,22 @@ export default function SeccionInstancias() {
         Las órdenes corren el gestor <code className="font-mono">for3s</code> del server y quedan
         auditadas. Una operación a la vez por instancia (la segunda recibe «en curso»).
       </p>
+      <ConfirmModal
+        abierto={confirmando !== null}
+        peligro
+        titulo={`Apagar «${confirmando?.nombre ?? ""}»`}
+        mensaje="Esta instancia es CRÍTICA: apagarla tumba la demo pública y la API de clientes mientras esté abajo. No se pierde ningún dato, y este control sigue vivo — puedes reencenderla desde aquí mismo."
+        textoConfirmar="Apagar de todos modos"
+        ocupado={operando !== null}
+        onConfirmar={() => {
+          if (confirmando) {
+            const inst = confirmando;
+            setConfirmando(null);
+            void ejecutar(inst);
+          }
+        }}
+        onCancelar={() => setConfirmando(null)}
+      />
     </div>
   );
 }
