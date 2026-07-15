@@ -8,6 +8,14 @@ import {
   labelServicio,
   nombreCorto,
 } from "@/lib/servidorLabels";
+import dynamic from "next/dynamic";
+
+// React Flow debe cargarse SOLO en el cliente (SSR le rompe el cálculo de
+// medidas → nodos encimados / edges perdidos, bug conocido en Next).
+const GrafoInstancia = dynamic(() => import("./grafo/GrafoInstancia"), {
+  ssr: false,
+  loading: () => <p className="text-sm text-foreground-tertiary font-mono">Dibujando el grafo…</p>,
+});
 
 /**
  * Servidor (F4.e Capa 1): la foto COMPLETA del host, legible y VIVA.
@@ -70,6 +78,7 @@ export default function SeccionServidor() {
   const [auto, setAuto] = useState(true);
   const [tick, setTick] = useState(0);
   const [latido, setLatido] = useState(false);
+  const [zoomInst, setZoomInst] = useState<string | null>(null); // For3s abierto en grafo
   const montado = useRef(true);
 
   // carga (manual por tick, o automática por intervalo)
@@ -133,6 +142,11 @@ export default function SeccionServidor() {
         Leyendo el servidor (docker stats tarda unos segundos)…
       </p>
     );
+
+  // vista grafo (Capa 2): entramos a UN For3s y vemos su cableado
+  if (zoomInst) {
+    return <GrafoInstancia inst={zoomInst} foto={foto} onVolver={() => setZoomInst(null)} />;
+  }
 
   const s = foto.sistema;
   const ramUsada = (s.ram_total_mb ?? 0) - (s.ram_libre_mb ?? 0);
@@ -220,9 +234,20 @@ export default function SeccionServidor() {
                   <span className="text-sm font-semibold text-foreground-active">{li.nombre}</span>
                   <span className="text-xs text-foreground-tertiary ml-2">{li.sub}</span>
                 </div>
-                <span className="text-xs font-mono text-foreground-tertiary">
-                  {vivos}/{contenedores.length} activos
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-mono text-foreground-tertiary">
+                    {vivos}/{contenedores.length} activos
+                  </span>
+                  {inst !== "host" && (
+                    <button
+                      type="button"
+                      onClick={() => setZoomInst(inst)}
+                      className="text-xs font-mono text-brand-bold hover:underline"
+                    >
+                      Ver conexiones →
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="divide-y divide-edge-secondary/40">
                 {contenedores.map((c) => {
