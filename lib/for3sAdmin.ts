@@ -190,11 +190,15 @@ export async function validarToken(token: string): Promise<boolean> {
 export const getClientes = (dias = 30) =>
   llamar<{ clientes: Cliente[]; dias: number }>(`/adm/clientes?dias=${dias}`);
 
+// M3: alta = onboarding (rechaza duplicados, arma el paquete completo). Acepta
+// cuotas opcionales para fijarlas en el mismo paso. Un id repetido → 409.
 export const altaCliente = (datos: {
   client_id: string;
   nombre?: string;
   dias?: number;
   scopes?: string[];
+  cuota_dia_requests?: number | null;
+  cuota_dia_tokens?: number | null;
 }) =>
   llamar<{ ok: boolean; client_id: string; key: string }>("/adm/clientes", {
     method: "POST",

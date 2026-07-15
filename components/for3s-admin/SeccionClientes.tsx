@@ -82,10 +82,12 @@ export default function SeccionClientes({
   const [aviso, setAviso] = useState("");
   const [keyNueva, setKeyNueva] = useState<{ clientId: string; key: string } | null>(null);
   const [mostrandoAlta, setMostrandoAlta] = useState(false);
-  // alta
+  // alta (onboarding: paquete completo)
   const [fId, setFId] = useState("");
   const [fNombre, setFNombre] = useState("");
   const [fDias, setFDias] = useState("");
+  const [fCuotaReq, setFCuotaReq] = useState("");
+  const [fCuotaTok, setFCuotaTok] = useState("");
   // detalle expandido
   const [abierto, setAbierto] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
@@ -168,6 +170,8 @@ export default function SeccionClientes({
         client_id: id,
         nombre: fNombre.trim() || undefined,
         dias: fDias.trim() ? Number(fDias) : undefined,
+        cuota_dia_requests: fCuotaReq.trim() ? Number(fCuotaReq) : undefined,
+        cuota_dia_tokens: fCuotaTok.trim() ? Number(fCuotaTok) : undefined,
       });
       setKeyNueva({ clientId: r.client_id, key: r.key });
       // si venía de la waitlist: marcar convertido (el flujo completo)
@@ -183,13 +187,15 @@ export default function SeccionClientes({
       setFId("");
       setFNombre("");
       setFDias("");
+      setFCuotaReq("");
+      setFCuotaTok("");
       cargar();
     } catch (e) {
       setError(e instanceof PanelError ? e.message : "El alta falló.");
     } finally {
       setOcupado(false);
     }
-  }, [fId, fNombre, fDias, prefillAlta, onAltaConsumida, cargar]);
+  }, [fId, fNombre, fDias, fCuotaReq, fCuotaTok, prefillAlta, onAltaConsumida, cargar]);
 
   const verLogs = useCallback(async (clientId: string) => {
     try {
@@ -250,9 +256,25 @@ export default function SeccionClientes({
               placeholder="Expira en N días (vacío = sin expiración)"
               className="rounded-lg bg-surface-primary border border-edge-primary focus:border-brand-bold px-3 py-2 text-sm text-foreground-active outline-none"
             />
+            <input
+              value={fCuotaReq}
+              onChange={(e) => setFCuotaReq(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="Cuota llamadas/día (vacío = default)"
+              className="rounded-lg bg-surface-primary border border-edge-primary focus:border-brand-bold px-3 py-2 text-sm text-foreground-active outline-none"
+            />
+            <input
+              value={fCuotaTok}
+              onChange={(e) => setFCuotaTok(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="Cuota tokens/día (vacío = default)"
+              className="rounded-lg bg-surface-primary border border-edge-primary focus:border-brand-bold px-3 py-2 text-sm text-foreground-active outline-none"
+            />
           </div>
+          <p className="text-[11px] text-foreground-tertiary mt-2">
+            Onboarding: arma el paquete completo del cliente de una (key + expiración + cuotas). Un id
+            repetido se rechaza — no re-genera la key de un cliente vivo.
+          </p>
           <button type="button" disabled={ocupado} className="btn-pill btn-pill-primary mt-4" onClick={crear}>
-            {ocupado ? "Creando…" : "Crear y generar key"}
+            {ocupado ? "Creando…" : "Crear cliente + key"}
           </button>
         </div>
       )}
