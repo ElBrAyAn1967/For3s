@@ -84,6 +84,7 @@ export default function SeccionServidor() {
   const [svcAccion, setSvcAccion] = useState<{ nombre: string; op: "arrancar" | "parar" | "reiniciar" } | null>(null);
   const [svcOcupado, setSvcOcupado] = useState(false);
   const [svcAviso, setSvcAviso] = useState("");
+  const [expandidos, setExpandidos] = useState<Set<string>>(new Set()); // For3s con TODAS sus piezas
   const montado = useRef(true);
 
   // carga (manual por tick, o automática por intervalo)
@@ -136,9 +137,25 @@ export default function SeccionServidor() {
     ];
     return orden.map((inst) => ({
       inst,
-      contenedores: porInst[inst].map((c) => ({ ...c, stats: statsPor[c.nombre] })),
+      // ordenados por consumo (CPU+RAM) de mayor a menor: los 3 primeros son
+      // los que se ven cuando el grupo está colapsado.
+      contenedores: porInst[inst]
+        .map((c) => ({ ...c, stats: statsPor[c.nombre] }))
+        .sort((a, b) => {
+          const ca = (a.stats?.cpu ?? 0) + (a.stats?.ram_pct ?? 0);
+          const cb = (b.stats?.cpu ?? 0) + (b.stats?.ram_pct ?? 0);
+          return cb - ca;
+        }),
     }));
   }, [foto]);
+
+  const toggleExpandido = (inst: string) =>
+    setExpandidos((prev) => {
+      const s = new Set(prev);
+      if (s.has(inst)) s.delete(inst);
+      else s.add(inst);
+      return s;
+    });
 
   if (error && !foto) return <p className="text-sm text-danger">{error}</p>;
   if (!foto)
@@ -273,13 +290,27 @@ export default function SeccionServidor() {
         {grupos.map(({ inst, contenedores }) => {
           const li = labelInstancia(inst);
           const vivos = contenedores.filter((c) => c.estado === "running").length;
+          const expandido = expandidos.has(inst);
+          // colapsado = solo los 3 que más consumen (ya vienen ordenados)
+          const visibles = expandido ? contenedores : contenedores.slice(0, 3);
+          const ocultos = contenedores.length - visibles.length;
           return (
             <div key={inst} className="rounded-2xl border border-edge-primary bg-surface-overlay-large overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-edge-secondary">
-                <div>
-                  <span className="text-sm font-semibold text-foreground-active">{li.nombre}</span>
-                  <span className="text-xs text-foreground-tertiary ml-2">{li.sub}</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleExpandido(inst)}
+                  className="flex items-center gap-2 text-left group"
+                  title={expandido ? "Colapsar (solo top 3)" : "Ver todas las piezas"}
+                >
+                  <span className="text-xs text-foreground-tertiary w-3">{expandido ? "▾" : "▸"}</span>
+                  <span>
+                    <span className="text-sm font-semibold text-foreground-active group-hover:text-brand-bold transition-colors">
+                      {li.nombre}
+                    </span>
+                    <span className="text-xs text-foreground-tertiary ml-2">{li.sub}</span>
+                  </span>
+                </button>
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-mono text-foreground-tertiary">
                     {vivos}/{contenedores.length} activos
@@ -296,7 +327,7 @@ export default function SeccionServidor() {
                 </div>
               </div>
               <div className="divide-y divide-edge-secondary/40">
-                {contenedores.map((c) => {
+                {visibles.map((c) => {
                   const vivo = c.estado === "running";
                   return (
                     <div key={c.nombre} className="px-5 py-3 grid grid-cols-12 gap-3 items-center">
@@ -337,6 +368,24 @@ export default function SeccionServidor() {
                     </div>
                   );
                 })}
+                {ocultos > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => toggleExpandido(inst)}
+                    className="w-full px-5 py-2.5 text-xs font-mono text-brand-bold hover:bg-surface-primary/40 transition-colors text-left"
+                  >
+                    + {ocultos} pieza{ocultos > 1 ? "s" : ""} más (menor consumo) — ver todas
+                  </button>
+                )}
+                {expandido && contenedores.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => toggleExpandido(inst)}
+                    className="w-full px-5 py-2.5 text-xs font-mono text-foreground-tertiary hover:bg-surface-primary/40 transition-colors text-left"
+                  >
+                    ▴ colapsar (solo top 3 por consumo)
+                  </button>
+                )}
               </div>
             </div>
           );
