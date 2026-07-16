@@ -365,6 +365,43 @@ export const getAlertas = () =>
 export const marcarAlertaVista = (id: number) =>
   llamar<{ ok: boolean }>(`/adm/alertas/${id}/vista`, { method: "POST", body: JSON.stringify({}) });
 
+// ───────────────────── expediente / hoja de servicio (Frente E F1) ─────────────────────
+
+export interface Mision {
+  id: number;
+  tipo: "codigo" | "analisis" | "equipo" | "otro";
+  pedido: string;
+  que_hizo: string;
+  verificacion: string;
+  resultado: "en_curso" | "entregada" | "verificada" | "fallida";
+  errores: string;
+  ms: number;
+  creado_at: string;
+  cerrado_at: string | null;
+}
+
+export interface ExpedienteHoja {
+  dias: number;
+  fuentes_caidas: string[];
+  misiones?: { total: number; filas: Mision[] };
+  nocturno?: { job: string; corridas: number; ok: number; ultima: string | null }[];
+  equipo?: {
+    id: number;
+    tarea: string;
+    familia: string;
+    n_specialists: number;
+    n_ok: number;
+    segundos: number;
+    creado_at: string;
+  }[];
+  automod?: { archivo: string; origen: string; nota: string; detectado_at: string }[];
+  insights?: Record<string, number>;
+}
+
+/** La hoja de servicio: el trabajo REAL de For3s con evidencia (misiones +
+ * nocturno + equipo + automod + insights). La confianza se gana viéndolo. */
+export const getExpediente = (dias = 7) => llamar<ExpedienteHoja>(`/adm/expediente?dias=${dias}`);
+
 // ───────────────────────── waitlist pública (Funnel) ─────────────────────────
 
 /** Alta pública de prospecto — SIN token (endpoint público del canal). */
