@@ -16,6 +16,7 @@ import SeccionInstancias from "./SeccionInstancias";
 import SeccionServidor from "./SeccionServidor";
 import SeccionAlertas from "./SeccionAlertas";
 import SeccionExpediente from "./SeccionExpediente";
+import SeccionDemo from "./SeccionDemo";
 
 /**
  * Panel de administración de For3s OS (Frente B F4.c). Página interna, solo
@@ -24,12 +25,21 @@ import SeccionExpediente from "./SeccionExpediente";
  * token esta página es un cascarón vacío.
  */
 
-type Tab = "resumen" | "clientes" | "waitlist" | "instancias" | "servidor" | "alertas" | "expediente";
+type Tab =
+  | "resumen"
+  | "clientes"
+  | "waitlist"
+  | "demo"
+  | "instancias"
+  | "servidor"
+  | "alertas"
+  | "expediente";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "resumen", label: "Resumen" },
   { id: "clientes", label: "Clientes" },
   { id: "waitlist", label: "Waitlist" },
+  { id: "demo", label: "Demo" },
   { id: "instancias", label: "Instancias" },
   { id: "servidor", label: "Servidor" },
   { id: "alertas", label: "Alertas" },
@@ -166,7 +176,8 @@ export default function PanelDashboard() {
   return (
     <div className="min-h-screen bg-surface-primary px-4 py-8 sm:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-start justify-between mb-6">
+        {/* E2 responsive: header se apila en móvil para que "Salir" no se encime */}
+        <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[11px] font-mono uppercase tracking-widest text-brand-bold mb-1">
               For3s OS · plano admin (tailnet)
@@ -178,19 +189,22 @@ export default function PanelDashboard() {
           <button
             type="button"
             onClick={logout}
-            className="text-xs font-mono text-foreground-tertiary hover:text-foreground-active transition-colors border border-edge-primary rounded-full px-4 py-2"
+            className="self-start text-xs font-mono text-foreground-tertiary hover:text-foreground-active transition-colors border border-edge-primary rounded-full px-4 py-2 sm:self-auto"
           >
             Salir
           </button>
         </div>
 
-        <div className="flex gap-2 mb-8 border-b border-edge-secondary">
+        {/* E2 responsive: con 8 pestañas la barra se desborda en móvil → scroll
+            horizontal (coherente con las tablas del panel, que ya usan overflow-x-auto).
+            whitespace-nowrap evita que una pestaña parta su texto en 2 líneas. */}
+        <div className="flex gap-2 mb-8 border-b border-edge-secondary overflow-x-auto flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`px-4 py-2 text-sm transition-colors border-b-2 -mb-px ${
+              className={`shrink-0 whitespace-nowrap px-4 py-2 text-sm transition-colors border-b-2 -mb-px ${
                 tab === t.id
                   ? "border-brand-bold text-foreground-active font-medium"
                   : "border-transparent text-foreground-tertiary hover:text-foreground-secondary"
@@ -209,6 +223,7 @@ export default function PanelDashboard() {
           />
         )}
         {tab === "waitlist" && <SeccionWaitlist onConvertir={convertirProspecto} />}
+        {tab === "demo" && <SeccionDemo />}
         {tab === "instancias" && <SeccionInstancias />}
         {tab === "servidor" && <SeccionServidor />}
         {tab === "alertas" && <SeccionAlertas />}
