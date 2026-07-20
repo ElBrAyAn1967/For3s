@@ -126,14 +126,19 @@ habría roto en producción):
 2. `AbortSignal.timeout` podía no existir en runtimes viejos → cubierto por el `catch` → fail-closed.
 3. Interface `Counts` copiada del componente viejo → verificada campo a campo contra `counts()` real.
 
-**⚠️ HALLAZGO DE INFRA (bloquea la verificación del caso positivo E2E, NO es de la pieza E):**
-El **Postgres nativo del server escucha SOLO en `127.0.0.1:5432`, no en el tailnet** (`ss` lo
-confirmó). El doc §8 decía que se abrió a `100.64.0.0/10` — hoy esa config NO está activa
-(revertida o el server rebootó sin ella). ⇒ `/api/demo/admin/users` con auth OK devuelve **500
-`ECONNREFUSED 100.112.177.53:5432`**. El demo-admin viejo daría el MISMO error hoy — preexiste a
-esta pieza. **Para Brian (requiere sudo en el server):** reactivar `listen_addresses` + `pg_hba`
-del Postgres demo para el tailnet, y así ver la tabla de personas en la pestaña Demo. Sin eso, la
-pestaña Demo mostrará el error "No llego al backend de la demo (¿tailnet?)" que ya maneja la UI.
+**✅ HALLAZGO DE INFRA — RESUELTO (2026-07-20, Brian dio OK):**
+El Postgres demo escuchaba SOLO en `127.0.0.1:5432`. Diagnóstico REAL (no era config faltante):
+el archivo YA tenía `listen_addresses = 'localhost,100.112.177.53'` + la regla `pg_hba` para
+`for3s_demo` desde `100.64.0.0/10`, y `SHOW listen_addresses` reportaba el valor correcto —
+**pero el proceso solo tenía bind en 127.0.0.1**. Causa: PG arrancó en boot ANTES de que
+`tailscale0` tuviera su IP → intentó bindear `100.112.177.53`, la interfaz no existía aún, lo
+omitió en silencio. **Fix correcto = `systemctl restart postgresql@16-main`** (NO editar nada;
+la interfaz ya tenía la IP). Tras el restart: bind en `127.0.0.1:5432` **Y** `100.112.177.53:5432`.
+- **✅ Caso positivo E2E verificado:** `/api/demo/admin/users` con auth → **200 + tabla real de
+  personas** (2 registros: pepe/brian@gmail.com, brian/brayan002150@gmail.com). Bearer basura → 401.
+- **Deuda futura (no urgente):** el bind se pierde si el server reinicia y PG arranca antes que
+  tailscale0. Fix duradero: `After=tailscaled.service` / `Requires` en el unit de PG, o un
+  `ExecStartPre` que espere la IP. Anotar para mantenimiento del server (no es de la pieza E).
 
 ## 5 · Decisiones para el momento de construir (menores)
 1. Orden de la pestaña "Demo" en la barra (propongo tras Waitlist).
