@@ -15,8 +15,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "no_session" }, { status: 401 });
   }
   // La identidad = correo de la SESIÓN (httpOnly). NO del body. Riesgo #1 del plan.
-  const clientId = sess.email;
-
+  // chatGeneral deriva el client_id ESTABLE del correo (hash) — ver clientIdDeCorreo.
   const { message } = (await request.json().catch(() => ({}))) as {
     message?: string;
   };
@@ -28,7 +27,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { reply } = await chatGeneral(clientId, message);
+    const { reply } = await chatGeneral(sess.email, message);
     return Response.json({ reply });
   } catch (e) {
     if (e instanceof For3sChatError) {

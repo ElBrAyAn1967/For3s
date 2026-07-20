@@ -8,9 +8,24 @@
 // canal API del general en 127.0.0.1:8788 del server). Auth con la key demo del
 // general. La conversación reusa /v1/chat (la web es un cliente más, como NavigoX).
 
+import { createHash } from "node:crypto";
+
 const GENERAL_BASE =
   process.env.FOR3S_GENERAL_BASE ?? "https://for3s.tail6749e5.ts.net";
 const GENERAL_KEY = process.env.FOR3S_GENERAL_API_KEY ?? "";
+
+// 🔴 BUG DE AISLAMIENTO CAZADO (2026-07-20): el canal API sanea el X-Client-Id con
+// _limpiar_id, que BORRA @ . + (solo deja [a-z0-9_-]) y trunca a 32. Con correos
+// reales eso COLISIONA usuarios distintos (a+b@x.com, ab.test@x.com, a.b.test@x.com
+// → todos "abtestxcom" → MISMO hilo/vault: fuga entre usuarios). Fix: derivar un id
+// ESTABLE y ÚNICO del correo (hash), así cada correo tiene su id [a-z0-9] intacto
+// por _limpiar_id, y dos correos distintos NUNCA colisionan. El correo se normaliza
+// (minúsculas+trim) para que el mismo correo dé siempre el mismo id.
+export function clientIdDeCorreo(email: string): string {
+  const norm = (email || "").trim().toLowerCase();
+  // 24 hex chars = 96 bits: unicidad de sobra, y < 32 (no lo trunca _limpiar_id).
+  return "u" + createHash("sha256").update(norm).digest("hex").slice(0, 24);
+}
 
 export class For3sChatError extends Error {
   constructor(
@@ -26,9 +41,10 @@ export class For3sChatError extends Error {
  * clientId = el CORREO del usuario (viene de la sesión, nunca del body) → su hilo.
  * Fail-closed: sin key configurada → error de config (no manda nada). */
 export async function chatGeneral(
-  clientId: string,
+  email: string,
   message: string,
 ): Promise<{ reply: string }> {
+  const clientId = clientIdDeCorreo(email);
   if (!GENERAL_KEY) {
     throw new For3sChatError(
       "canal general no configurado (FOR3S_GENERAL_API_KEY)",
@@ -72,10 +88,11 @@ export async function chatGeneral(
 /** Guarda el token de un conector (ej. github) del usuario en el vault del canal,
  * ligado a SU clientId (correo). Pieza C. Devuelve true si el canal lo aceptó. */
 export async function guardarConector(
-  clientId: string,
+  email: string,
   tipo: string,
   token: string,
 ): Promise<boolean> {
+  const clientId = clientIdDeCorreo(email);
   if (!GENERAL_KEY || !token.trim()) return false;
   try {
     const res = await fetch(`${GENERAL_BASE}/v1/conector`, {
@@ -96,9 +113,10 @@ export async function guardarConector(
 
 /** ¿El usuario tiene un conector conectado? (no devuelve el token, solo el estado) */
 export async function estadoConector(
-  clientId: string,
+  email: string,
   tipo: string,
 ): Promise<boolean> {
+  const clientId = clientIdDeCorreo(email);
   if (!GENERAL_KEY) return false;
   try {
     const res = await fetch(
@@ -118,9 +136,10 @@ export async function estadoConector(
 
 /** Desconecta un conector del usuario (borra su token del vault). Pieza C. */
 export async function borrarConector(
-  clientId: string,
+  email: string,
   tipo: string,
 ): Promise<boolean> {
+  const clientId = clientIdDeCorreo(email);
   if (!GENERAL_KEY) return false;
   try {
     const res = await fetch(`${GENERAL_BASE}/v1/conector`, {
@@ -143,9 +162,10 @@ export async function borrarConector(
  * Así /v1/chat responde con SU billing. La key va DESCIFRADA una sola vez por el
  * túnel interno (el canal la re-cifra en su vault). clientId = el correo. */
 export async function registrarByok(
-  clientId: string,
+  email: string,
   claudeKey: string,
 ): Promise<boolean> {
+  const clientId = clientIdDeCorreo(email);
   if (!GENERAL_KEY || !claudeKey.trim()) return false;
   try {
     const res = await fetch(`${GENERAL_BASE}/v1/token`, {
