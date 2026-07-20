@@ -783,7 +783,8 @@
         "profile": "Perfil",
         "connectors": "Conectores",
         "brain": "Cerebro",
-        "logout": "Cerrar sesión"
+        "logout": "Cerrar sesión",
+        "keys": "API keys"
       },
       "profile": {
         "title": "Tu perfil",
@@ -891,6 +892,21 @@
         "send": "Enviar",
         "thinking": "Pensando…",
         "error": "No pude enviar tu mensaje. Intenta de nuevo."
+      },
+      "apikeys": {
+        "title": "Mis API keys",
+        "subtitle": "Genera keys para usar tu For3s desde tu propio código (como una API).",
+        "nombreLabel": "Nombre de la key",
+        "nombrePlaceholder": "ej. mi-app",
+        "generar": "Generar",
+        "copiaAhora": "Cópiala ahora: no se vuelve a mostrar.",
+        "copiar": "Copiar",
+        "contador": "{activas} de {tope} keys activas.",
+        "tope": "Máximo {n} keys activas. Revoca una para generar otra.",
+        "vacio": "Aún no tienes keys. Genera la primera.",
+        "cargando": "Cargando…",
+        "revocar": "Revocar",
+        "error": "No pude generar la key. Intenta de nuevo."
       }
     },
     "waiting": {

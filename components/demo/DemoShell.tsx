@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, User, Plug, Brain, LogOut, PanelsTopLeft } from "lucide-react";
+import { MessageSquare, User, Plug, KeyRound, Brain, LogOut, PanelsTopLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import ConnectApiKey from "./ConnectApiKey";
 import ChatPanel from "./ChatPanel";
 import ProfilePanel from "./ProfilePanel";
 import ConnectorsPanel from "./ConnectorsPanel";
+import ApiKeysPanel from "./ApiKeysPanel";
 import BrainPanel from "./BrainPanel";
 import type { DemoKind } from "@/lib/demo/types";
 
@@ -20,7 +21,7 @@ import type { DemoKind } from "@/lib/demo/types";
  *
  * Recibe los datos de la sesión (name/email) y el callback de cerrar sesión.
  */
-type Section = "chat" | "profile" | "connectors" | "brain";
+type Section = "chat" | "profile" | "connectors" | "keys" | "brain";
 
 export default function DemoShell({
   kind,
@@ -50,6 +51,7 @@ export default function DemoShell({
     { key: "chat", label: t("nav.chat"), Icon: MessageSquare },
     { key: "profile", label: t("nav.profile"), Icon: User },
     { key: "connectors", label: t("nav.connectors"), Icon: Plug },
+    { key: "keys", label: t("nav.keys"), Icon: KeyRound },
     { key: "brain", label: t("nav.brain"), Icon: Brain },
   ];
 
@@ -134,6 +136,8 @@ export default function DemoShell({
               />
             ) : section === "connectors" ? (
               <ConnectorsPanel />
+            ) : section === "keys" ? (
+              <ApiKeysPanel />
             ) : (
               <BrainPanel />
             )}

@@ -158,6 +158,87 @@ export async function borrarConector(
   }
 }
 
+// ── Pieza D · API keys f3k_ self-service (tu For3s en tu app) ─────────────────
+
+export interface MiKey {
+  id: string;
+  nombre: string;
+  estado: string;
+  creada: string;
+  ultimo_uso: string | null;
+}
+
+/** Lista las keys f3k_ del usuario (sin la key plana). */
+export async function listarMisKeys(
+  email: string,
+): Promise<{ keys: MiKey[]; activas: number; tope: number } | null> {
+  const clientId = clientIdDeCorreo(email);
+  if (!GENERAL_KEY) return null;
+  try {
+    const res = await fetch(`${GENERAL_BASE}/v1/miskeys`, {
+      headers: { "X-API-Key": GENERAL_KEY, "X-Client-Id": clientId },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { keys: MiKey[]; activas: number; tope: number };
+  } catch {
+    return null;
+  }
+}
+
+/** Genera una key f3k_ del usuario. Devuelve la key PLANA (mostrar 1 vez) o un
+ * error (ej. 'tope' si ya tiene 3). */
+export async function generarMiKey(
+  email: string,
+  nombre: string,
+): Promise<{ key: string; id: string } | { error: string }> {
+  const clientId = clientIdDeCorreo(email);
+  if (!GENERAL_KEY) return { error: "config" };
+  try {
+    const res = await fetch(`${GENERAL_BASE}/v1/miskeys`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": GENERAL_KEY,
+        "X-Client-Id": clientId,
+      },
+      body: JSON.stringify({ nombre }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      key?: string;
+      id?: string;
+      error?: string;
+    };
+    if (res.status === 409) return { error: "tope" };
+    if (!res.ok || !data.key) return { error: data.error ?? "error" };
+    return { key: data.key, id: data.id ?? "" };
+  } catch {
+    return { error: "red" };
+  }
+}
+
+/** Revoca una key f3k_ del usuario (solo la suya; el canal valida propiedad). */
+export async function revocarMiKey(email: string, id: string): Promise<boolean> {
+  const clientId = clientIdDeCorreo(email);
+  if (!GENERAL_KEY) return false;
+  try {
+    const res = await fetch(`${GENERAL_BASE}/v1/miskeys`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": GENERAL_KEY,
+        "X-Client-Id": clientId,
+      },
+      body: JSON.stringify({ id }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /** Registra la API key de Claude del usuario en el canal (BYOK) para SU clientId.
  * Así /v1/chat responde con SU billing. La key va DESCIFRADA una sola vez por el
  * túnel interno (el canal la re-cifra en su vault). clientId = el correo. */
