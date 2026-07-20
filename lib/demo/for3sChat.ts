@@ -69,6 +69,76 @@ export async function chatGeneral(
   return { reply: data.reply ?? "" };
 }
 
+/** Guarda el token de un conector (ej. github) del usuario en el vault del canal,
+ * ligado a SU clientId (correo). Pieza C. Devuelve true si el canal lo aceptó. */
+export async function guardarConector(
+  clientId: string,
+  tipo: string,
+  token: string,
+): Promise<boolean> {
+  if (!GENERAL_KEY || !token.trim()) return false;
+  try {
+    const res = await fetch(`${GENERAL_BASE}/v1/conector`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": GENERAL_KEY,
+        "X-Client-Id": clientId,
+      },
+      body: JSON.stringify({ tipo, token: token.trim() }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** ¿El usuario tiene un conector conectado? (no devuelve el token, solo el estado) */
+export async function estadoConector(
+  clientId: string,
+  tipo: string,
+): Promise<boolean> {
+  if (!GENERAL_KEY) return false;
+  try {
+    const res = await fetch(
+      `${GENERAL_BASE}/v1/conector?tipo=${encodeURIComponent(tipo)}`,
+      {
+        headers: { "X-API-Key": GENERAL_KEY, "X-Client-Id": clientId },
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+    if (!res.ok) return false;
+    const data = (await res.json().catch(() => ({}))) as { conectado?: boolean };
+    return !!data.conectado;
+  } catch {
+    return false;
+  }
+}
+
+/** Desconecta un conector del usuario (borra su token del vault). Pieza C. */
+export async function borrarConector(
+  clientId: string,
+  tipo: string,
+): Promise<boolean> {
+  if (!GENERAL_KEY) return false;
+  try {
+    const res = await fetch(`${GENERAL_BASE}/v1/conector`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": GENERAL_KEY,
+        "X-Client-Id": clientId,
+      },
+      body: JSON.stringify({ tipo }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /** Registra la API key de Claude del usuario en el canal (BYOK) para SU clientId.
  * Así /v1/chat responde con SU billing. La key va DESCIFRADA una sola vez por el
  * túnel interno (el canal la re-cifra en su vault). clientId = el correo. */

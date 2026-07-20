@@ -805,7 +805,9 @@
       "connectors": {
         "title": "Connectors",
         "subtitle": "Connect your tools so For3s can work with them.",
-        "connect": "Connect"
+        "connect": "Connect",
+        "disconnect": "Disconnect",
+        "soon": "Soon"
       },
       "brain": {
         "title": "Brain",

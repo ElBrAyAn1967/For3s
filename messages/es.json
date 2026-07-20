@@ -805,7 +805,9 @@
       "connectors": {
         "title": "Conectores",
         "subtitle": "Conecta tus herramientas para que For3s trabaje con ellas.",
-        "connect": "Conectar"
+        "connect": "Conectar",
+        "disconnect": "Desconectar",
+        "soon": "Pronto"
       },
       "brain": {
         "title": "Cerebro",
