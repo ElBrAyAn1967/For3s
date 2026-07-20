@@ -779,6 +779,7 @@
     },
     "shell": {
       "nav": {
+        "chat": "Chat",
         "profile": "Profile",
         "connectors": "Connectors",
         "brain": "Brain",
@@ -879,6 +880,15 @@
           "label": "H6 · Self-care",
           "desc": "At night, For3s maintains itself: it consolidates what matters into the graph and forgets old noise, with no human intervention."
         }
+      },
+      "chat": {
+        "title": "Chat with For3s",
+        "subtitle": "Write to it. The agent replies with your context and remembers your thread.",
+        "empty": "Start the conversation: ask it anything.",
+        "placeholder": "Type your message…",
+        "send": "Send",
+        "thinking": "Thinking…",
+        "error": "Couldn't send your message. Try again."
       }
     },
     "waiting": {

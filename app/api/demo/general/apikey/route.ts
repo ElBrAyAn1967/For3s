@@ -9,6 +9,7 @@ import { readDemoSession } from "@/lib/demo/session";
 import { saveApiKey } from "@/lib/demo/userStore";
 import { encryptSecret } from "@/lib/demo/crypto";
 import { isValidApiKeyFormat, apiKeyHint } from "@/lib/demo/apiKey";
+import { registrarByok } from "@/lib/demo/for3sChat";
 import type { DemoKind } from "@/lib/demo/types";
 
 export async function POST(request: NextRequest) {
@@ -28,6 +29,14 @@ export async function POST(request: NextRequest) {
   const encBlob = encryptSecret(key);
   const hint = apiKeyHint(key);
   await saveApiKey(sess.kind as DemoKind, sess.email, encBlob, hint);
+
+  // Pieza B: en General, registrar la key en el canal (BYOK) para que el chat
+  // responda con el billing del usuario. Best-effort: si falla, la key queda
+  // guardada igual y el chat cae a cortesía (no rompe el guardado). La 1:1 tiene
+  // su propio flujo de agente, no pasa por aquí.
+  if (sess.kind === "general") {
+    void registrarByok(sess.email, key);
+  }
 
   return Response.json({ ok: true, hint });
 }

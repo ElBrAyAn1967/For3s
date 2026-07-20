@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { User, Plug, Brain, LogOut, PanelsTopLeft } from "lucide-react";
+import { MessageSquare, User, Plug, Brain, LogOut, PanelsTopLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import ConnectApiKey from "./ConnectApiKey";
+import ChatPanel from "./ChatPanel";
 import ProfilePanel from "./ProfilePanel";
 import ConnectorsPanel from "./ConnectorsPanel";
 import BrainPanel from "./BrainPanel";
@@ -19,7 +20,7 @@ import type { DemoKind } from "@/lib/demo/types";
  *
  * Recibe los datos de la sesión (name/email) y el callback de cerrar sesión.
  */
-type Section = "profile" | "connectors" | "brain";
+type Section = "chat" | "profile" | "connectors" | "brain";
 
 export default function DemoShell({
   kind,
@@ -38,7 +39,7 @@ export default function DemoShell({
 }) {
   const t = useTranslations("Demo.shell");
   const [keyHint, setKeyHint] = useState<string | null>(initialKeyHint);
-  const [section, setSection] = useState<Section>("profile");
+  const [section, setSection] = useState<Section>("chat");
 
   // Mientras no haya API key, el shell se muestra completo (sidebar + topbar)
   // pero el contenido inicial es la PETICIÓN de API key (primera petición dentro
@@ -46,6 +47,7 @@ export default function DemoShell({
   const connected = !!keyHint;
 
   const nav: { key: Section; label: string; Icon: typeof User }[] = [
+    { key: "chat", label: t("nav.chat"), Icon: MessageSquare },
     { key: "profile", label: t("nav.profile"), Icon: User },
     { key: "connectors", label: t("nav.connectors"), Icon: Plug },
     { key: "brain", label: t("nav.brain"), Icon: Brain },
@@ -120,6 +122,8 @@ export default function DemoShell({
               <div className="flex justify-center pt-6">
                 <ConnectApiKey onConnected={setKeyHint} persist defaultOpen />
               </div>
+            ) : section === "chat" ? (
+              <ChatPanel />
             ) : section === "profile" ? (
               <ProfilePanel
                 kind={kind}

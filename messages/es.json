@@ -779,6 +779,7 @@
     },
     "shell": {
       "nav": {
+        "chat": "Chat",
         "profile": "Perfil",
         "connectors": "Conectores",
         "brain": "Cerebro",
@@ -879,6 +880,15 @@
           "label": "H6 · Se cuida solo",
           "desc": "De noche, For3s se mantiene solo: consolida lo importante al grafo y olvida el ruido viejo, sin intervención humana."
         }
+      },
+      "chat": {
+        "title": "Conversa con For3s",
+        "subtitle": "Escríbele. El agente responde con tu contexto y recuerda tu hilo.",
+        "empty": "Empieza la conversación: pregúntale lo que quieras.",
+        "placeholder": "Escribe tu mensaje…",
+        "send": "Enviar",
+        "thinking": "Pensando…",
+        "error": "No pude enviar tu mensaje. Intenta de nuevo."
       }
     },
     "waiting": {
