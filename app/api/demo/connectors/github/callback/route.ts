@@ -11,13 +11,13 @@ import { guardarConector } from "@/lib/demo/for3sChat";
 
 const STATE_COOKIE = "for3s_gh_oauth_state";
 
-function volverAlPanel(ok: boolean): Response {
-  // vuelve al shell; el panel de conectores refresca su estado real al montar.
+function volverAlPanel(request: NextRequest, ok: boolean): Response {
+  // Vuelve al shell EN EL MISMO ORIGEN desde el que se llamó (bug 2026-07-20: estaba
+  // hardcodeado al tailnet, así que probando en localhost la cookie de sesión se
+  // perdía al volver y el conector parecía fallar). El panel refresca su estado real.
   const q = ok ? "github=connected" : "github=error";
-  return Response.redirect(
-    `${process.env.NEXT_PUBLIC_SITE_BASE ?? "https://for3s.tail6749e5.ts.net"}/demo?${q}`,
-    302,
-  );
+  const origen = new URL(request.url).origin;
+  return Response.redirect(`${origen}/demo?${q}`, 302);
 }
 
 export async function GET(request: NextRequest) {
@@ -36,15 +36,15 @@ export async function GET(request: NextRequest) {
 
   // Validación anti-CSRF: el state debe existir y coincidir. Fail-closed.
   if (!code || !returnedState || !expectedState || returnedState !== expectedState) {
-    return volverAlPanel(false);
+    return volverAlPanel(request, false);
   }
 
   const token = await exchangeGithubCode(code);
   if (!token) {
-    return volverAlPanel(false);
+    return volverAlPanel(request, false);
   }
 
   // Guardar en el vault del canal, ligado al CORREO de la sesión (no del body).
   const ok = await guardarConector(sess.email, "github", token);
-  return volverAlPanel(ok);
+  return volverAlPanel(request, ok);
 }
