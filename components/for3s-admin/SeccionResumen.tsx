@@ -52,7 +52,11 @@ function BarrasSerie({ puntos, gran }: { puntos: PuntoSerie[]; gran: Granularida
   const H = 160;
   const PAD = 4;
   const max = Math.max(1, ...puntos.map((p) => p.llamadas));
-  const bw = Math.max(4, Math.min(28, (W - PAD * 2) / Math.max(puntos.length, 1) - 2));
+  // Ancho de barra: ocupa casi todo su paso (separación mínima), con un tope alto
+  // para que con POCOS puntos las barras no queden delgadas y desperdigadas
+  // (Brian 2026-07-21: "las gráficas deberían estar más pegadas").
+  const paso0 = (W - PAD * 2) / Math.max(puntos.length, 1);
+  const bw = Math.max(4, Math.min(64, paso0 * 0.82));
   const paso = (W - PAD * 2) / Math.max(puntos.length, 1);
   // cuántas etiquetas del eje mostrar (no encimar): ~8 repartidas
   const cadaN = Math.max(1, Math.ceil(puntos.length / 8));

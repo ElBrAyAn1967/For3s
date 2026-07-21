@@ -5,7 +5,7 @@ import { isAdminAuthorized } from "@/lib/demo/admin";
 import { listUsers, counts } from "@/lib/demo/userStore";
 
 export async function GET(request: Request) {
-  if (!(await isAdminAuthorized(request))) {
+  if (!isAdminAuthorized(request)) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
   const now = Date.now();

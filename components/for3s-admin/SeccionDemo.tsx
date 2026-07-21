@@ -1,18 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getToken } from "@/lib/for3sAdmin";
 import type { DemoUser } from "@/lib/demo/types";
 
 /**
  * Sección "Demo" del panel admin unificado (pieza E, 2026-07-20).
  * Absorbe el antiguo /demo-admin: registros y lista de espera de la demo General.
  *
- * Auth: NO tiene login propio — vive dentro de PanelDashboard, que ya autenticó
- * el token en el navegador (arquitectura tailnet-only, ver lib/for3sAdmin.ts).
+ * Auth: la MISMA que tenía el /demo-admin cuando funcionaba — contraseña
+ * (DEMO_ADMIN_PASSWORD, ya configurada en Vercel) por header X-Admin-Password.
+ * Se pide UNA vez y se guarda en sessionStorage mientras dure la pestaña.
+ * ⚠️ 2026-07-21: intenté cambiarla por "validar el token del panel contra el
+ * server" y eso ROMPIÓ la sección en Vercel (ese endpoint es tailnet-only, ver
+ * lib/demo/admin.ts). Mover el componente al panel NO requería tocar la auth.
+ *
  * Los datos vienen de la BD for3s_demo vía /api/demo/admin/users (rutas del sitio,
- * distinto backend que las demás secciones que van al server For3s directo).
+ * distinto backend que las demás secciones, que van al server For3s directo).
  */
+const PASS_KEY = "for3s_demo_admin_pass";
 
 interface Counts {
   total: number;
@@ -33,26 +38,36 @@ export default function SeccionDemo() {
   const [users, setUsers] = useState<DemoUser[] | null>(null);
   const [counts, setCounts] = useState<Counts | null>(null);
   const [error, setError] = useState("");
+  // Lee la contraseña guardada en el 1er render (lazy init: sin efecto, sin
+  // cascading-render). sessionStorage solo existe en el cliente; el componente
+  // es "use client" y el guard de typeof cubre el render del servidor.
+  const [pass, setPass] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : window.sessionStorage.getItem(PASS_KEY),
+  );
+  const [passInput, setPassInput] = useState("");
+  const [passMala, setPassMala] = useState(false);
 
-  // Auto-refresca cada 5s mientras la pestaña está montada. Cancela con un flag
-  // al desmontar (evita setState sobre componente desmontado tras el await).
+  // Auto-refresca cada 5s mientras haya contraseña. Cancela con un flag al
+  // desmontar (evita setState sobre componente desmontado tras el await).
   useEffect(() => {
+    if (!pass) return;
     let alive = true;
 
     const load = async () => {
       try {
-        // mismo token de control del panel (una sola llave, pieza E) → el endpoint
-        // lo valida server-side contra el server For3s.
         const res = await fetch("/api/demo/admin/users", {
-          headers: { Authorization: `Bearer ${getToken()}` },
+          headers: { "x-admin-password": pass },
         });
         if (!alive) return;
+        if (res.status === 401) {
+          // contraseña equivocada → volver a pedirla (y no dejarla guardada)
+          window.sessionStorage.removeItem(PASS_KEY);
+          setPass(null);
+          setPassMala(true);
+          return;
+        }
         if (!res.ok) {
-          setError(
-            res.status === 401
-              ? "Sesión no autorizada para la demo."
-              : "No pude cargar los registros de la demo.",
-          );
+          setError("No pude cargar los registros de la demo.");
           return;
         }
         const data = (await res.json()) as { users: DemoUser[]; counts: Counts };
@@ -61,7 +76,7 @@ export default function SeccionDemo() {
         setCounts(data.counts);
         setError("");
       } catch {
-        if (alive) setError("No llego al backend de la demo (¿tailnet?).");
+        if (alive) setError("No llego al backend de la demo.");
       }
     };
 
@@ -71,7 +86,47 @@ export default function SeccionDemo() {
       alive = false;
       window.clearInterval(id);
     };
-  }, []);
+  }, [pass]);
+
+  function entrar() {
+    const p = passInput.trim();
+    if (!p) return;
+    window.sessionStorage.setItem(PASS_KEY, p);
+    setPass(p);
+    setPassInput("");
+    setPassMala(false);
+  }
+
+  // Gate: sin contraseña, pide la del demo-admin (la de siempre).
+  if (!pass) {
+    return (
+      <div className="max-w-sm">
+        <h2 className="text-lg font-semibold text-foreground-active mb-1">
+          Demo General · Personas
+        </h2>
+        <p className="text-sm text-foreground-secondary mb-4">
+          Contraseña de la demo para ver los registros.
+        </p>
+        <input
+          type="password"
+          value={passInput}
+          onChange={(e) => {
+            setPassInput(e.target.value);
+            if (passMala) setPassMala(false);
+          }}
+          onKeyDown={(e) => e.key === "Enter" && entrar()}
+          placeholder="Contraseña"
+          className={`w-full rounded-lg bg-surface-primary border px-4 py-3 text-sm text-foreground-active outline-none transition-colors ${
+            passMala ? "border-danger" : "border-edge-primary focus:border-brand-bold"
+          }`}
+        />
+        {passMala && <p className="mt-2 text-xs text-danger">Contraseña incorrecta.</p>}
+        <button type="button" onClick={entrar} className="btn-pill btn-pill-primary w-full mt-4">
+          Entrar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>
