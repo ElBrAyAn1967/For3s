@@ -89,25 +89,30 @@ export default function DemoShell({
 
         {/* Columna derecha: topbar + contenido */}
         <div className="flex flex-col min-w-0">
-          {/* Topbar: en móvil es la navegación principal (con íconos);
-              en md+ complementa al sidebar. Hace wrap si no cabe. */}
-          <header className="flex flex-wrap items-center justify-center md:justify-end gap-1 border-b border-edge-secondary px-3 py-2.5 sm:px-4 sm:py-3">
-            {nav.map(({ key, label, Icon }) => (
-              <button
-                key={key}
-                type="button"
-                disabled={!connected}
-                onClick={() => setSection(key)}
-                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] sm:text-xs font-mono uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                  connected && section === key
-                    ? "text-foreground-accent"
-                    : "text-foreground-tertiary hover:text-foreground-active"
-                }`}
-              >
-                <Icon className="size-3.5 md:hidden" />
-                {label}
-              </button>
-            ))}
+          {/* Topbar. En móvil (sin sidebar) es la navegación principal con íconos.
+              En md+ el sidebar ya navega, así que aquí SOLO queda "Cerrar sesión"
+              a la derecha — sin duplicar el menú (Brian 2026-07-22). */}
+          <header className="flex flex-wrap items-center justify-between md:justify-end gap-1 border-b border-edge-secondary px-3 py-2.5 sm:px-4 sm:py-3">
+            {/* Navegación: solo en móvil (md:hidden) */}
+            <div className="flex flex-wrap items-center gap-1 md:hidden">
+              {nav.map(({ key, label, Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  disabled={!connected}
+                  onClick={() => setSection(key)}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-mono uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                    connected && section === key
+                      ? "text-foreground-accent"
+                      : "text-foreground-tertiary hover:text-foreground-active"
+                  }`}
+                >
+                  <Icon className="size-3.5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+            {/* Cerrar sesión: siempre visible (importante, Brian) */}
             <button
               type="button"
               onClick={onLogout}

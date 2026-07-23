@@ -11,6 +11,8 @@ import {
   Monitor,
   Send,
   Palette,
+  Workflow,
+  NotebookPen,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ComponentType } from "react";
@@ -26,6 +28,10 @@ const CONNECTORS: {
 }[] = [
   { key: "github", label: "GitHub", Icon: Code2, live: true },
   { key: "vercel", label: "Vercel", Icon: Triangle },
+  // n8n y notebooklm: dos conectores importantes, por encima de los de Adobe
+  // (Brian 2026-07-22). Placeholder por ahora (se cablean con el patrón de GitHub).
+  { key: "n8n", label: "n8n", Icon: Workflow },
+  { key: "notebooklm", label: "NotebookLM", Icon: NotebookPen },
   { key: "premiere", label: "Adobe Premiere", Icon: Clapperboard },
   { key: "illustrator", label: "Adobe Illustrator", Icon: PenTool },
   { key: "canva", label: "Canva", Icon: Palette },

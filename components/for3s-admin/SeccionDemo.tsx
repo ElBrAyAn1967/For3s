@@ -190,6 +190,21 @@ export default function SeccionDemo() {
     }
   }
 
+  // Elimina una persona (y su puerta 1:1 si tenía). Devuelve error o null.
+  async function eliminarPersona(id: string): Promise<string | null> {
+    if (!pass) return "sin_sesion";
+    try {
+      const res = await fetch(`/api/demo/admin/users/${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-password": pass },
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      return res.ok ? null : data.error ?? "error";
+    } catch {
+      return "sin_red";
+    }
+  }
+
   // Auto-refresca cada 5s mientras haya contraseña. Cancela con un flag al
   // desmontar (evita setState sobre componente desmontado tras el await).
   useEffect(() => {
@@ -440,6 +455,7 @@ export default function SeccionDemo() {
           user={editando}
           onClose={() => setEditando(null)}
           onGuardar={guardarEdicion}
+          onEliminar={eliminarPersona}
         />
       )}
     </div>
@@ -657,6 +673,7 @@ function ModalEditar({
   user,
   onClose,
   onGuardar,
+  onEliminar,
 }: {
   user: DemoUser;
   onClose: () => void;
@@ -664,6 +681,7 @@ function ModalEditar({
     id: string,
     cuerpo: { name?: string; email?: string; demoUi?: string },
   ) => Promise<string | null>;
+  onEliminar: (id: string) => Promise<string | null>;
 }) {
   const [nombre, setNombre] = useState(user.name);
   const [correo, setCorreo] = useState(user.email);
@@ -671,6 +689,7 @@ function ModalEditar({
   const [msg, setMsg] = useState("");
   const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmarBorrar, setConfirmarBorrar] = useState(false);
 
   const ERR: Record<string, string> = {
     correo_invalido: "Ese correo no se ve válido.",
@@ -713,6 +732,22 @@ function ModalEditar({
         }
       }
       setOk("Guardado. La tabla se actualiza en unos segundos.");
+      window.setTimeout(onClose, 900);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function eliminar() {
+    setMsg("");
+    setBusy(true);
+    try {
+      const e = await onEliminar(user.id);
+      if (e) {
+        setMsg(ERR[e] ?? "No se pudo eliminar.");
+        return;
+      }
+      setOk("Eliminada. La tabla se actualiza en unos segundos.");
       window.setTimeout(onClose, 900);
     } finally {
       setBusy(false);
@@ -766,18 +801,52 @@ function ModalEditar({
         {msg && <p className="mt-4 text-sm text-danger" role="alert">{msg}</p>}
         {ok && <p className="mt-4 text-sm text-foreground-accent">{ok}</p>}
 
-        <div className="mt-6 flex gap-2 justify-end">
-          <button type="button" onClick={onClose} className="btn-pill border border-edge-primary text-foreground-secondary">
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={guardar}
-            disabled={busy || (!cambioDatos && !cambioDemo)}
-            className="btn-pill btn-pill-primary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {busy ? "Guardando…" : "Guardar"}
-          </button>
+        <div className="mt-6 flex items-center gap-2">
+          {/* Eliminar (a la izquierda): confirmación de dos pasos para no borrar
+              por accidente. Borra la persona y su puerta 1:1 si tenía. */}
+          {!confirmarBorrar ? (
+            <button
+              type="button"
+              onClick={() => setConfirmarBorrar(true)}
+              disabled={busy}
+              className="text-xs font-mono text-foreground-tertiary hover:text-danger transition-colors disabled:opacity-50"
+            >
+              Eliminar
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <span className="text-danger">¿Seguro?</span>
+              <button
+                type="button"
+                onClick={eliminar}
+                disabled={busy}
+                className="rounded-md bg-danger/15 border border-danger/40 px-2.5 py-1 text-danger hover:bg-danger/25 transition-colors disabled:opacity-50"
+              >
+                {busy ? "Eliminando…" : "Sí, eliminar"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmarBorrar(false)}
+                className="text-foreground-tertiary hover:text-foreground-secondary transition-colors"
+              >
+                No
+              </button>
+            </div>
+          )}
+
+          <div className="ml-auto flex gap-2">
+            <button type="button" onClick={onClose} className="btn-pill border border-edge-primary text-foreground-secondary">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={guardar}
+              disabled={busy || (!cambioDatos && !cambioDemo)}
+              className="btn-pill btn-pill-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {busy ? "Guardando…" : "Guardar"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

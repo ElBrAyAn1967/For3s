@@ -271,6 +271,26 @@ export async function editarUsuario(
   });
 }
 
+// Elimina una persona (por id de fila). Borra su registro de demo_users. Si es
+// una 1:1 privada, también borra su "puerta" en demo_accounts (por correo), para
+// no dejar el link huérfano. Devuelve 'ok' | 'no_existe'.
+export async function eliminarUsuario(id: string): Promise<"ok" | "no_existe"> {
+  const sql = db();
+  return sql.begin(async (tx) => {
+    const [u] = await tx<{ email: string }[]>`
+      SELECT email FROM demo_users WHERE id = ${id}
+    `;
+    if (!u) return "no_existe" as const;
+    await tx`DELETE FROM demo_users WHERE id = ${id}`;
+    // Si tenía una demo 1:1 privada con ese correo, borra también la puerta.
+    await tx`
+      DELETE FROM demo_accounts
+      WHERE kind = 'privado' AND lower(email_autorizado) = ${u.email.toLowerCase()}
+    `;
+    return "ok" as const;
+  });
+}
+
 // MOCKUP de "cambiar demo": actualiza SOLO kind_ui (lo que se muestra en el
 // panel). El demo REAL (kind) NO se toca → el hilo del agente NO se mueve. Neon
 // guarda ambos, así sabe la verdad: en UI se ve una cosa, en realidad es otra.

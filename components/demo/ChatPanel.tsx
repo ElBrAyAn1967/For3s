@@ -63,7 +63,9 @@ export default function ChatPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full max-w-2xl">
+    // Ocupa todo el ancho del contenido (antes max-w-2xl dejaba un hueco a la
+    // derecha, Brian 2026-07-22). El chat respira en el espacio disponible.
+    <div className="flex flex-col h-full w-full">
       <h2 className="text-xl font-semibold text-foreground-active mb-1">
         {t("title")}
       </h2>
@@ -85,7 +87,7 @@ export default function ChatPanel() {
             className={turn.role === "user" ? "flex justify-end" : "flex justify-start"}
           >
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+              className={`max-w-[75%] md:max-w-[68%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                 turn.role === "user"
                   ? "bg-brand-bold/10 text-foreground-active"
                   : "bg-surface-primary border border-edge-secondary text-foreground-secondary"

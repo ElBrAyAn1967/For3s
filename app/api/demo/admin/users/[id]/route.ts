@@ -8,7 +8,7 @@
 //                       la verdad (kind ≠ kind_ui). Migrar hilos = pendiente futuro.
 
 import { isAdminAuthorized } from "@/lib/demo/admin";
-import { editarUsuario, cambiarDemoMock } from "@/lib/demo/userStore";
+import { editarUsuario, cambiarDemoMock, eliminarUsuario } from "@/lib/demo/userStore";
 import { normalizeEmail, normalizeName, isValidEmail } from "@/lib/demo/normalize";
 import type { DemoKind } from "@/lib/demo/types";
 
@@ -68,5 +68,21 @@ export async function PATCH(
   const r = await editarUsuario(id, cambios);
   if (r === "no_existe") return Response.json({ error: "no_existe" }, { status: 404 });
   if (r === "email_en_uso") return Response.json({ error: "correo_ya_existe" }, { status: 409 });
+  return Response.json({ ok: true });
+}
+
+// DELETE — elimina la persona (y su puerta 1:1 si la tenía).
+export async function DELETE(
+  request: Request,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  if (!isAdminAuthorized(request)) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const { id } = await ctx.params;
+  if (!id) return Response.json({ error: "id_requerido" }, { status: 400 });
+
+  const r = await eliminarUsuario(id);
+  if (r === "no_existe") return Response.json({ error: "no_existe" }, { status: 404 });
   return Response.json({ ok: true });
 }
