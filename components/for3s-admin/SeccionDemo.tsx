@@ -34,6 +34,10 @@ const STATUS_LABEL: Record<string, string> = {
   ready: "Listo",
 };
 
+// Instancias a las que una demo 1:1 privada puede apuntar (lista fija, decisión
+// de Brian 2026-07-22). Debe coincidir con INSTANCIAS en lib/demo/accountStore.ts.
+const INSTANCIAS = ["general", "jazz", "mashe", "foresito", "brian"] as const;
+
 export default function SeccionDemo() {
   const [users, setUsers] = useState<DemoUser[] | null>(null);
   const [counts, setCounts] = useState<Counts | null>(null);
@@ -46,6 +50,82 @@ export default function SeccionDemo() {
   );
   const [passInput, setPassInput] = useState("");
   const [passMala, setPassMala] = useState(false);
+
+  // --- Formulario "Agregar" (persona 1:1 privada o general) ---
+  const [abierto, setAbierto] = useState(false);
+  const [fNombre, setFNombre] = useState("");
+  const [fCorreo, setFCorreo] = useState("");
+  const [fPrivada, setFPrivada] = useState(true); // arranca en 1:1 privada
+  const [fInstancia, setFInstancia] = useState<string>("general");
+  const [guardando, setGuardando] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [linkGenerado, setLinkGenerado] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState(false);
+
+  const ERRORES: Record<string, string> = {
+    nombre_requerido: "Falta el nombre de la persona.",
+    correo_invalido: "Ese correo no se ve válido.",
+    instancia_invalida: "Elige una instancia válida.",
+    correo_ya_existe: "Ya existe una demo 1:1 con ese correo.",
+    error_guardando: "No se pudo guardar. Intenta de nuevo.",
+  };
+
+  function resetForm() {
+    setFNombre("");
+    setFCorreo("");
+    setFPrivada(true);
+    setFInstancia("general");
+    setFormError("");
+    setLinkGenerado(null);
+    setCopiado(false);
+  }
+
+  async function agregar() {
+    if (!pass) return;
+    setFormError("");
+    setLinkGenerado(null);
+    // General todavía se registra por el propio formulario de la demo; aquí solo
+    // damos de alta las 1:1 privadas (que son las que necesitan link + BD).
+    if (!fPrivada) {
+      setFormError(
+        "Las personas de la demo General se registran solas al entrar a /demo. Aquí se agregan las 1:1 privadas.",
+      );
+      return;
+    }
+    setGuardando(true);
+    try {
+      const res = await fetch("/api/demo/admin/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-password": pass },
+        body: JSON.stringify({
+          nombre: fNombre.trim(),
+          email: fCorreo.trim(),
+          instancia: fInstancia,
+        }),
+      });
+      const data = (await res.json()) as { link?: string; error?: string };
+      if (!res.ok || !data.link) {
+        setFormError(ERRORES[data.error ?? ""] ?? "No se pudo guardar.");
+        return;
+      }
+      setLinkGenerado(`${window.location.origin}${data.link}`);
+    } catch {
+      setFormError("No llegué al backend. Revisa la conexión.");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function copiarLink() {
+    if (!linkGenerado) return;
+    try {
+      await navigator.clipboard.writeText(linkGenerado);
+      setCopiado(true);
+      window.setTimeout(() => setCopiado(false), 1800);
+    } catch {
+      /* si el navegador bloquea el portapapeles, el link ya está visible para copiar a mano */
+    }
+  }
 
   // Auto-refresca cada 5s mientras haya contraseña. Cancela con un flag al
   // desmontar (evita setState sobre componente desmontado tras el await).
@@ -130,12 +210,46 @@ export default function SeccionDemo() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-foreground-active mb-1">
-        Demo General · Personas
-      </h2>
-      <p className="text-sm text-foreground-secondary mb-6">
-        Registros y lista de espera. Se actualiza cada 5 s.
-      </p>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground-active mb-1">
+            Demo · Personas
+          </h2>
+          <p className="text-sm text-foreground-secondary">
+            Registros de la General + demos 1:1 privadas. Se actualiza cada 5 s.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (abierto) resetForm();
+            setAbierto((v) => !v);
+          }}
+          className="btn-pill btn-pill-primary shrink-0"
+        >
+          {abierto ? "Cerrar" : "＋ Agregar"}
+        </button>
+      </div>
+
+      {abierto && (
+        <FormAgregar
+          fNombre={fNombre}
+          setFNombre={setFNombre}
+          fCorreo={fCorreo}
+          setFCorreo={setFCorreo}
+          fPrivada={fPrivada}
+          setFPrivada={setFPrivada}
+          fInstancia={fInstancia}
+          setFInstancia={setFInstancia}
+          guardando={guardando}
+          formError={formError}
+          linkGenerado={linkGenerado}
+          copiado={copiado}
+          onGuardar={agregar}
+          onCopiar={copiarLink}
+          onOtra={resetForm}
+        />
+      )}
 
       {error && (
         <p className="mb-4 text-sm text-danger" role="alert">
@@ -217,6 +331,178 @@ export default function SeccionDemo() {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+// Formulario para dar de alta una persona. General se registra sola al entrar a
+// /demo; aquí el caso real es la 1:1 privada: genera token + link para compartir.
+function FormAgregar(props: {
+  fNombre: string;
+  setFNombre: (v: string) => void;
+  fCorreo: string;
+  setFCorreo: (v: string) => void;
+  fPrivada: boolean;
+  setFPrivada: (v: boolean) => void;
+  fInstancia: string;
+  setFInstancia: (v: string) => void;
+  guardando: boolean;
+  formError: string;
+  linkGenerado: string | null;
+  copiado: boolean;
+  onGuardar: () => void;
+  onCopiar: () => void;
+  onOtra: () => void;
+}) {
+  const {
+    fNombre,
+    setFNombre,
+    fCorreo,
+    setFCorreo,
+    fPrivada,
+    setFPrivada,
+    fInstancia,
+    setFInstancia,
+    guardando,
+    formError,
+    linkGenerado,
+    copiado,
+    onGuardar,
+    onCopiar,
+    onOtra,
+  } = props;
+
+  const inputCls =
+    "w-full rounded-lg bg-surface-primary border border-edge-primary px-3.5 py-2.5 text-sm text-foreground-active outline-none transition-colors focus:border-brand-bold";
+  const labelCls =
+    "block text-[11px] font-mono uppercase tracking-widest text-foreground-tertiary mb-1.5";
+
+  // Estado de éxito: el link ya se generó. Se muestra en lugar del formulario.
+  if (linkGenerado) {
+    return (
+      <div className="mb-8 rounded-2xl border border-brand-bold/40 bg-brand-bold/[0.06] p-5">
+        <p className="text-sm font-medium text-foreground-active mb-1">
+          Demo 1:1 creada ✓
+        </p>
+        <p className="text-xs text-foreground-secondary mb-4">
+          Comparte este link solo con {fNombre.trim() || "la persona"}. Es su acceso privado.
+        </p>
+        <div className="flex items-stretch gap-2">
+          <code className="flex-1 overflow-x-auto rounded-lg border border-edge-primary bg-surface-primary px-3 py-2.5 text-xs text-foreground-active font-mono whitespace-nowrap">
+            {linkGenerado}
+          </code>
+          <button type="button" onClick={onCopiar} className="btn-pill btn-pill-primary shrink-0">
+            {copiado ? "Copiado ✓" : "Copiar"}
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={onOtra}
+          className="mt-4 text-xs font-mono text-foreground-tertiary hover:text-foreground-secondary transition-colors"
+        >
+          + Agregar otra persona
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-8 rounded-2xl border border-edge-primary bg-surface-overlay-large p-5">
+      {/* Tipo de demo: segmentado. 1:1 privada es el caso que se maneja aquí. */}
+      <div className="mb-5">
+        <span className={labelCls}>Tipo de acceso</span>
+        <div className="inline-flex rounded-lg border border-edge-primary bg-surface-primary p-0.5">
+          {[
+            { on: true, label: "1:1 privada" },
+            { on: false, label: "General" },
+          ].map((opt) => (
+            <button
+              key={opt.label}
+              type="button"
+              onClick={() => setFPrivada(opt.on)}
+              className={`rounded-md px-3.5 py-1.5 text-xs font-mono transition-colors ${
+                fPrivada === opt.on
+                  ? "bg-brand-bold text-white"
+                  : "text-foreground-tertiary hover:text-foreground-secondary"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {!fPrivada && (
+          <p className="mt-2 text-xs text-foreground-tertiary">
+            La demo General no se agrega desde aquí: la persona se registra sola al entrar a{" "}
+            <span className="font-mono">/demo</span>.
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className={labelCls} htmlFor="agr-nombre">
+            Nombre de la persona
+          </label>
+          <input
+            id="agr-nombre"
+            value={fNombre}
+            onChange={(e) => setFNombre(e.target.value)}
+            placeholder="p. ej. Dora"
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <label className={labelCls} htmlFor="agr-correo">
+            Correo autorizado
+          </label>
+          <input
+            id="agr-correo"
+            type="email"
+            value={fCorreo}
+            onChange={(e) => setFCorreo(e.target.value)}
+            placeholder="persona@correo.com"
+            className={inputCls}
+            onKeyDown={(e) => e.key === "Enter" && fPrivada && onGuardar()}
+          />
+        </div>
+      </div>
+
+      {fPrivada && (
+        <div className="mt-4 max-w-[15rem]">
+          <label className={labelCls} htmlFor="agr-instancia">
+            Instancia
+          </label>
+          <select
+            id="agr-instancia"
+            value={fInstancia}
+            onChange={(e) => setFInstancia(e.target.value)}
+            className={`${inputCls} cursor-pointer`}
+          >
+            {INSTANCIAS.map((i) => (
+              <option key={i} value={i}>
+                {i}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {formError && (
+        <p className="mt-4 text-sm text-danger" role="alert">
+          {formError}
+        </p>
+      )}
+
+      <div className="mt-5">
+        <button
+          type="button"
+          onClick={onGuardar}
+          disabled={guardando || !fPrivada}
+          className="btn-pill btn-pill-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {guardando ? "Creando…" : "Crear demo 1:1"}
+        </button>
       </div>
     </div>
   );
