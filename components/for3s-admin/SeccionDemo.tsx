@@ -34,9 +34,10 @@ const STATUS_LABEL: Record<string, string> = {
   ready: "Listo",
 };
 
-// Instancias a las que una demo 1:1 privada puede apuntar (lista fija, decisión
-// de Brian 2026-07-22). Debe coincidir con INSTANCIAS en lib/demo/accountStore.ts.
-const INSTANCIAS = ["general", "jazz", "mashe", "foresito", "brian"] as const;
+// Instancias a las que una demo 1:1 privada puede apuntar (lista fija).
+// Debe coincidir con INSTANCIAS en lib/demo/accountStore.ts. 'foresito' NO está:
+// es la instancia interna de la empresa, no demo-able (Brian 2026-07-22).
+const INSTANCIAS = ["general", "jazz", "mashe", "brian"] as const;
 
 export default function SeccionDemo() {
   const [users, setUsers] = useState<DemoUser[] | null>(null);

@@ -21,10 +21,11 @@
 import { randomBytes } from "node:crypto";
 import { db } from "./db";
 
-// Instancias válidas a las que una demo 1:1 puede apuntar (lista fija,
-// decisión de Brian 2026-07-22). Si mañana hay una instancia nueva de verdad,
-// se agrega aquí.
-export const INSTANCIAS = ["general", "jazz", "mashe", "foresito", "brian"] as const;
+// Instancias válidas a las que una demo 1:1 puede apuntar (lista fija).
+// ⚠️ 'foresito' NO está: es la instancia INTERNA de la empresa y es riesgoso
+// meter externos ahí (decisión de Brian 2026-07-22). Solo instancias demo-ables.
+// Cada una debe existir también en el CHECK de demo_users (jazz/mashe/brian/general).
+export const INSTANCIAS = ["general", "jazz", "mashe", "brian"] as const;
 export type Instancia = (typeof INSTANCIAS)[number];
 
 // Vista de una cuenta 1:1 para el panel admin (sin exponer el token completo
