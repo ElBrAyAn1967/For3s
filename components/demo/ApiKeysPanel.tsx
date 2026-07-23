@@ -3,19 +3,17 @@
 import { useEffect, useState } from "react";
 import { KeyRound, Copy, Check, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { MiKey, UsoPunto } from "@/lib/demo/for3sChat";
 
 /**
  * Apartado "Mis API keys" (Pieza D, 2026-07-20). El usuario genera sus propias
  * keys f3k_ para consumir SU For3s por API (integrarlo en su código, como NavigoX).
  * Pone un nombre → se genera (tope 3) → se muestra la key plana UNA vez → revocable.
+ *
+ * Uso real por key (2026-07-22): cada key muestra un sparkline de llamadas por
+ * día (línea que sube/baja, estilo GitHub) + totales (llamadas · tokens · $ de tu
+ * cupo). El dato viene del canal (api_consumo). Ver lib/demo/for3sChat.ts.
  */
-interface MiKey {
-  id: string;
-  nombre: string;
-  estado: string;
-  creada: string;
-  ultimo_uso: string | null;
-}
 
 export default function ApiKeysPanel() {
   const t = useTranslations("Demo.shell.apikeys");
@@ -126,6 +124,10 @@ export default function ApiKeysPanel() {
 
   const lleno = activas >= tope;
 
+  // Formatea el costo: centavos con más decimales para que no se vea $0.00.
+  const fmtCosto = (n: number) =>
+    n === 0 ? "$0" : n < 0.01 ? `$${n.toFixed(4)}` : `$${n.toFixed(2)}`;
+
   return (
     <div className="max-w-2xl">
       <h2 className="text-xl font-semibold text-foreground-active mb-1">{t("title")}</h2>
@@ -185,27 +187,113 @@ export default function ApiKeysPanel() {
         {keys !== null && keys.length === 0 && (
           <p className="text-sm text-foreground-tertiary">{t("vacio")}</p>
         )}
-        {(keys ?? []).map((k) => (
-          <div
-            key={k.id}
-            className="flex items-center justify-between gap-3 rounded-lg border border-edge-secondary bg-surface-overlay-large px-4 py-3"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <KeyRound className="size-4 text-foreground-tertiary flex-shrink-0" />
-              <span className="truncate text-sm text-foreground-active">{k.nombre}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => revocar(k.id)}
-              disabled={busy}
-              className="flex-shrink-0 text-foreground-tertiary hover:text-danger transition-colors disabled:opacity-50"
-              aria-label={t("revocar")}
+        {(keys ?? []).map((k) => {
+          const llamadas = k.total_llamadas ?? 0;
+          const tokens = k.total_tokens ?? 0;
+          const costo = k.costo_usd ?? 0;
+          return (
+            <div
+              key={k.id}
+              className="rounded-lg border border-edge-secondary bg-surface-overlay-large px-4 py-3"
             >
-              <Trash2 className="size-4" />
-            </button>
-          </div>
-        ))}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <KeyRound className="size-4 text-foreground-tertiary flex-shrink-0" />
+                  <span className="truncate text-sm text-foreground-active">{k.nombre}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => revocar(k.id)}
+                  disabled={busy}
+                  className="flex-shrink-0 text-foreground-tertiary hover:text-danger transition-colors disabled:opacity-50"
+                  aria-label={t("revocar")}
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+
+              {/* Uso: sparkline (llamadas/día, sube y baja) + totales debajo. */}
+              <div className="mt-3">
+                <Sparkline serie={k.serie ?? []} />
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-foreground-tertiary">
+                  <span>
+                    <span className="text-foreground-secondary">{llamadas.toLocaleString()}</span> llamadas
+                  </span>
+                  <span>
+                    <span className="text-foreground-secondary">{tokens.toLocaleString()}</span> tokens
+                  </span>
+                  <span title="Solo lo que salió de tu cupo (no BYOK)">
+                    <span className="text-foreground-secondary">{fmtCosto(costo)}</span> de tu cupo
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+/**
+ * Sparkline de uso: línea de llamadas por día que sube y baja (estilo GitHub).
+ * Sin ejes ni etiquetas — es un pulso visual, no un gráfico completo. Rellena los
+ * días sin llamadas con 0 para que la línea sea continua (no salte huecos). Si no
+ * hay uso todavía, muestra una guía plana tenue con "sin uso aún".
+ */
+function Sparkline({ serie }: { serie: UsoPunto[] }) {
+  const W = 260;
+  const H = 34;
+  const P = 2;
+
+  if (serie.length === 0) {
+    return (
+      <div className="flex items-center gap-2">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[260px]" role="img" aria-label="Sin uso">
+          <line
+            x1={P}
+            y1={H / 2}
+            x2={W - P}
+            y2={H / 2}
+            className="stroke-edge-secondary"
+            strokeWidth={1.5}
+            strokeDasharray="3 3"
+          />
+        </svg>
+        <span className="text-[10px] font-mono text-foreground-tertiary whitespace-nowrap">sin uso aún</span>
+      </div>
+    );
+  }
+
+  // Rellena el rango de fechas (primer→último día) con 0 donde no hubo llamadas,
+  // para que la línea represente el tiempo real, no solo los días con actividad.
+  const porFecha = new Map(serie.map((p) => [p.fecha, p.llamadas]));
+  const dias: number[] = [];
+  const d0 = new Date(serie[0].fecha + "T00:00:00Z");
+  const dN = new Date(serie[serie.length - 1].fecha + "T00:00:00Z");
+  for (let d = new Date(d0); d <= dN; d.setUTCDate(d.getUTCDate() + 1)) {
+    dias.push(porFecha.get(d.toISOString().slice(0, 10)) ?? 0);
+  }
+  // Un solo día → duplica el punto para que se vea una línea, no un vacío.
+  const vals = dias.length === 1 ? [dias[0], dias[0]] : dias;
+  const max = Math.max(1, ...vals);
+  const paso = vals.length > 1 ? (W - P * 2) / (vals.length - 1) : 0;
+  const pts = vals.map((v, i) => {
+    const x = P + i * paso;
+    const y = H - P - (v / max) * (H - P * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[260px]" role="img" aria-label="Uso por día">
+      <polyline
+        points={pts.join(" ")}
+        fill="none"
+        className="stroke-brand-bold"
+        strokeWidth={1.75}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

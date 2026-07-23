@@ -160,12 +160,24 @@ export async function borrarConector(
 
 // ── Pieza D · API keys f3k_ self-service (tu For3s en tu app) ─────────────────
 
+// Un punto de la serie de uso (por día) → la línea que sube/baja.
+export interface UsoPunto {
+  fecha: string; // "YYYY-MM-DD"
+  llamadas: number;
+}
+
 export interface MiKey {
   id: string;
   nombre: string;
   estado: string;
   creada: string;
   ultimo_uso: string | null;
+  // Uso real (lo agrega el canal desde api_consumo). Opcionales: keys de antes
+  // del cambio o si el conteo falla vienen sin ellos → el UI cae a 0.
+  total_llamadas?: number;
+  total_tokens?: number;
+  costo_usd?: number; // solo NUESTRO cupo (byok=false)
+  serie?: UsoPunto[];
 }
 
 /** Lista las keys f3k_ del usuario (sin la key plana). */
