@@ -77,8 +77,82 @@ export async function listAccounts(): Promise<CuentaPrivada[]> {
   }));
 }
 
-// Crea una demo 1:1 privada. Genera el token, la inserta y devuelve el token
-// generado (para armar el link /demo/<token> que Brian copia).
+// Resuelve una demo 1:1 privada por su token secreto (consulta Neon). Devuelve
+// null si el token no existe → la página responde 404 (no revela tokens válidos).
+// Solo busca cuentas 'privado' (las creadas desde el panel); las legado
+// jazz/mashe/brian se resuelven aparte por env var en accounts.ts.
+export async function resolvePrivadaByToken(token: string): Promise<CuentaPrivada | null> {
+  const sql = db();
+  const [r] = await sql<
+    {
+      kind: string;
+      token: string | null;
+      nombre_persona: string | null;
+      email_autorizado: string | null;
+      instancia: string | null;
+      max_concurrent: number;
+      container_name: string;
+    }[]
+  >`
+    SELECT kind, token, nombre_persona, email_autorizado, instancia,
+           max_concurrent, container_name
+    FROM demo_accounts
+    WHERE kind = 'privado' AND token = ${token}
+    LIMIT 1
+  `;
+  if (!r) return null;
+  return {
+    kind: r.kind,
+    token: r.token,
+    nombrePersona: r.nombre_persona,
+    emailAutorizado: r.email_autorizado,
+    instancia: r.instancia,
+    maxConcurrent: r.max_concurrent,
+    containerName: r.container_name,
+  };
+}
+
+// Agrega a mano una persona a la demo GENERAL (sin link: entra por /demo directo).
+// Es un usuario normal de general, pre-cargado desde el panel. Idempotente:
+// si el correo ya existe en general, no duplica. Devuelve si ya existía.
+export async function crearGeneral(input: {
+  nombre: string;
+  email: string;
+}): Promise<{ yaExistia: boolean }> {
+  const sql = db();
+  const email = input.email.trim().toLowerCase();
+  const nombreNorm = input.nombre.trim().toLowerCase();
+  const now = new Date();
+  const [row] = await sql<{ inserted: boolean }[]>`
+    INSERT INTO demo_users (kind, name, email, status, created_at, last_seen_at)
+    VALUES ('general', ${nombreNorm}, ${email}, 'released', ${now}, ${now})
+    ON CONFLICT (kind, lower(email)) DO NOTHING
+    RETURNING true AS inserted
+  `;
+  return { yaExistia: !row };
+}
+
+// ¿Este correo es el autorizado de ALGUNA demo 1:1 privada? (consulta Neon).
+// Lo usa el register para dejar entrar a una privada aunque corra sobre la
+// instancia general (que de suyo no restringe correos). El correo llega ya
+// normalizado a minúsculas.
+export async function esCorreoDePrivada(email: string): Promise<boolean> {
+  const sql = db();
+  const [r] = await sql<{ n: number }[]>`
+    SELECT count(*)::int AS n FROM demo_accounts
+    WHERE kind = 'privado' AND lower(email_autorizado) = ${email.trim().toLowerCase()}
+  `;
+  return (r?.n ?? 0) > 0;
+}
+
+// Crea una demo 1:1 privada. Escribe en DOS tablas (transaccional):
+//   - demo_accounts: la "puerta" (token/link + correo autorizado + instancia).
+//   - demo_users:    la PERSONA, como cualquier otro usuario, pero con su token.
+//     (Brian 2026-07-22: "la 1:1 también es un usuario como los otros, con otras
+//      características" → debe aparecer en la tabla de personas del panel.)
+// La persona corre sobre la INSTANCIA elegida (decisión de Brian): su `kind` en
+// demo_users es esa instancia, que ya es un runtime válido. Devuelve el token
+// generado para armar el link /demo/<token>.
 // El correo se guarda normalizado (minúsculas) — es la identidad autorizada.
 export async function crearPrivada(input: {
   nombre: string;
@@ -88,15 +162,26 @@ export async function crearPrivada(input: {
   const sql = db();
   const token = generarToken();
   const email = input.email.trim().toLowerCase();
-  const nombre = input.nombre.trim();
-  // El contenedor de una 1:1 nueva va a la instancia elegida (Paso 3 conecta el
-  // enrutado real; por ahora se guarda la referencia).
+  const nombreVisible = input.nombre.trim();
+  const nombreNorm = nombreVisible.toLowerCase(); // demo_users guarda name en minúsculas
   const container = `for3s-demo-${input.instancia}`;
-  await sql`
-    INSERT INTO demo_accounts
-      (kind, token, max_concurrent, container_name, nombre_persona, email_autorizado, instancia)
-    VALUES
-      ('privado', ${token}, 1, ${container}, ${nombre}, ${email}, ${input.instancia})
-  `;
-  return { token };
+  const now = new Date();
+
+  return sql.begin(async (tx) => {
+    // 1) La puerta: token + correo autorizado + a qué instancia apunta.
+    await tx`
+      INSERT INTO demo_accounts
+        (kind, token, max_concurrent, container_name, nombre_persona, email_autorizado, instancia)
+      VALUES
+        ('privado', ${token}, 1, ${container}, ${nombreVisible}, ${email}, ${input.instancia})
+    `;
+    // 2) La persona: un usuario más, sobre la instancia elegida. 'released' hasta
+    //    que entre por su link (entonces la máquina de estados la activa).
+    await tx`
+      INSERT INTO demo_users (kind, name, email, status, created_at, last_seen_at)
+      VALUES (${input.instancia}, ${nombreNorm}, ${email}, 'released', ${now}, ${now})
+      ON CONFLICT (kind, lower(email)) DO NOTHING
+    `;
+    return { token };
+  });
 }

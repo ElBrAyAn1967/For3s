@@ -28,11 +28,15 @@ export default async function TokenDemoPage({
   const { locale, token } = await params;
   setRequestLocale(locale);
 
-  const account = resolveByToken(token);
+  const account = await resolveByToken(token);
   if (!account) notFound();
 
   const t = await getTranslations({ locale, namespace: "Demo" });
-  const name = t(`specialized.${account.kind}.name`);
+  // Nombre a saludar: si la 1:1 trae nombre de persona (creada desde el panel),
+  // se usa ese; si es una legado (jazz/mashe/brian), la traducción de siempre.
+  const name = account.nombrePersona?.trim()
+    ? account.nombrePersona.trim()
+    : t(`specialized.${account.kind}.name`);
 
   return (
     <GeneralPageShell

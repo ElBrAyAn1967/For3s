@@ -61,6 +61,7 @@ export default function SeccionDemo() {
   const [formError, setFormError] = useState("");
   const [linkGenerado, setLinkGenerado] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [okGeneral, setOkGeneral] = useState<{ nombre: string; yaExistia: boolean } | null>(null);
 
   const ERRORES: Record<string, string> = {
     nombre_requerido: "Falta el nombre de la persona.",
@@ -78,37 +79,43 @@ export default function SeccionDemo() {
     setFormError("");
     setLinkGenerado(null);
     setCopiado(false);
+    setOkGeneral(null);
   }
 
   async function agregar() {
     if (!pass) return;
     setFormError("");
     setLinkGenerado(null);
-    // General todavía se registra por el propio formulario de la demo; aquí solo
-    // damos de alta las 1:1 privadas (que son las que necesitan link + BD).
-    if (!fPrivada) {
-      setFormError(
-        "Las personas de la demo General se registran solas al entrar a /demo. Aquí se agregan las 1:1 privadas.",
-      );
-      return;
-    }
+    setOkGeneral(null);
     setGuardando(true);
     try {
       const res = await fetch("/api/demo/admin/accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-password": pass },
         body: JSON.stringify({
+          tipo: fPrivada ? "privado" : "general",
           nombre: fNombre.trim(),
           email: fCorreo.trim(),
           instancia: fInstancia,
         }),
       });
-      const data = (await res.json()) as { link?: string; error?: string };
-      if (!res.ok || !data.link) {
+      const data = (await res.json()) as {
+        link?: string;
+        tipo?: string;
+        yaExistia?: boolean;
+        error?: string;
+      };
+      if (!res.ok) {
         setFormError(ERRORES[data.error ?? ""] ?? "No se pudo guardar.");
         return;
       }
-      setLinkGenerado(`${window.location.origin}${data.link}`);
+      if (data.tipo === "general") {
+        setOkGeneral({ nombre: fNombre.trim(), yaExistia: !!data.yaExistia });
+      } else if (data.link) {
+        setLinkGenerado(`${window.location.origin}${data.link}`);
+      } else {
+        setFormError("Respuesta inesperada del servidor.");
+      }
     } catch {
       setFormError("No llegué al backend. Revisa la conexión.");
     } finally {
@@ -245,6 +252,7 @@ export default function SeccionDemo() {
           formError={formError}
           linkGenerado={linkGenerado}
           copiado={copiado}
+          okGeneral={okGeneral}
           onGuardar={agregar}
           onCopiar={copiarLink}
           onOtra={resetForm}
@@ -351,6 +359,7 @@ function FormAgregar(props: {
   formError: string;
   linkGenerado: string | null;
   copiado: boolean;
+  okGeneral: { nombre: string; yaExistia: boolean } | null;
   onGuardar: () => void;
   onCopiar: () => void;
   onOtra: () => void;
@@ -368,6 +377,7 @@ function FormAgregar(props: {
     formError,
     linkGenerado,
     copiado,
+    okGeneral,
     onGuardar,
     onCopiar,
     onOtra,
@@ -377,6 +387,29 @@ function FormAgregar(props: {
     "w-full rounded-lg bg-surface-primary border border-edge-primary px-3.5 py-2.5 text-sm text-foreground-active outline-none transition-colors focus:border-brand-bold";
   const labelCls =
     "block text-[11px] font-mono uppercase tracking-widest text-foreground-tertiary mb-1.5";
+
+  // Éxito general: la persona quedó dada de alta en la demo General (sin link).
+  if (okGeneral) {
+    return (
+      <div className="mb-8 rounded-2xl border border-brand-bold/40 bg-brand-bold/[0.06] p-5">
+        <p className="text-sm font-medium text-foreground-active mb-1">
+          {okGeneral.yaExistia ? "Ya estaba registrada" : "Persona agregada a General ✓"}
+        </p>
+        <p className="text-xs text-foreground-secondary mb-4">
+          {okGeneral.yaExistia
+            ? `${okGeneral.nombre || "Esa persona"} ya existía en la demo General con ese correo.`
+            : `${okGeneral.nombre || "La persona"} entra a la demo General por /demo con su correo. No lleva link privado.`}
+        </p>
+        <button
+          type="button"
+          onClick={onOtra}
+          className="text-xs font-mono text-foreground-tertiary hover:text-foreground-secondary transition-colors"
+        >
+          + Agregar otra persona
+        </button>
+      </div>
+    );
+  }
 
   // Estado de éxito: el link ya se generó. Se muestra en lugar del formulario.
   if (linkGenerado) {
@@ -433,8 +466,8 @@ function FormAgregar(props: {
         </div>
         {!fPrivada && (
           <p className="mt-2 text-xs text-foreground-tertiary">
-            La demo General no se agrega desde aquí: la persona se registra sola al entrar a{" "}
-            <span className="font-mono">/demo</span>.
+            La agregas a mano a la demo General. También puede entrar sola por{" "}
+            <span className="font-mono">/demo</span> con su nombre y correo. No lleva link privado.
           </p>
         )}
       </div>
@@ -498,10 +531,16 @@ function FormAgregar(props: {
         <button
           type="button"
           onClick={onGuardar}
-          disabled={guardando || !fPrivada}
+          disabled={guardando}
           className="btn-pill btn-pill-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {guardando ? "Creando…" : "Crear demo 1:1"}
+          {guardando
+            ? fPrivada
+              ? "Creando…"
+              : "Agregando…"
+            : fPrivada
+              ? "Crear demo 1:1"
+              : "Agregar a General"}
         </button>
       </div>
     </div>

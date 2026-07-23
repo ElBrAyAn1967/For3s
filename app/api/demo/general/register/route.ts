@@ -9,6 +9,7 @@ import { registerOrResume } from "@/lib/demo/userStore";
 import { setDemoEmail } from "@/lib/demo/session";
 import { normalizeEmail, normalizeName, isValidEmail } from "@/lib/demo/normalize";
 import { isEmailAllowed } from "@/lib/demo/allowedEmails";
+import { esCorreoDePrivada } from "@/lib/demo/accountStore";
 import type { DemoKind } from "@/lib/demo/types";
 
 const VALID: DemoKind[] = ["jazz", "mashe", "brian", "general"];
@@ -33,7 +34,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Demos 1:1: solo el correo autorizado entra. Si no, 404 (hermético).
-  if (!isEmailAllowed(kind, email)) {
+  // El correo puede estar autorizado de dos formas: por env var legado
+  // (jazz/mashe/brian) o por ser el correo de una 1:1 privada creada en el panel
+  // (guardada en demo_accounts). General no restringe.
+  if (!isEmailAllowed(kind, email) && !(await esCorreoDePrivada(email))) {
     return Response.json({ error: "not_found" }, { status: 404 });
   }
 

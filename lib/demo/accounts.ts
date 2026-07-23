@@ -49,9 +49,43 @@ export function getAccount(kind: DemoKind): DemoAccount {
   return buildAccount(kind);
 }
 
+// Resultado de resolver un link 1:1: la cuenta de runtime + (si es una privada
+// creada desde el panel) el nombre de la persona y su correo autorizado, que la
+// página necesita para saludar y validar. Las legado (jazz/mashe/brian) no traen
+// estos campos (los resuelve por traducción como siempre).
+export interface ResolvedDemo extends DemoAccount {
+  nombrePersona?: string | null;
+  emailAutorizado?: string | null;
+}
+
 // Devuelve la cuenta 1:1 cuyo token coincide, o null si el token no existe
 // (→ la página debe responder 404 para no revelar qué tokens son válidos).
-export function resolveByToken(token: string): DemoAccount | null {
+//
+// Orden de resolución:
+//   1) Neon (demo_accounts kind='privado'): las 1:1 creadas desde el panel.
+//      Corren sobre la INSTANCIA elegida → su `kind` de runtime es esa instancia.
+//   2) Env vars legado (jazz/mashe/brian): las 1:1 originales.
+export async function resolveByToken(token: string): Promise<ResolvedDemo | null> {
+  // 1) Privadas nuevas (BD). Import dinámico: accountStore usa node:crypto y solo
+  //    se necesita aquí, no en el resto de consumidores de accounts.ts.
+  const { resolvePrivadaByToken } = await import("./accountStore");
+  const priv = await resolvePrivadaByToken(token);
+  if (priv) {
+    // La instancia elegida es sobre qué RUNTIME corre. Solo hay runtime real para
+    // los DemoKind con contenedor/cupo definidos (jazz/mashe/brian/general).
+    // 'foresito' u otra sin runtime propio cae a 'general' (nunca rompe la entrada).
+    const RUNTIME_KINDS: DemoKind[] = ["jazz", "mashe", "brian", "general"];
+    const inst = RUNTIME_KINDS.includes(priv.instancia as DemoKind)
+      ? (priv.instancia as DemoKind)
+      : "general";
+    return {
+      ...buildAccount(inst),
+      nombrePersona: priv.nombrePersona,
+      emailAutorizado: priv.emailAutorizado,
+    };
+  }
+
+  // 2) Legado por env var.
   for (const kind of ["jazz", "mashe", "brian"] as const) {
     if (tokenFor(kind) === token) return buildAccount(kind);
   }

@@ -10,6 +10,7 @@ import { isAdminAuthorized } from "@/lib/demo/admin";
 import {
   listAccounts,
   crearPrivada,
+  crearGeneral,
   INSTANCIAS,
   type Instancia,
 } from "@/lib/demo/accountStore";
@@ -33,30 +34,40 @@ export async function POST(request: Request) {
     return Response.json({ error: "json_invalido" }, { status: 400 });
   }
 
-  const { nombre, email, instancia } = (body ?? {}) as {
+  const { tipo, nombre, email, instancia } = (body ?? {}) as {
+    tipo?: unknown;
     nombre?: unknown;
     email?: unknown;
     instancia?: unknown;
   };
 
-  // Validación defensiva: los tres campos son obligatorios para una 1:1.
+  // Validación común: nombre y correo siempre obligatorios.
   if (typeof nombre !== "string" || !nombre.trim()) {
     return Response.json({ error: "nombre_requerido" }, { status: 400 });
   }
   if (typeof email !== "string" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
     return Response.json({ error: "correo_invalido" }, { status: 400 });
   }
-  if (typeof instancia !== "string" || !INSTANCIAS.includes(instancia as Instancia)) {
-    return Response.json({ error: "instancia_invalida" }, { status: 400 });
-  }
+
+  // 'general' es explícito; cualquier otro caso se trata como privada (compat con
+  // el cliente anterior, que no mandaba `tipo` y siempre creaba privada).
+  const esGeneral = tipo === "general";
 
   try {
+    if (esGeneral) {
+      const { yaExistia } = await crearGeneral({ nombre, email });
+      return Response.json({ ok: true, tipo: "general", yaExistia });
+    }
+    // Privada: la instancia es obligatoria y debe ser válida.
+    if (typeof instancia !== "string" || !INSTANCIAS.includes(instancia as Instancia)) {
+      return Response.json({ error: "instancia_invalida" }, { status: 400 });
+    }
     const { token } = await crearPrivada({
       nombre,
       email,
       instancia: instancia as Instancia,
     });
-    return Response.json({ ok: true, link: `/demo/${token}` });
+    return Response.json({ ok: true, tipo: "privado", link: `/demo/${token}` });
   } catch (e) {
     // Correo duplicado u otro error de BD → mensaje claro, sin filtrar detalles.
     const msg = e instanceof Error ? e.message : "error";
