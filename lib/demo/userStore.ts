@@ -235,6 +235,57 @@ export async function setAgentState(
   `;
 }
 
+// --- Edición desde el panel admin (por id de fila) ---
+
+// Edita nombre y/o correo de una persona (REAL, se guarda). El correo es la
+// identidad: cambiarlo mueve la fila a otra identidad, así que se valida que no
+// choque con otra persona del mismo demo real. name/email llegan normalizados.
+// Devuelve 'ok' | 'email_en_uso' | 'no_existe'.
+export async function editarUsuario(
+  id: string,
+  cambios: { name?: string; email?: string },
+): Promise<"ok" | "email_en_uso" | "no_existe"> {
+  const sql = db();
+  return sql.begin(async (tx) => {
+    const [u] = await tx<{ kind: string }[]>`SELECT kind FROM demo_users WHERE id = ${id}`;
+    if (!u) return "no_existe" as const;
+
+    // Si cambia el correo, que no colisione con otra persona del mismo demo real.
+    if (cambios.email) {
+      const [clash] = await tx<{ id: string }[]>`
+        SELECT id FROM demo_users
+        WHERE kind = ${u.kind} AND lower(email) = ${cambios.email} AND id <> ${id}
+      `;
+      if (clash) return "email_en_uso" as const;
+    }
+
+    // Actualiza solo los campos provistos.
+    if (cambios.name !== undefined && cambios.email !== undefined) {
+      await tx`UPDATE demo_users SET name = ${cambios.name}, email = ${cambios.email} WHERE id = ${id}`;
+    } else if (cambios.name !== undefined) {
+      await tx`UPDATE demo_users SET name = ${cambios.name} WHERE id = ${id}`;
+    } else if (cambios.email !== undefined) {
+      await tx`UPDATE demo_users SET email = ${cambios.email} WHERE id = ${id}`;
+    }
+    return "ok" as const;
+  });
+}
+
+// MOCKUP de "cambiar demo": actualiza SOLO kind_ui (lo que se muestra en el
+// panel). El demo REAL (kind) NO se toca → el hilo del agente NO se mueve. Neon
+// guarda ambos, así sabe la verdad: en UI se ve una cosa, en realidad es otra.
+// Migrar el hilo real entre agentes es un pendiente a futuro (no codificado aún).
+export async function cambiarDemoMock(
+  id: string,
+  nuevoDemoUi: DemoKind,
+): Promise<"ok" | "no_existe"> {
+  const sql = db();
+  const [u] = await sql<{ id: string }[]>`
+    UPDATE demo_users SET kind_ui = ${nuevoDemoUi} WHERE id = ${id} RETURNING id
+  `;
+  return u ? "ok" : "no_existe";
+}
+
 // --- Lectura para el dashboard admin (todas las demos) ---
 export async function listUsers(now: number): Promise<DemoUser[]> {
   const sql = db();
@@ -246,6 +297,7 @@ export async function listUsers(now: number): Promise<DemoUser[]> {
     {
       id: string;
       kind: string;
+      kind_ui: string | null;
       name: string;
       email: string;
       status: string;
@@ -256,12 +308,14 @@ export async function listUsers(now: number): Promise<DemoUser[]> {
       last_seen_at: Date;
     }[]
   >`
-    SELECT id, kind, name, email, status, position, notified, agent_on, created_at, last_seen_at
+    SELECT id, kind, kind_ui, name, email, status, position, notified, agent_on, created_at, last_seen_at
     FROM demo_users ORDER BY created_at DESC
   `;
   return rows.map((r) => ({
     id: r.id,
     kind: r.kind as DemoKind,
+    // kind_ui puede venir null en filas viejas → cae al real.
+    kindUi: (r.kind_ui ?? r.kind) as DemoKind,
     name: r.name,
     email: r.email,
     status: r.status as DemoUser["status"],

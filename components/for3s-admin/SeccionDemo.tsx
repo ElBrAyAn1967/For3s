@@ -39,6 +39,36 @@ const STATUS_LABEL: Record<string, string> = {
 // es la instancia interna de la empresa, no demo-able (Brian 2026-07-22).
 const INSTANCIAS = ["general", "jazz", "mashe", "brian"] as const;
 
+// Color de la etiqueta de demo, para identificar de un vistazo (Brian 2026-07-22):
+// jazz morado · mashe verde · brian amarillo · general gris. Tintes suaves con
+// buen contraste en dark, sin gritar. Clases estáticas (Tailwind no purga strings
+// concatenados). Cada demo: [borde, fondo, texto].
+const DEMO_COLOR: Record<string, string> = {
+  jazz: "border-purple-400/40 bg-purple-400/10 text-purple-300",
+  mashe: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300",
+  brian: "border-amber-400/40 bg-amber-400/10 text-amber-300",
+  general: "border-edge-secondary bg-surface-primary text-foreground-secondary",
+};
+
+function demoColor(kind: string): string {
+  return DEMO_COLOR[kind] ?? DEMO_COLOR.general;
+}
+
+// Etiqueta de demo coloreada. Si el demo mostrado (kindUi) difiere del real,
+// marca el mockup con un asterisco + tooltip (la verdad vive en Neon).
+function DemoBadge({ kindUi, kindReal }: { kindUi: string; kindReal: string }) {
+  const esMock = kindUi !== kindReal;
+  return (
+    <span
+      title={esMock ? `Mostrado como ${kindUi}. Real (hilo): ${kindReal}. Cambio simulado.` : undefined}
+      className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-mono uppercase ${demoColor(kindUi)}`}
+    >
+      {kindUi}
+      {esMock && <span className="not-italic text-current opacity-70">*</span>}
+    </span>
+  );
+}
+
 export default function SeccionDemo() {
   const [users, setUsers] = useState<DemoUser[] | null>(null);
   const [counts, setCounts] = useState<Counts | null>(null);
@@ -63,6 +93,10 @@ export default function SeccionDemo() {
   const [linkGenerado, setLinkGenerado] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [okGeneral, setOkGeneral] = useState<{ nombre: string; yaExistia: boolean } | null>(null);
+
+  // --- Filtro por instancia + edición de persona ---
+  const [filtro, setFiltro] = useState<string>("todos"); // "todos" | jazz | mashe | brian | general
+  const [editando, setEditando] = useState<DemoUser | null>(null); // fila en edición (modal)
 
   const ERRORES: Record<string, string> = {
     nombre_requerido: "Falta el nombre de la persona.",
@@ -132,6 +166,27 @@ export default function SeccionDemo() {
       window.setTimeout(() => setCopiado(false), 1800);
     } catch {
       /* si el navegador bloquea el portapapeles, el link ya está visible para copiar a mano */
+    }
+  }
+
+  // Guarda la edición de una persona. `cuerpo` puede ser datos reales
+  // ({name, email}) o el mockup de demo ({demoUi}). Devuelve el código de error
+  // del backend (o null si salió bien) para que el modal lo muestre.
+  async function guardarEdicion(
+    id: string,
+    cuerpo: { name?: string; email?: string; demoUi?: string },
+  ): Promise<string | null> {
+    if (!pass) return "sin_sesion";
+    try {
+      const res = await fetch(`/api/demo/admin/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-admin-password": pass },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      return res.ok ? null : data.error ?? "error";
+    } catch {
+      return "sin_red";
     }
   }
 
@@ -277,6 +332,36 @@ export default function SeccionDemo() {
         </div>
       )}
 
+      {/* Filtros por instancia: clasificar quién está en cada demo. El conteo
+          usa el demo MOSTRADO (kindUi), que es lo que el admin ve. */}
+      {users && users.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {(["todos", ...INSTANCIAS] as const).map((f) => {
+            const n =
+              f === "todos" ? users.length : users.filter((u) => u.kindUi === f).length;
+            const activo = filtro === f;
+            const color = f === "todos" ? "" : demoColor(f);
+            return (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFiltro(f)}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-mono transition-colors ${
+                  activo
+                    ? f === "todos"
+                      ? "border-brand-bold text-brand-bold"
+                      : color
+                    : "border-edge-primary text-foreground-tertiary hover:text-foreground-secondary"
+                }`}
+              >
+                {f === "todos" ? "Todos" : f}
+                <span className="opacity-60">{n}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-2xl border border-edge-primary bg-surface-overlay-large">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-edge-secondary text-[11px] font-mono uppercase tracking-widest text-foreground-tertiary">
@@ -286,61 +371,77 @@ export default function SeccionDemo() {
               <th className="px-4 py-3">Correo</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3">Cola</th>
-              <th className="px-4 py-3">Notificado</th>
               <th className="px-4 py-3">Registrado</th>
+              <th className="px-4 py-3 text-right">Editar</th>
             </tr>
           </thead>
           <tbody>
-            {users !== null && users.length === 0 && (
-              <tr>
-                <td
-                  colSpan={7}
-                  className="px-4 py-8 text-center text-foreground-tertiary"
-                >
-                  Sin registros todavía.
-                </td>
-              </tr>
-            )}
-            {users === null && !error && (
-              <tr>
-                <td
-                  colSpan={7}
-                  className="px-4 py-8 text-center text-foreground-tertiary"
-                >
-                  Cargando…
-                </td>
-              </tr>
-            )}
-            {(users ?? []).map((u) => (
-              <tr key={u.id} className="border-b border-edge-secondary/50">
-                <td className="px-4 py-3">
-                  <span className="inline-block rounded-md border border-edge-secondary bg-surface-primary px-2 py-0.5 text-[11px] font-mono uppercase text-foreground-secondary">
-                    {u.kind}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-foreground-active capitalize">
-                  {u.name}
-                </td>
-                <td className="px-4 py-3 text-foreground-secondary font-mono text-xs">
-                  {u.email}
-                </td>
-                <td className="px-4 py-3">
-                  <StatusBadge status={u.status} />
-                </td>
-                <td className="px-4 py-3 text-foreground-tertiary">
-                  {u.position ?? "—"}
-                </td>
-                <td className="px-4 py-3 text-foreground-tertiary">
-                  {u.notified ? "✓" : "—"}
-                </td>
-                <td className="px-4 py-3 text-foreground-tertiary text-xs">
-                  {new Date(u.createdAt).toLocaleString("es-MX")}
-                </td>
-              </tr>
-            ))}
+            {(() => {
+              const filtrados =
+                users === null
+                  ? null
+                  : filtro === "todos"
+                    ? users
+                    : users.filter((u) => u.kindUi === filtro);
+              if (filtrados !== null && filtrados.length === 0) {
+                return (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-foreground-tertiary">
+                      {users && users.length > 0
+                        ? "Nadie en esta instancia."
+                        : "Sin registros todavía."}
+                    </td>
+                  </tr>
+                );
+              }
+              if (filtrados === null && !error) {
+                return (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-foreground-tertiary">
+                      Cargando…
+                    </td>
+                  </tr>
+                );
+              }
+              return (filtrados ?? []).map((u) => (
+                <tr key={u.id} className="border-b border-edge-secondary/50">
+                  <td className="px-4 py-3">
+                    <DemoBadge kindUi={u.kindUi} kindReal={u.kind} />
+                  </td>
+                  <td className="px-4 py-3 text-foreground-active capitalize">{u.name}</td>
+                  <td className="px-4 py-3 text-foreground-secondary font-mono text-xs">
+                    {u.email}
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={u.status} />
+                  </td>
+                  <td className="px-4 py-3 text-foreground-tertiary">{u.position ?? "—"}</td>
+                  <td className="px-4 py-3 text-foreground-tertiary text-xs">
+                    {new Date(u.createdAt).toLocaleString("es-MX")}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => setEditando(u)}
+                      className="text-xs font-mono text-foreground-tertiary hover:text-brand-bold transition-colors"
+                    >
+                      Editar
+                    </button>
+                  </td>
+                </tr>
+              ));
+            })()}
           </tbody>
         </table>
       </div>
+
+      {editando && (
+        <ModalEditar
+          user={editando}
+          onClose={() => setEditando(null)}
+          onGuardar={guardarEdicion}
+        />
+      )}
     </div>
   );
 }
@@ -543,6 +644,141 @@ function FormAgregar(props: {
               ? "Crear demo 1:1"
               : "Agregar a General"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+// Modal de edición de una persona. Dos zonas:
+//   1) Datos reales: nombre + correo (se guardan de verdad).
+//   2) Cambiar demo (MOCKUP): mueve solo la etiqueta mostrada (kind_ui). Avisa
+//      claramente que el hilo NO se mueve (migrar hilos = pendiente a futuro).
+function ModalEditar({
+  user,
+  onClose,
+  onGuardar,
+}: {
+  user: DemoUser;
+  onClose: () => void;
+  onGuardar: (
+    id: string,
+    cuerpo: { name?: string; email?: string; demoUi?: string },
+  ) => Promise<string | null>;
+}) {
+  const [nombre, setNombre] = useState(user.name);
+  const [correo, setCorreo] = useState(user.email);
+  const [demoUi, setDemoUi] = useState<string>(user.kindUi);
+  const [msg, setMsg] = useState("");
+  const [ok, setOk] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const ERR: Record<string, string> = {
+    correo_invalido: "Ese correo no se ve válido.",
+    nombre_invalido: "El nombre no puede ir vacío.",
+    correo_ya_existe: "Otra persona de este demo ya usa ese correo.",
+    no_existe: "Esa persona ya no existe (recarga).",
+    demo_invalido: "Demo no válido.",
+    sin_red: "No llegué al backend.",
+    sin_sesion: "Sesión expirada, vuelve a entrar.",
+  };
+
+  const inputCls =
+    "w-full rounded-lg bg-surface-primary border border-edge-primary px-3.5 py-2.5 text-sm text-foreground-active outline-none transition-colors focus:border-brand-bold";
+  const labelCls =
+    "block text-[11px] font-mono uppercase tracking-widest text-foreground-tertiary mb-1.5";
+
+  const cambioDatos =
+    nombre.trim().toLowerCase() !== user.name || correo.trim().toLowerCase() !== user.email;
+  const cambioDemo = demoUi !== user.kindUi;
+
+  async function guardar() {
+    setMsg("");
+    setOk("");
+    setBusy(true);
+    try {
+      // Datos reales primero (si cambiaron).
+      if (cambioDatos) {
+        const e = await onGuardar(user.id, { name: nombre.trim(), email: correo.trim() });
+        if (e) {
+          setMsg(ERR[e] ?? "No se pudo guardar.");
+          return;
+        }
+      }
+      // Luego el mockup de demo (si cambió).
+      if (cambioDemo) {
+        const e = await onGuardar(user.id, { demoUi });
+        if (e) {
+          setMsg(ERR[e] ?? "No se pudo cambiar el demo.");
+          return;
+        }
+      }
+      setOk("Guardado. La tabla se actualiza en unos segundos.");
+      window.setTimeout(onClose, 900);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border border-edge-primary bg-surface-overlay-large p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-base font-semibold text-foreground-active mb-1">Editar persona</h3>
+        <p className="text-xs text-foreground-tertiary mb-5 font-mono">
+          Real (hilo): <span className={`${demoColor(user.kind)} px-1.5 py-0.5 rounded`}>{user.kind}</span>
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className={labelCls} htmlFor="ed-nombre">Nombre</label>
+            <input id="ed-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls} htmlFor="ed-correo">Correo</label>
+            <input id="ed-correo" type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} className={inputCls} />
+          </div>
+
+          {/* Cambiar demo — MOCKUP */}
+          <div className="rounded-xl border border-amber-400/30 bg-amber-400/[0.04] p-3.5">
+            <label className={labelCls} htmlFor="ed-demo">Demo mostrado (simulado)</label>
+            <select
+              id="ed-demo"
+              value={demoUi}
+              onChange={(e) => setDemoUi(e.target.value)}
+              className={`${inputCls} cursor-pointer`}
+            >
+              {INSTANCIAS.map((i) => (
+                <option key={i} value={i}>{i}</option>
+              ))}
+            </select>
+            <p className="mt-2 text-[11px] leading-relaxed text-foreground-tertiary">
+              Cambia solo la etiqueta que se ve. El hilo del agente NO se mueve (Neon
+              guarda el real aparte). Migrar hilos entre agentes es un pendiente a futuro.
+            </p>
+          </div>
+        </div>
+
+        {msg && <p className="mt-4 text-sm text-danger" role="alert">{msg}</p>}
+        {ok && <p className="mt-4 text-sm text-foreground-accent">{ok}</p>}
+
+        <div className="mt-6 flex gap-2 justify-end">
+          <button type="button" onClick={onClose} className="btn-pill border border-edge-primary text-foreground-secondary">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={guardar}
+            disabled={busy || (!cambioDatos && !cambioDemo)}
+            className="btn-pill btn-pill-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {busy ? "Guardando…" : "Guardar"}
+          </button>
+        </div>
       </div>
     </div>
   );

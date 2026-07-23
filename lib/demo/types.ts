@@ -58,7 +58,9 @@ export interface SessionView {
 // el mismo correo continúa la misma sesión donde se quedó.
 export interface DemoUser {
   id: string;
-  kind: DemoKind; // a qué demo pertenece la sesión
+  kind: DemoKind; // demo REAL: dónde vive el hilo del agente (fuente de verdad)
+  kindUi: DemoKind; // demo MOSTRADO en el panel (cosmético; el admin lo cambia sin
+  // mover el hilo). Migrar el hilo real entre agentes = pendiente a futuro.
   name: string; // normalizado (minúsculas) en BD; la UI lo capitaliza al pintar
   email: string; // normalizado (minúsculas) — identidad única
   status: SessionStatus;
