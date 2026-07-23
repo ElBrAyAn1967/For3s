@@ -14,6 +14,21 @@ const GENERAL_BASE =
   process.env.FOR3S_GENERAL_BASE ?? "https://for3s.tail6749e5.ts.net";
 const GENERAL_KEY = process.env.FOR3S_GENERAL_API_KEY ?? "";
 
+// Ronda F0 Pieza 3: enrutado por instancia. Cada instancia expuesta tiene su
+// RUTA en el Funnel (/i/<instancia>) y su PROPIA key. El dueño verificado (Pieza
+// 2) va a SU instancia, no a general. Config por env: FOR3S_INST_<INSTANCIA>_KEY.
+// La base es la misma (Funnel), cambia la ruta. Un mapa vacío = solo general.
+const FUNNEL_BASE =
+  process.env.FOR3S_GENERAL_BASE ?? "https://for3s.tail6749e5.ts.net";
+
+// Devuelve { base, key } para hablar con una instancia dueña, o null si no está
+// configurada (→ el caller cae a general). La key vive en env (nunca en el cliente).
+function canalDeInstancia(instancia: string): { url: string; key: string } | null {
+  const key = process.env[`FOR3S_INST_${instancia.toUpperCase()}_KEY`];
+  if (!key) return null;
+  return { url: `${FUNNEL_BASE}/i/${instancia}/v1/chat`, key };
+}
+
 // 🔴 BUG DE AISLAMIENTO CAZADO (2026-07-20): el canal API sanea el X-Client-Id con
 // _limpiar_id, que BORRA @ . + (solo deja [a-z0-9_-]) y trunca a 32. Con correos
 // reales eso COLISIONA usuarios distintos (a+b@x.com, ab.test@x.com, a.b.test@x.com
@@ -80,6 +95,49 @@ export async function chatGeneral(
   if (!res.ok) {
     throw new For3sChatError(`el agente respondió ${res.status}`, "api", res.status);
   }
+
+  const data = (await res.json().catch(() => ({}))) as { reply?: string };
+  return { reply: data.reply ?? "" };
+}
+
+/** Ronda F0 Pieza 3: chat de un DUEÑO verificado con SU instancia (brian/jazz/…).
+ * Enruta a /i/<instancia> con la key de esa instancia. El X-Client-Id sigue siendo
+ * el hash de su correo → su hilo aislado en SU instancia (mismo mecanismo que general).
+ * Si la instancia no está configurada (sin key en env) → error de config (fail-closed:
+ * NO cae a general silenciosamente, para no mezclar el dueño con el pool público). */
+export async function chatDueno(
+  email: string,
+  instancia: string,
+  message: string,
+): Promise<{ reply: string }> {
+  const canal = canalDeInstancia(instancia);
+  if (!canal) {
+    throw new For3sChatError(`instancia '${instancia}' no expuesta a web`, "config");
+  }
+  const clientId = clientIdDeCorreo(email);
+  if (!clientId || !message.trim()) {
+    throw new For3sChatError("faltan clientId o message", "api", 400);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(canal.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": canal.key,
+        "X-Client-Id": clientId,
+      },
+      body: JSON.stringify({ message: message.trim() }),
+      signal: AbortSignal.timeout(95_000),
+    });
+  } catch {
+    throw new For3sChatError(`no llego a la instancia ${instancia}`, "red");
+  }
+
+  if (res.status === 401) throw new For3sChatError("key de la instancia inválida", "api", 401);
+  if (res.status === 429) throw new For3sChatError("demasiadas solicitudes, intenta en un momento", "api", 429);
+  if (!res.ok) throw new For3sChatError(`la instancia respondió ${res.status}`, "api", res.status);
 
   const data = (await res.json().catch(() => ({}))) as { reply?: string };
   return { reply: data.reply ?? "" };

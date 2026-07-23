@@ -6,8 +6,8 @@
 // Body: { message }. Responde { reply }. Solo demo General (las 1:1 tienen su flujo).
 
 import type { NextRequest } from "next/server";
-import { readDemoSession } from "@/lib/demo/session";
-import { chatGeneral, For3sChatError } from "@/lib/demo/for3sChat";
+import { readDemoSession, readDuenoVerificado } from "@/lib/demo/session";
+import { chatGeneral, chatDueno, For3sChatError } from "@/lib/demo/for3sChat";
 
 export async function POST(request: NextRequest) {
   const sess = await readDemoSession();
@@ -27,6 +27,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Ronda F0 Pieza 3: si este correo probó ser dueño de una instancia (verificó
+    // por código, cookie httpOnly), su chat va a SU instancia, no a general.
+    // El correo del dueño verificado debe coincidir con el de la sesión (misma persona).
+    const dueno = await readDuenoVerificado();
+    if (dueno && dueno.email === sess.email) {
+      const { reply } = await chatDueno(sess.email, dueno.instancia, message);
+      return Response.json({ reply });
+    }
     const { reply } = await chatGeneral(sess.email, message);
     return Response.json({ reply });
   } catch (e) {
