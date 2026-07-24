@@ -62,6 +62,29 @@ export default function GeneralExperience({
     [onActiveChange],
   );
 
+  // Rehidratar al montar: si la cookie de sesión sigue viva (el server la lee en
+  // heartbeat), restauramos la sesión activa SIN volver a registrar ni re-enviar
+  // código. Así "atrás"/refrescar continúan donde se quedó, en vez de mandar al
+  // registro desde cero. Si no hay cookie (401/404), se queda en "register".
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/demo/general/heartbeat", { method: "POST" });
+        if (!cancelado && res.ok) {
+          apply((await res.json()) as RegisterResult);
+        }
+      } catch {
+        /* sin sesión / sin red → se queda en el registro */
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
+    // Solo al montar: rehidrata una vez la sesión desde la cookie.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Heartbeat mientras está activo o esperando.
   useEffect(() => {
     if (phase !== "active" && phase !== "waitlist") return;
@@ -73,15 +96,13 @@ export default function GeneralExperience({
     return () => window.clearInterval(id);
   }, [phase, apply]);
 
-  // Libera el cupo al cerrar la pestaña.
-  useEffect(() => {
-    if (phase !== "active" && phase !== "waitlist") return;
-    const release = () => {
-      navigator.sendBeacon?.("/api/demo/general/logout");
-    };
-    window.addEventListener("pagehide", release);
-    return () => window.removeEventListener("pagehide", release);
-  }, [phase]);
+  // NOTA (fix sesión persistente): antes se hacía logout en 'pagehide'. Pero
+  // 'pagehide' se dispara también al navegar hacia atrás, refrescar o cambiar de
+  // pestaña — no solo al cerrar — así que sacaba al usuario de su sesión con una
+  // navegación normal (frustrante). Lo quitamos: la sesión aguanta hasta que se
+  // cierra de verdad. El cupo se libera solo cuando el heartbeat deja de latir
+  // (el server marca la sesión como stale y la recupera con reapStale). El botón
+  // "Cerrar sesión" (logout) sigue liberando el cupo de forma explícita.
 
   const logout = useCallback(async () => {
     await fetch("/api/demo/general/logout", { method: "POST" });

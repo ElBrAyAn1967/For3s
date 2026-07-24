@@ -75,8 +75,12 @@ export default function GeneralRegister({
     null,
   );
 
-  // Registra en general y avisa al padre (el flujo normal de siempre).
-  const registrarYEntrar = async () => {
+  // Registra la sesión del dueño en Neon (tabla demo_users vía registerOrResume)
+  // y deja la cookie de correo — PERO NO entra al chat (no llama a onRegistered).
+  // La entrada real ocurre solo tras verificar el código (verificarCodigo).
+  // Devuelve true si el registro en Neon quedó autorizado y guardado; false si
+  // el server lo rechazó (en cuyo caso ya se pintó el error y no seguimos).
+  const registrarSesionDueno = async (): Promise<boolean> => {
     const res = await fetch("/api/demo/general/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -88,9 +92,10 @@ export default function GeneralRegister({
       else if (data.error === "not_found") setError("denied");
       else setError("invalid");
       setSubmitting(false);
-      return;
+      return false;
     }
-    const result = (await res.json()) as RegisterResult;
+    // El registro en Neon quedó hecho (entrada autorizada + persistida). No
+    // entramos: solo dejamos rastro local para pre-rellenar la próxima vez.
     const normName = name.trim().toLowerCase().replace(/\s+/g, " ");
     const normEmail = email.trim().toLowerCase();
     try {
@@ -98,7 +103,7 @@ export default function GeneralRegister({
     } catch {
       /* localStorage no disponible → se ignora */
     }
-    onRegistered(result, { name: normName, email: normEmail });
+    return true;
   };
 
   const submit = async () => {
@@ -116,9 +121,12 @@ export default function GeneralRegister({
         });
         const d = (await chk.json().catch(() => ({}))) as { dueno?: boolean; instancia?: string };
         if (d.dueno && d.instancia) {
-          // Es dueño: registrar la sesión (para tener la cookie de correo) y
-          // luego enviar el código. Al verificar, el chat irá a su instancia.
-          await registrarYEntrar();
+          // Es dueño: registrar la sesión EN NEON (autoriza + persiste la entrada
+          // y deja la cookie de correo) pero SIN entrar al chat. Solo si Neon
+          // aceptó el registro mandamos el código y mostramos el paso de código.
+          // La entrada real ocurre al verificar el código (verificarCodigo).
+          const ok = await registrarSesionDueno();
+          if (!ok) return; // el server rechazó: error ya pintado, no seguimos.
           await fetch("/api/demo/verify/send", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
