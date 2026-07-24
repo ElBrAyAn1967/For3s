@@ -199,10 +199,21 @@ export default function GeneralRegister({
       // Verificado: entrar (el chat ya va a su instancia por la cookie de dueño).
       const normName = name.trim().toLowerCase().replace(/\s+/g, " ");
       const normEmail = email.trim().toLowerCase();
-      onRegistered(
-        { status: "active", position: null, returning: true, activeCount: 1, maxConcurrent: 10, hasApiKey: false, apiKeyHint: null, agentOn: true },
-        { name: normName, email: normEmail },
-      );
+      // El estado de la API key (hasApiKey/apiKeyHint) NO se puede hardcodear: si
+      // el dueño ya conectó su key antes, debe reconocerse y NO volver a pedirla.
+      // Pedimos el estado REAL a heartbeat (lee la cookie → Neon) y lo pasamos tal
+      // cual. Si por lo que sea no responde, caemos a "sin key" (pide conectar).
+      let estado: RegisterResult = {
+        status: "active", position: null, returning: true, activeCount: 1,
+        maxConcurrent: 10, hasApiKey: false, apiKeyHint: null, agentOn: true,
+      };
+      try {
+        const hb = await fetch("/api/demo/general/heartbeat", { method: "POST" });
+        if (hb.ok) estado = (await hb.json()) as RegisterResult;
+      } catch {
+        /* sin red → estado conservador (pedirá conectar la key) */
+      }
+      onRegistered(estado, { name: normName, email: normEmail });
     } catch {
       setCodigoError("No llegué al servidor. Intenta de nuevo.");
       setSubmitting(false);
