@@ -461,10 +461,18 @@ export async function counts(now: number) {
       count(*) FILTER (WHERE status='waiting')::int AS waiting
     FROM demo_users
   `;
+  // El cupo del panel es GLOBAL: la suma de los cupos de todas las instancias
+  // activas (general 10 + brian/jazz/mashe 1 c/u = 13), no solo el de general.
+  // Antes estaba fijo a cupoDe('general') → mostraba "1/10" aunque la persona
+  // viviera en una 1:1 con cupo 1. El detalle por instancia se ve en los filtros.
+  const [cap] = await sql<{ suma: number }[]>`
+    SELECT COALESCE(sum(max_concurrent), 0)::int AS suma
+    FROM demo_instancias WHERE activa = true
+  `;
   return {
     total: row?.total ?? 0,
     active: row?.active ?? 0,
     waiting: row?.waiting ?? 0,
-    maxConcurrent: await cupoDe("general"), // C3: cupo desde demo_instancias
+    maxConcurrent: cap?.suma ?? 0,
   };
 }

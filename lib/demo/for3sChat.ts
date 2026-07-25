@@ -10,6 +10,7 @@
 
 import { createHash } from "node:crypto";
 import { canalDe } from "./instancias";
+import { instanciaRealDe } from "./userStore";
 
 // C1 · Puente CABLEADO (2026-07-24): el CHAT (chatGeneral/chatDueno) toma el canal
 // (url + key) de cada instancia desde demo_instancias vía canalDe() (con fallback a
@@ -234,14 +235,31 @@ export interface MiKey {
 }
 
 /** Lista las keys f3k_ del usuario (sin la key plana). */
+/**
+ * Canal /v1/miskeys de la instancia DONDE VIVE el usuario (no siempre general).
+ * Un dueño (ej. de brian) debe gestionar sus keys f3k_ contra SU instancia; usar
+ * el canal general fallaba porque ese agente no lo conoce. Cae a general si no se
+ * puede resolver su instancia (usuario normal de la demo pública).
+ */
+async function canalMiskeysDe(email: string): Promise<{ base: string; key: string } | null> {
+  const inst = (await instanciaRealDe(email)) ?? "general";
+  const canal = await canalDe(inst);
+  if (canal) {
+    // canal.url apunta a /v1/chat de esa instancia → derivamos su base.
+    return { base: canal.url.replace(/\/v1\/chat$/, ""), key: canal.key };
+  }
+  return GENERAL_KEY ? { base: GENERAL_BASE, key: GENERAL_KEY } : null;
+}
+
 export async function listarMisKeys(
   email: string,
 ): Promise<{ keys: MiKey[]; activas: number; tope: number } | null> {
   const clientId = clientIdDeCorreo(email);
-  if (!GENERAL_KEY) return null;
+  const canal = await canalMiskeysDe(email);
+  if (!canal) return null;
   try {
-    const res = await fetch(`${GENERAL_BASE}/v1/miskeys`, {
-      headers: { "X-API-Key": GENERAL_KEY, "X-Client-Id": clientId },
+    const res = await fetch(`${canal.base}/v1/miskeys`, {
+      headers: { "X-API-Key": canal.key, "X-Client-Id": clientId },
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return null;
@@ -258,13 +276,14 @@ export async function generarMiKey(
   nombre: string,
 ): Promise<{ key: string; id: string } | { error: string }> {
   const clientId = clientIdDeCorreo(email);
-  if (!GENERAL_KEY) return { error: "config" };
+  const canal = await canalMiskeysDe(email);
+  if (!canal) return { error: "config" };
   try {
-    const res = await fetch(`${GENERAL_BASE}/v1/miskeys`, {
+    const res = await fetch(`${canal.base}/v1/miskeys`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": GENERAL_KEY,
+        "X-API-Key": canal.key,
         "X-Client-Id": clientId,
       },
       body: JSON.stringify({ nombre }),
@@ -286,13 +305,14 @@ export async function generarMiKey(
 /** Revoca una key f3k_ del usuario (solo la suya; el canal valida propiedad). */
 export async function revocarMiKey(email: string, id: string): Promise<boolean> {
   const clientId = clientIdDeCorreo(email);
-  if (!GENERAL_KEY) return false;
+  const canal = await canalMiskeysDe(email);
+  if (!canal) return false;
   try {
-    const res = await fetch(`${GENERAL_BASE}/v1/miskeys`, {
+    const res = await fetch(`${canal.base}/v1/miskeys`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": GENERAL_KEY,
+        "X-API-Key": canal.key,
         "X-Client-Id": clientId,
       },
       body: JSON.stringify({ id }),
