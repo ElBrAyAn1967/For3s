@@ -197,15 +197,29 @@ export async function promoverDuenoAsuInstancia(
   const nombre = name.trim().toLowerCase();
   const seen = new Date(now);
   await sql.begin(async (tx) => {
-    // 1) Alta/actualización de la persona del dueño EN SU instancia.
-    await tx`
-      INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
-      VALUES (${instancia}, ${instancia}, ${nombre}, ${correo}, 'active', 'dueno', 'general', ${seen}, ${seen})
-      ON CONFLICT (kind, lower(email)) DO UPDATE
-        SET status='active', rol='dueno', hilo_nombre='general', last_seen_at=${seen}
+    // 0) Rescatar la API key que el dueño pudo haber guardado en su fila 'general'
+    //    (la guardó ahí porque entró por la puerta pública antes de verificar).
+    //    Así NO se pierde al mover la persona a su instancia.
+    const [prev] = await tx<{ api_key_enc: string | null; api_key_hint: string | null }[]>`
+      SELECT api_key_enc, api_key_hint FROM demo_users
+      WHERE lower(email)=${correo} AND api_key_enc IS NOT NULL
+      ORDER BY last_seen_at DESC LIMIT 1
     `;
-    // 2) Borrar su registro erróneo en 'general' (entró ahí por la puerta pública
-    //    antes de verificar). Su sitio es SU oficina, no el pool general.
+    const keyEnc = prev?.api_key_enc ?? null;
+    const keyHint = prev?.api_key_hint ?? null;
+
+    // 1) Alta/actualización de la persona del dueño EN SU instancia, con su key
+    //    rescatada. En UPDATE, solo pisa la key si la fila destino no tenía una.
+    await tx`
+      INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, api_key_enc, api_key_hint, created_at, last_seen_at)
+      VALUES (${instancia}, ${instancia}, ${nombre}, ${correo}, 'active', 'dueno', 'general', ${keyEnc}, ${keyHint}, ${seen}, ${seen})
+      ON CONFLICT (kind, lower(email)) DO UPDATE
+        SET status='active', rol='dueno', hilo_nombre='general', last_seen_at=${seen},
+            api_key_enc = COALESCE(demo_users.api_key_enc, EXCLUDED.api_key_enc),
+            api_key_hint = COALESCE(demo_users.api_key_hint, EXCLUDED.api_key_hint)
+    `;
+    // 2) Borrar su registro en 'general' (entró por la puerta pública antes de
+    //    verificar). Su sitio es SU oficina. La key ya se rescató arriba.
     await tx`
       DELETE FROM demo_users
       WHERE instancia='general' AND lower(email)=${correo} AND ${instancia} <> 'general'
@@ -221,14 +235,20 @@ export async function touch(
   const sql = db();
   return sql.begin(async (tx) => {
     const t = tx as unknown as SqlLike;
-    const [u] = await tx<{ id: string }[]>`
-      SELECT id FROM demo_users WHERE instancia = ${kind} AND lower(email) = ${email}
+    // Buscar la persona por CORREO en cualquier instancia (no atado al kind de la
+    // cookie). Un dueño verificado vive en SU instancia (brian), no en el 'general'
+    // de la cookie → si filtrábamos por kind, al refrescar no se encontraba y la UI
+    // sacaba al usuario. Su instancia REAL manda para el estado/cupo.
+    const [u] = await tx<{ id: string; instancia: string }[]>`
+      SELECT id, instancia FROM demo_users WHERE lower(email) = ${email}
+      ORDER BY last_seen_at DESC LIMIT 1
     `;
     if (!u) return null;
+    const inst = u.instancia as DemoKind;
     await tx`UPDATE demo_users SET last_seen_at = ${new Date(now)} WHERE id = ${u.id}`;
-    await reapStale(t, kind, now);
-    await promote(t, kind);
-    return buildResult(t, kind, email, true);
+    await reapStale(t, inst, now);
+    await promote(t, inst);
+    return buildResult(t, inst, email, true);
   });
 }
 
