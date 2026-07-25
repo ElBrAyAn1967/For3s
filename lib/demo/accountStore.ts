@@ -20,6 +20,7 @@
 
 import { randomBytes } from "node:crypto";
 import { db } from "./db";
+import { nombreDeHilo } from "./hilos"; // estándar único del nombre de hilo
 
 // Instancias válidas a las que una demo 1:1 puede apuntar (lista fija).
 // ⚠️ 'foresito' NO está: es la instancia INTERNA de la empresa y es riesgoso
@@ -136,7 +137,7 @@ export async function crearGeneral(input: {
   const [row] = await sql<{ inserted: boolean }[]>`
     INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
     VALUES ('general', 'general', ${nombreNorm}, ${email}, 'released', 'visitante',
-            ${"hilo-" + nombreNorm.replace(/[^a-z0-9]+/g, "-")}, ${now}, ${now})
+            ${nombreDeHilo("visitante", nombreNorm, email)}, ${now}, ${now})
     ON CONFLICT (kind, lower(email)) DO NOTHING
     RETURNING true AS inserted
   `;
@@ -203,7 +204,7 @@ export async function crearPrivada(input: {
     await tx`
       INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
       VALUES (${input.instancia}, ${input.instancia}, ${nombreNorm}, ${email}, 'released', 'visitante',
-              ${"hilo-" + nombreNorm.replace(/[^a-z0-9]+/g, "-")}, ${now}, ${now})
+              ${nombreDeHilo("visitante", nombreNorm, email)}, ${now}, ${now})
       ON CONFLICT (kind, lower(email)) DO NOTHING
     `;
     return { token };

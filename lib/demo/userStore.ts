@@ -14,6 +14,7 @@
 import type { Sql } from "postgres";
 import { cupoDe } from "./instancias"; // C3: cupo desde demo_instancias
 import { sesionTtlMs, panelCupoModo } from "./config"; // parámetros desde demo_config
+import { nombreDeHilo } from "./hilos"; // estándar único del nombre de hilo
 import {
   type RegisterResult,
   type RegisterDenied,
@@ -128,9 +129,20 @@ export async function registerOrResume(
       if (existing.name !== name) {
         return { error: "name_mismatch" } satisfies RegisterDenied;
       }
+      // HALLAZGO 2 · el rol se RECALCULA en cada entrada, no solo al crear.
+      // Antes solo se decidía al registrar: si hacías dueño a alguien que ya había
+      // entrado, seguía como 'visitante' para siempre. Ahora, si su correo está en
+      // demo_duenos de esta instancia, se corrige (y su hilo pasa al base 'general').
+      const [d] = await tx<{ n: number }[]>`
+        SELECT count(*)::int AS n FROM demo_duenos
+        WHERE lower(email)=${email} AND instancia=${kind}
+      `;
+      const rolAhora = (d?.n ?? 0) > 0 ? "dueno" : "visitante";
       await tx`
         UPDATE demo_users
-        SET last_seen_at = ${seen},
+        SET rol = ${rolAhora},
+            hilo_nombre = ${nombreDeHilo(rolAhora, name, email)},
+            last_seen_at = ${seen},
             status = CASE
               WHEN status IN ('released','connecting') AND
                    (SELECT count(*) FROM demo_users WHERE instancia = ${kind} AND status='active') < ${max}
@@ -156,10 +168,10 @@ export async function registerOrResume(
       WHERE lower(email)=${email} AND instancia=${kind}
     `;
     const rol = (esDueno[0]?.n ?? 0) > 0 ? "dueno" : "visitante";
-    const hilo =
-      rol === "dueno"
-        ? "general"
-        : "hilo-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    // HALLAZGO 3 · nombre de hilo por el estándar único (lib/demo/hilos.ts):
+    // dueño → 'general'; invitado → hilo-<nombre>-<sufijo del correo>, ÚNICO por
+    // correo (antes solo el nombre → dos personas homónimas compartían hilo).
+    const hilo = nombreDeHilo(rol, name, email);
     await tx`
       INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
       VALUES (${kind}, ${kind}, ${name}, ${email}, ${status}, ${rol}, ${hilo}, ${seen}, ${seen})
