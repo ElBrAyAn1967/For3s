@@ -121,17 +121,26 @@ export default function GeneralRegister({
         });
         const d = (await chk.json().catch(() => ({}))) as { dueno?: boolean; instancia?: string };
         if (d.dueno && d.instancia) {
-          // Es dueño: registrar la sesión EN NEON (autoriza + persiste la entrada
-          // y deja la cookie de correo) pero SIN entrar al chat. Solo si Neon
-          // aceptó el registro mandamos el código y mostramos el paso de código.
-          // La entrada real ocurre al verificar el código (verificarCodigo).
-          const ok = await registrarSesionDueno();
-          if (!ok) return; // el server rechazó: error ya pintado, no seguimos.
+          // REGLA "un dueño = su oficina": el dueño NO se registra en general, ni
+          // temporalmente. Solo se le manda el código; al verificarlo, verify/check
+          // lo crea DIRECTAMENTE en SU instancia (rol=dueno, hilo=general).
+          // (Antes se llamaba registrarSesionDueno() aquí, lo que creaba su fila en
+          //  general en CADA entrada → filas duplicadas y estado confuso.)
           await fetch("/api/demo/verify/send", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
           });
+          // Guardamos el nombre localmente: verify/check lo necesita para crear su
+          // persona en su instancia (lo mandamos en el paso del código).
+          try {
+            window.localStorage.setItem(lastKey(kind), JSON.stringify({
+              name: name.trim().toLowerCase().replace(/\s+/g, " "),
+              email: email.trim().toLowerCase(),
+            }));
+          } catch {
+            /* localStorage no disponible → se ignora */
+          }
           setDuenoInst(d.instancia);
           setPaso("codigo");
           setSubmitting(false);
@@ -185,10 +194,13 @@ export default function GeneralRegister({
     setSubmitting(true);
     setCodigoError("");
     try {
+      // Mandamos el nombre: el dueño NO tiene fila previa en general (ya no se
+      // registra ahí), así que verify/check lo necesita para crear su persona
+      // directamente en SU instancia.
       const res = await fetch("/api/demo/verify/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, codigo: c }),
+        body: JSON.stringify({ email, codigo: c, name }),
       });
       const d = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
       if (!res.ok || !d.ok) {

@@ -10,6 +10,7 @@ import { setDemoEmail } from "@/lib/demo/session";
 import { normalizeEmail, normalizeName, isValidEmail } from "@/lib/demo/normalize";
 import { isEmailAllowed } from "@/lib/demo/allowedEmails";
 import { esCorreoDePrivada } from "@/lib/demo/accountStore";
+import { instanciaDe } from "@/lib/demo/duenos";
 import { registrarEvento } from "@/lib/demo/eventos";
 import type { DemoKind } from "@/lib/demo/types";
 
@@ -40,6 +41,18 @@ export async function POST(request: NextRequest) {
   // (guardada en demo_accounts). General no restringe.
   if (!isEmailAllowed(kind, email) && !(await esCorreoDePrivada(email))) {
     return Response.json({ error: "not_found" }, { status: 404 });
+  }
+
+  // REGLA "un dueño = su oficina" (defensa en servidor): si este correo es dueño de
+  // una instancia, NO puede registrarse en otra (p.ej. entrar a general como uno más).
+  // Debe verificar su código y entrar a la suya. Evita filas duplicadas del mismo
+  // correo en general + su instancia.
+  const dueno = await instanciaDe(email);
+  if (dueno && dueno.instancia !== kind) {
+    return Response.json(
+      { error: "es_dueno", instancia: dueno.instancia },
+      { status: 409 },
+    );
   }
 
   const result = await registerOrResume(kind, name, email, Date.now());
