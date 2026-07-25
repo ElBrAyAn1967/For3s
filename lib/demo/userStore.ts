@@ -13,6 +13,7 @@
 
 import type { Sql } from "postgres";
 import { cupoDe } from "./instancias"; // C3: cupo desde demo_instancias
+import { sesionTtlMs, panelCupoModo } from "./config"; // parámetros desde demo_config
 import {
   type RegisterResult,
   type RegisterDenied,
@@ -21,14 +22,13 @@ import {
 } from "./types";
 import { db } from "./db";
 
-const ACTIVE_TTL_MS = 60_000;
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SqlLike = Sql<any>;
 
 // Marca como 'released' las sesiones activas sin heartbeat reciente (de un kind).
+// El TTL sale de demo_config.sesion_ttl_seg (editable sin push; default 60s).
 async function reapStale(sql: SqlLike, kind: DemoKind, now: number): Promise<void> {
-  const cutoff = new Date(now - ACTIVE_TTL_MS);
+  const cutoff = new Date(now - (await sesionTtlMs()));
   await sql`
     UPDATE demo_users SET status = 'released'
     WHERE instancia = ${kind} AND status = 'active' AND last_seen_at < ${cutoff}
@@ -461,18 +461,25 @@ export async function counts(now: number) {
       count(*) FILTER (WHERE status='waiting')::int AS waiting
     FROM demo_users
   `;
-  // El cupo del panel es GLOBAL: la suma de los cupos de todas las instancias
-  // activas (general 10 + brian/jazz/mashe 1 c/u = 13), no solo el de general.
-  // Antes estaba fijo a cupoDe('general') → mostraba "1/10" aunque la persona
-  // viviera en una 1:1 con cupo 1. El detalle por instancia se ve en los filtros.
-  const [cap] = await sql<{ suma: number }[]>`
-    SELECT COALESCE(sum(max_concurrent), 0)::int AS suma
-    FROM demo_instancias WHERE activa = true
-  `;
+  // Cupo que muestra el panel: lo decide demo_config.panel_cupo_modo (NO el código).
+  //   'suma'    → suma de todas las instancias activas (10+1+1+1 = 13)
+  //   'general' → solo el cupo de general (10)
+  // Cambiarlo = UPDATE en demo_config, sin push ni redeploy.
+  const modo = await panelCupoModo();
+  let maxConcurrent: number;
+  if (modo === "general") {
+    maxConcurrent = await cupoDe("general");
+  } else {
+    const [cap] = await sql<{ suma: number }[]>`
+      SELECT COALESCE(sum(max_concurrent), 0)::int AS suma
+      FROM demo_instancias WHERE activa = true
+    `;
+    maxConcurrent = cap?.suma ?? 0;
+  }
   return {
     total: row?.total ?? 0,
     active: row?.active ?? 0,
     waiting: row?.waiting ?? 0,
-    maxConcurrent: cap?.suma ?? 0,
+    maxConcurrent,
   };
 }

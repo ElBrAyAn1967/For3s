@@ -12,9 +12,10 @@
 import { createHash, randomInt } from "node:crypto";
 import { Resend } from "resend";
 import { db } from "./db";
+import { codigoValidezMs, codigoMaxIntentos } from "./config";
 
-const VALIDEZ_MS = 10 * 60 * 1000; // 10 minutos
-const MAX_INTENTOS = 5;
+// Validez e intentos salen de demo_config (codigo_validez_min / codigo_max_intentos)
+// → se cambian con un UPDATE en Neon, sin push ni redeploy. Defaults: 10 min / 5.
 
 // Hash del código (SHA-256 con el correo como sal → dos correos con el mismo
 // código no colisionan). El código en claro nunca toca la BD.
@@ -37,7 +38,7 @@ export async function enviarCodigo(input: {
   const email = input.email.trim().toLowerCase();
   const codigo = generarCodigo();
   const hash = hashCodigo(email, codigo);
-  const expira = new Date(Date.now() + VALIDEZ_MS);
+  const expira = new Date(Date.now() + (await codigoValidezMs()));
 
   // 1) Guardar (reemplaza cualquier código previo de ese correo → intentos a 0).
   const sql = db();
@@ -96,7 +97,7 @@ export async function validarCodigo(
 
     if (!row || row.usado) return { ok: false as const, error: "no_hay_codigo" as const };
     if (row.expira_at.getTime() < Date.now()) return { ok: false as const, error: "expirado" as const };
-    if (row.intentos >= MAX_INTENTOS) return { ok: false as const, error: "bloqueado" as const };
+    if (row.intentos >= (await codigoMaxIntentos())) return { ok: false as const, error: "bloqueado" as const };
 
     const acierto = row.codigo_hash === hashCodigo(correo, codigo.trim());
     if (!acierto) {

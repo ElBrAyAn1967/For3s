@@ -13,6 +13,7 @@
 import { db } from "./db";
 import { decryptSecret } from "./crypto";
 import { MAX_CONCURRENT, type DemoKind } from "./types";
+import { cacheInstanciasMs } from "./config";
 
 export interface InstanciaConfig {
   instancia: string;
@@ -23,7 +24,7 @@ export interface InstanciaConfig {
   activa: boolean;
 }
 
-const TTL_MS = 10_000; // 10s (Brian 2026-07-24)
+// TTL del cache: sale de demo_config.cache_config_seg (editable sin push; default 10s).
 
 // Cache en memoria del proceso: instancia → { config, expira }.
 type CacheEntry = { config: InstanciaConfig | null; expira: number };
@@ -42,7 +43,7 @@ export async function getInstancia(instancia: string): Promise<InstanciaConfig |
     FROM demo_instancias WHERE instancia = ${key}
   `;
   const config = row ?? null;
-  cache.set(key, { config, expira: now + TTL_MS });
+  cache.set(key, { config, expira: now + (await cacheInstanciasMs()) });
   return config;
 }
 
