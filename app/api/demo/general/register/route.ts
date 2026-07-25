@@ -10,6 +10,7 @@ import { setDemoEmail } from "@/lib/demo/session";
 import { normalizeEmail, normalizeName, isValidEmail } from "@/lib/demo/normalize";
 import { isEmailAllowed } from "@/lib/demo/allowedEmails";
 import { esCorreoDePrivada } from "@/lib/demo/accountStore";
+import { registrarEvento } from "@/lib/demo/eventos";
 import type { DemoKind } from "@/lib/demo/types";
 
 const VALID: DemoKind[] = ["jazz", "mashe", "brian", "general"];
@@ -49,5 +50,12 @@ export async function POST(request: NextRequest) {
 
   // Guardamos kind+correo en cookies para heartbeat/logout/apikey.
   await setDemoEmail(email, kind);
+  // C5 · Telemetría: registrar la entrada (o cola). No bloquea la respuesta.
+  void registrarEvento({
+    tipo: result.status === "waiting" ? "waitlist" : "register",
+    instancia: kind,
+    email,
+    detalle: { status: result.status, returning: result.returning },
+  });
   return Response.json(result);
 }

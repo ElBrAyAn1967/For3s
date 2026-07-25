@@ -5,6 +5,7 @@
 import { validarCodigo } from "@/lib/demo/verificacion";
 import { setDuenoVerificado } from "@/lib/demo/session";
 import { normalizeEmail, isValidEmail } from "@/lib/demo/normalize";
+import { registrarEvento } from "@/lib/demo/eventos";
 
 const ERRORES: Record<string, string> = {
   no_hay_codigo: "No hay código pendiente. Pide uno nuevo.",
@@ -33,5 +34,7 @@ export async function POST(request: Request) {
   // Verificado: marca en la sesión (cookie httpOnly) que este correo probó ser
   // dueño de esta instancia. La Pieza 3 lo usará para enrutar el chat.
   await setDuenoVerificado(email, r.instancia);
+  // C5 · Telemetría: el dueño verificó su código correctamente.
+  void registrarEvento({ tipo: "verify", instancia: r.instancia, email });
   return Response.json({ ok: true, instancia: r.instancia });
 }

@@ -12,8 +12,8 @@
 // registro persiste (pueden volver con su correo).
 
 import type { Sql } from "postgres";
+import { cupoDe } from "./instancias"; // C3: cupo desde demo_instancias
 import {
-  MAX_CONCURRENT,
   type RegisterResult,
   type RegisterDenied,
   type DemoUser,
@@ -31,13 +31,13 @@ async function reapStale(sql: SqlLike, kind: DemoKind, now: number): Promise<voi
   const cutoff = new Date(now - ACTIVE_TTL_MS);
   await sql`
     UPDATE demo_users SET status = 'released'
-    WHERE kind = ${kind} AND status = 'active' AND last_seen_at < ${cutoff}
+    WHERE instancia = ${kind} AND status = 'active' AND last_seen_at < ${cutoff}
   `;
 }
 
 async function activeCount(sql: SqlLike, kind: DemoKind): Promise<number> {
   const [row] = await sql<{ n: number }[]>`
-    SELECT count(*)::int AS n FROM demo_users WHERE kind = ${kind} AND status = 'active'
+    SELECT count(*)::int AS n FROM demo_users WHERE instancia = ${kind} AND status = 'active'
   `;
   return row?.n ?? 0;
 }
@@ -45,14 +45,14 @@ async function activeCount(sql: SqlLike, kind: DemoKind): Promise<number> {
 // Promueve de la cola (FIFO) mientras haya cupo en ese kind. Recalcula posiciones.
 // Devuelve los correos recién promovidos (para notificar — stub email).
 async function promote(sql: SqlLike, kind: DemoKind): Promise<string[]> {
-  const max = MAX_CONCURRENT[kind];
+  const max = await cupoDe(kind); // C3: cupo desde demo_instancias (antes MAX_CONCURRENT[kind])
   const active = await activeCount(sql, kind);
   let free = max - active;
   const promoted: string[] = [];
 
   if (free > 0) {
     const waiting = await sql<{ id: string; email: string }[]>`
-      SELECT id, email FROM demo_users WHERE kind = ${kind} AND status = 'waiting'
+      SELECT id, email FROM demo_users WHERE instancia = ${kind} AND status = 'waiting'
       ORDER BY last_seen_at ASC LIMIT ${free}
     `;
     for (const w of waiting) {
@@ -65,7 +65,7 @@ async function promote(sql: SqlLike, kind: DemoKind): Promise<string[]> {
   await sql`
     WITH ordered AS (
       SELECT id, row_number() OVER (ORDER BY last_seen_at ASC) AS rn
-      FROM demo_users WHERE kind = ${kind} AND status = 'waiting'
+      FROM demo_users WHERE instancia = ${kind} AND status = 'waiting'
     )
     UPDATE demo_users u SET position = o.rn FROM ordered o WHERE u.id = o.id
   `;
@@ -88,7 +88,7 @@ async function buildResult(
     }[]
   >`
     SELECT status, position, api_key_enc, api_key_hint, agent_on
-    FROM demo_users WHERE kind = ${kind} AND lower(email) = ${email}
+    FROM demo_users WHERE instancia = ${kind} AND lower(email) = ${email}
   `;
   const active = await activeCount(sql, kind);
   return {
@@ -96,7 +96,7 @@ async function buildResult(
     position: u?.position ?? null,
     returning,
     activeCount: active,
-    maxConcurrent: MAX_CONCURRENT[kind],
+    maxConcurrent: await cupoDe(kind), // C3: cupo desde demo_instancias
     hasApiKey: !!u?.api_key_enc,
     apiKeyHint: u?.api_key_hint ?? null,
     agentOn: u?.agent_on ?? true,
@@ -118,10 +118,10 @@ export async function registerOrResume(
     const t = tx as unknown as SqlLike;
     await reapStale(t, kind, now);
     const seen = new Date(now);
-    const max = MAX_CONCURRENT[kind];
+    const max = await cupoDe(kind); // C3: cupo desde demo_instancias
 
     const [existing] = await tx<{ id: string; name: string }[]>`
-      SELECT id, name FROM demo_users WHERE kind = ${kind} AND lower(email) = ${email}
+      SELECT id, name FROM demo_users WHERE instancia = ${kind} AND lower(email) = ${email}
     `;
 
     if (existing) {
@@ -133,7 +133,7 @@ export async function registerOrResume(
         SET last_seen_at = ${seen},
             status = CASE
               WHEN status IN ('released','connecting') AND
-                   (SELECT count(*) FROM demo_users WHERE kind = ${kind} AND status='active') < ${max}
+                   (SELECT count(*) FROM demo_users WHERE instancia = ${kind} AND status='active') < ${max}
                 THEN 'active'
               WHEN status IN ('released','connecting')
                 THEN 'waiting'
@@ -147,9 +147,22 @@ export async function registerOrResume(
 
     const active = await activeCount(t, kind);
     const status = active < max ? "active" : "waiting";
+    // C2 · doble-escritura (transición): escribe kind (viejo) E instancia/rol/
+    // hilo_nombre (nuevo) a la vez. rol = 'dueno' si el correo está en demo_duenos
+    // para esta instancia, si no 'visitante'. hilo = 'general' (dueño) | 'hilo-<nombre>'.
+    // Derivado en SQL para que sea atómico y no cambie la firma de la función.
+    const esDueno = await tx<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM demo_duenos
+      WHERE lower(email)=${email} AND instancia=${kind}
+    `;
+    const rol = (esDueno[0]?.n ?? 0) > 0 ? "dueno" : "visitante";
+    const hilo =
+      rol === "dueno"
+        ? "general"
+        : "hilo-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     await tx`
-      INSERT INTO demo_users (kind, name, email, status, created_at, last_seen_at)
-      VALUES (${kind}, ${name}, ${email}, ${status}, ${seen}, ${seen})
+      INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
+      VALUES (${kind}, ${kind}, ${name}, ${email}, ${status}, ${rol}, ${hilo}, ${seen}, ${seen})
     `;
     await promote(t, kind);
     return buildResult(t, kind, email, false);
@@ -165,7 +178,7 @@ export async function touch(
   return sql.begin(async (tx) => {
     const t = tx as unknown as SqlLike;
     const [u] = await tx<{ id: string }[]>`
-      SELECT id FROM demo_users WHERE kind = ${kind} AND lower(email) = ${email}
+      SELECT id FROM demo_users WHERE instancia = ${kind} AND lower(email) = ${email}
     `;
     if (!u) return null;
     await tx`UPDATE demo_users SET last_seen_at = ${new Date(now)} WHERE id = ${u.id}`;
@@ -183,7 +196,7 @@ export async function endSession(
   const sql = db();
   return sql.begin(async (tx) => {
     const t = tx as unknown as SqlLike;
-    await tx`UPDATE demo_users SET status='released' WHERE kind = ${kind} AND lower(email) = ${email}`;
+    await tx`UPDATE demo_users SET status='released' WHERE instancia = ${kind} AND lower(email) = ${email}`;
     await reapStale(t, kind, now);
     return promote(t, kind);
   });
@@ -191,7 +204,7 @@ export async function endSession(
 
 export async function markNotified(kind: DemoKind, email: string): Promise<void> {
   const sql = db();
-  await sql`UPDATE demo_users SET notified = true WHERE kind = ${kind} AND lower(email) = ${email}`;
+  await sql`UPDATE demo_users SET notified = true WHERE instancia = ${kind} AND lower(email) = ${email}`;
 }
 
 // Guarda la API key CIFRADA (ligada a kind+correo).
@@ -204,7 +217,7 @@ export async function saveApiKey(
   const sql = db();
   await sql`
     UPDATE demo_users SET api_key_enc = ${encBlob}, api_key_hint = ${hint}
-    WHERE kind = ${kind} AND lower(email) = ${email}
+    WHERE instancia = ${kind} AND lower(email) = ${email}
   `;
 }
 
@@ -218,7 +231,7 @@ export async function updateName(
   const sql = db();
   await sql`
     UPDATE demo_users SET name = ${newName}
-    WHERE kind = ${kind} AND lower(email) = ${email}
+    WHERE instancia = ${kind} AND lower(email) = ${email}
   `;
 }
 
@@ -231,7 +244,7 @@ export async function setAgentState(
   const sql = db();
   await sql`
     UPDATE demo_users SET agent_on = ${on}
-    WHERE kind = ${kind} AND lower(email) = ${email}
+    WHERE instancia = ${kind} AND lower(email) = ${email}
   `;
 }
 
@@ -247,14 +260,14 @@ export async function editarUsuario(
 ): Promise<"ok" | "email_en_uso" | "no_existe"> {
   const sql = db();
   return sql.begin(async (tx) => {
-    const [u] = await tx<{ kind: string }[]>`SELECT kind FROM demo_users WHERE id = ${id}`;
+    const [u] = await tx<{ instancia: string }[]>`SELECT instancia FROM demo_users WHERE id = ${id}`;
     if (!u) return "no_existe" as const;
 
-    // Si cambia el correo, que no colisione con otra persona del mismo demo real.
+    // Si cambia el correo, que no colisione con otra persona de la misma instancia.
     if (cambios.email) {
       const [clash] = await tx<{ id: string }[]>`
         SELECT id FROM demo_users
-        WHERE kind = ${u.kind} AND lower(email) = ${cambios.email} AND id <> ${id}
+        WHERE instancia = ${u.instancia} AND lower(email) = ${cambios.email} AND id <> ${id}
       `;
       if (clash) return "email_en_uso" as const;
     }
@@ -363,6 +376,6 @@ export async function counts(now: number) {
     total: row?.total ?? 0,
     active: row?.active ?? 0,
     waiting: row?.waiting ?? 0,
-    maxConcurrent: MAX_CONCURRENT.general,
+    maxConcurrent: await cupoDe("general"), // C3: cupo desde demo_instancias
   };
 }

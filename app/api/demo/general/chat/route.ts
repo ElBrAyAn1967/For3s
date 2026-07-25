@@ -8,6 +8,7 @@
 import type { NextRequest } from "next/server";
 import { readDemoSession, readDuenoVerificado } from "@/lib/demo/session";
 import { chatGeneral, chatDueno, For3sChatError } from "@/lib/demo/for3sChat";
+import { registrarEvento } from "@/lib/demo/eventos";
 
 export async function POST(request: NextRequest) {
   const sess = await readDemoSession();
@@ -33,9 +34,13 @@ export async function POST(request: NextRequest) {
     const dueno = await readDuenoVerificado();
     if (dueno && dueno.email === sess.email) {
       const { reply } = await chatDueno(sess.email, dueno.instancia, message);
+      // C5 · Telemetría: chat del dueño → su instancia.
+      void registrarEvento({ tipo: "chat", instancia: dueno.instancia, email: sess.email, detalle: { rol: "dueno" } });
       return Response.json({ reply });
     }
     const { reply } = await chatGeneral(sess.email, message);
+    // C5 · Telemetría: chat de un usuario general.
+    void registrarEvento({ tipo: "chat", instancia: sess.kind, email: sess.email, detalle: { rol: "visitante" } });
     return Response.json({ reply });
   } catch (e) {
     if (e instanceof For3sChatError) {

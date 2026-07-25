@@ -61,11 +61,14 @@ export async function listAccounts(): Promise<CuentaPrivada[]> {
       container_name: string;
     }[]
   >`
-    SELECT kind, token, nombre_persona, email_autorizado, instancia,
-           max_concurrent, container_name
-    FROM demo_accounts
-    WHERE kind <> 'general'
-    ORDER BY kind
+    -- C4: lista las llaves 1:1 desde demo_llaves (incluye revocadas para que el
+    -- panel las muestre). El cupo sale de demo_instancias (fuente de verdad).
+    SELECT 'privado'::text AS kind, l.token, l.nombre_persona, l.email_autorizado,
+           l.instancia, i.max_concurrent,
+           'for3s-demo-'||l.instancia AS container_name
+    FROM demo_llaves l
+    JOIN demo_instancias i ON i.instancia = l.instancia
+    ORDER BY l.instancia
   `;
   return rows.map((r) => ({
     kind: r.kind,
@@ -95,10 +98,14 @@ export async function resolvePrivadaByToken(token: string): Promise<CuentaPrivad
       container_name: string;
     }[]
   >`
-    SELECT kind, token, nombre_persona, email_autorizado, instancia,
-           max_concurrent, container_name
-    FROM demo_accounts
-    WHERE kind = 'privado' AND token = ${token}
+    -- C4: la llave vive en demo_llaves; el cupo sale de demo_instancias (fuente de
+    -- verdad). Una llave REVOCADA no resuelve (el dueño apagó el acceso).
+    SELECT 'privado'::text AS kind, l.token, l.nombre_persona, l.email_autorizado,
+           l.instancia, i.max_concurrent,
+           'for3s-demo-'||l.instancia AS container_name
+    FROM demo_llaves l
+    JOIN demo_instancias i ON i.instancia = l.instancia
+    WHERE l.revocada = false AND l.token = ${token}
     LIMIT 1
   `;
   if (!r) return null;
@@ -124,9 +131,12 @@ export async function crearGeneral(input: {
   const email = input.email.trim().toLowerCase();
   const nombreNorm = input.nombre.trim().toLowerCase();
   const now = new Date();
+  // C2 · doble-escritura: kind (viejo) E instancia (nuevo). Persona de la 1:1 que
+  // vive sobre 'general' (rol visitante por defecto; su hilo se nombra por su nombre).
   const [row] = await sql<{ inserted: boolean }[]>`
-    INSERT INTO demo_users (kind, name, email, status, created_at, last_seen_at)
-    VALUES ('general', ${nombreNorm}, ${email}, 'released', ${now}, ${now})
+    INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
+    VALUES ('general', 'general', ${nombreNorm}, ${email}, 'released', 'visitante',
+            ${"hilo-" + nombreNorm.replace(/[^a-z0-9]+/g, "-")}, ${now}, ${now})
     ON CONFLICT (kind, lower(email)) DO NOTHING
     RETURNING true AS inserted
   `;
@@ -139,9 +149,11 @@ export async function crearGeneral(input: {
 // normalizado a minúsculas.
 export async function esCorreoDePrivada(email: string): Promise<boolean> {
   const sql = db();
+  // C4: lee de demo_llaves (tabla nueva). Una llave REVOCADA no autoriza (el dueño
+  // apagó el acceso). Antes: demo_accounts WHERE kind='privado' (sin revocación).
   const [r] = await sql<{ n: number }[]>`
-    SELECT count(*)::int AS n FROM demo_accounts
-    WHERE kind = 'privado' AND lower(email_autorizado) = ${email.trim().toLowerCase()}
+    SELECT count(*)::int AS n FROM demo_llaves
+    WHERE revocada = false AND lower(email_autorizado) = ${email.trim().toLowerCase()}
   `;
   return (r?.n ?? 0) > 0;
 }
@@ -169,18 +181,29 @@ export async function crearPrivada(input: {
   const now = new Date();
 
   return sql.begin(async (tx) => {
-    // 1) La puerta: token + correo autorizado + a qué instancia apunta.
+    // 1) La puerta (llave privada). C4 · doble-escritura: se escribe en demo_accounts
+    //    (viejo) Y en demo_llaves (nuevo, la fuente que ya lee el código). emitida_por
+    //    = el dueño de esa instancia (si tiene). En demo_llaves NO va el cupo/container:
+    //    esos salen de demo_instancias (fuente de verdad).
     await tx`
       INSERT INTO demo_accounts
         (kind, token, max_concurrent, container_name, nombre_persona, email_autorizado, instancia)
       VALUES
         ('privado', ${token}, 1, ${container}, ${nombreVisible}, ${email}, ${input.instancia})
     `;
+    await tx`
+      INSERT INTO demo_llaves (token, instancia, email_autorizado, nombre_persona, emitida_por)
+      VALUES (${token}, ${input.instancia}, ${email}, ${nombreVisible},
+              (SELECT email FROM demo_duenos WHERE instancia = ${input.instancia}))
+      ON CONFLICT (token) DO NOTHING
+    `;
     // 2) La persona: un usuario más, sobre la instancia elegida. 'released' hasta
     //    que entre por su link (entonces la máquina de estados la activa).
+    // C2 · doble-escritura: kind (viejo) E instancia (nuevo, = la instancia elegida).
     await tx`
-      INSERT INTO demo_users (kind, name, email, status, created_at, last_seen_at)
-      VALUES (${input.instancia}, ${nombreNorm}, ${email}, 'released', ${now}, ${now})
+      INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
+      VALUES (${input.instancia}, ${input.instancia}, ${nombreNorm}, ${email}, 'released', 'visitante',
+              ${"hilo-" + nombreNorm.replace(/[^a-z0-9]+/g, "-")}, ${now}, ${now})
       ON CONFLICT (kind, lower(email)) DO NOTHING
     `;
     return { token };

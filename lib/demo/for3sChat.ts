@@ -9,25 +9,16 @@
 // general. La conversación reusa /v1/chat (la web es un cliente más, como NavigoX).
 
 import { createHash } from "node:crypto";
+import { canalDe } from "./instancias";
 
+// C1 · Puente CABLEADO (2026-07-24): el CHAT (chatGeneral/chatDueno) toma el canal
+// (url + key) de cada instancia desde demo_instancias vía canalDe() (con fallback a
+// env en transición). Ver lib/demo/instancias.ts.
+// NOTA: las funciones de CONECTORES/KEYS de abajo siguen usando GENERAL_BASE/KEY de
+// env por ahora — su cableado es parte de C4/C5 (ronda posterior de conectores).
 const GENERAL_BASE =
   process.env.FOR3S_GENERAL_BASE ?? "https://for3s.tail6749e5.ts.net";
 const GENERAL_KEY = process.env.FOR3S_GENERAL_API_KEY ?? "";
-
-// Ronda F0 Pieza 3: enrutado por instancia. Cada instancia expuesta tiene su
-// RUTA en el Funnel (/i/<instancia>) y su PROPIA key. El dueño verificado (Pieza
-// 2) va a SU instancia, no a general. Config por env: FOR3S_INST_<INSTANCIA>_KEY.
-// La base es la misma (Funnel), cambia la ruta. Un mapa vacío = solo general.
-const FUNNEL_BASE =
-  process.env.FOR3S_GENERAL_BASE ?? "https://for3s.tail6749e5.ts.net";
-
-// Devuelve { base, key } para hablar con una instancia dueña, o null si no está
-// configurada (→ el caller cae a general). La key vive en env (nunca en el cliente).
-function canalDeInstancia(instancia: string): { url: string; key: string } | null {
-  const key = process.env[`FOR3S_INST_${instancia.toUpperCase()}_KEY`];
-  if (!key) return null;
-  return { url: `${FUNNEL_BASE}/i/${instancia}/v1/chat`, key };
-}
 
 // 🔴 BUG DE AISLAMIENTO CAZADO (2026-07-20): el canal API sanea el X-Client-Id con
 // _limpiar_id, que BORRA @ . + (solo deja [a-z0-9_-]) y trunca a 32. Con correos
@@ -60,9 +51,11 @@ export async function chatGeneral(
   message: string,
 ): Promise<{ reply: string }> {
   const clientId = clientIdDeCorreo(email);
-  if (!GENERAL_KEY) {
+  // C1 · Puente: general también sale de demo_instancias (fallback a env en transición).
+  const canal = await canalDe("general");
+  if (!canal) {
     throw new For3sChatError(
-      "canal general no configurado (FOR3S_GENERAL_API_KEY)",
+      "canal general no configurado (demo_instancias.general o FOR3S_GENERAL_API_KEY)",
       "config",
     );
   }
@@ -72,11 +65,11 @@ export async function chatGeneral(
 
   let res: Response;
   try {
-    res = await fetch(`${GENERAL_BASE}/v1/chat`, {
+    res = await fetch(canal.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": GENERAL_KEY,
+        "X-API-Key": canal.key,
         "X-Client-Id": clientId, // el correo → identidad → hilo aislado (AI1)
       },
       body: JSON.stringify({ message: message.trim() }),
@@ -110,7 +103,9 @@ export async function chatDueno(
   instancia: string,
   message: string,
 ): Promise<{ reply: string }> {
-  const canal = canalDeInstancia(instancia);
+  // C1 · Puente: lee canal (url + key descifrada) de demo_instancias (con fallback
+  // a env durante la transición). Antes: canalDeInstancia() leía de env + armaba URL.
+  const canal = await canalDe(instancia);
   if (!canal) {
     throw new For3sChatError(`instancia '${instancia}' no expuesta a web`, "config");
   }
