@@ -22,8 +22,14 @@ const DEV_FALLBACK: Record<"jazz" | "mashe" | "brian", string> = {
 };
 
 // Correo autorizado para una demo 1:1 (ya normalizado a minúsculas).
-export function allowedEmailFor(kind: "jazz" | "mashe" | "brian"): string {
-  return (process.env[ENV_KEY[kind]] ?? DEV_FALLBACK[kind]).trim().toLowerCase();
+// P1 · Tipo abierto: este módulo es LEGADO (correos por env var; la fuente de
+// verdad es demo_duenos). Para una instancia sin env devuelve "" → no autoriza.
+export function allowedEmailFor(kind: string): string {
+  const envKey = ENV_KEY[kind as keyof typeof ENV_KEY];
+  const fallback = DEV_FALLBACK[kind as keyof typeof DEV_FALLBACK];
+  return ((envKey ? process.env[envKey] : undefined) ?? fallback ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 // ¿Este correo está autorizado para esta demo? General no restringe (siempre ok).

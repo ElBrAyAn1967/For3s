@@ -11,7 +11,7 @@
 //   - Si no → es un NO-OP (solo se guarda el estado en BD; el contenedor no se
 //     toca). Así la UI funciona end-to-end sin romper en Vercel.
 
-import { CONTAINER_NAME, type DemoKind } from "./types";
+import { containerName, type DemoKind } from "./types";
 
 // Intenta start/stop del contenedor del agente. Devuelve true si la orden se
 // despachó a un controlador real; false si fue NO-OP (sin controlador).
@@ -26,7 +26,7 @@ export async function setContainerRunning(
     // Sin controlador configurado: solo persistimos el estado en BD (lo hace el
     // caller). El contenedor real se sincroniza cuando exista el controlador.
     console.info(
-      `[container NO-OP] ${CONTAINER_NAME[kind]} → ${on ? "start" : "stop"} (sin DEMO_AGENT_CONTROL_URL)`,
+      `[container NO-OP] ${containerName(kind)} → ${on ? "start" : "stop"} (sin DEMO_AGENT_CONTROL_URL)`,
     );
     return false;
   }
@@ -37,7 +37,7 @@ export async function setContainerRunning(
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ name: CONTAINER_NAME[kind], action: on ? "start" : "stop" }),
+      body: JSON.stringify({ name: containerName(kind), action: on ? "start" : "stop" }),
     });
     return res.ok;
   } catch {

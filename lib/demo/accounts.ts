@@ -9,7 +9,7 @@
 // getAccount) no cambia.
 
 import {
-  CONTAINER_NAME,
+  containerName,
   MAX_CONCURRENT,
   type DemoAccount,
   type DemoKind,
@@ -30,10 +30,13 @@ const ENV_KEY = {
   brian: "DEMO_BRIAN_TOKEN",
 } as const;
 
-type OneToOneKind = "jazz" | "mashe" | "brian";
-
-function tokenFor(kind: OneToOneKind): string {
-  return process.env[ENV_KEY[kind]] ?? DEV_FALLBACK[kind];
+// P1 · Tipo abierto (la instancia es un dato, no una lista fija). Este módulo es
+// LEGADO (tokens por env var, tabla demo_accounts): solo cubre las instancias
+// semilla; para una instancia nueva devuelve "" y el caller la trata como sin token.
+function tokenFor(kind: string): string {
+  const envKey = ENV_KEY[kind as keyof typeof ENV_KEY];
+  const fallback = DEV_FALLBACK[kind as keyof typeof DEV_FALLBACK];
+  return (envKey ? process.env[envKey] : undefined) ?? fallback ?? "";
 }
 
 function buildAccount(kind: DemoKind): DemoAccount {
@@ -41,7 +44,7 @@ function buildAccount(kind: DemoKind): DemoAccount {
     kind,
     token: kind === "general" ? null : tokenFor(kind),
     maxConcurrent: MAX_CONCURRENT[kind],
-    containerName: CONTAINER_NAME[kind],
+    containerName: containerName(kind),
   };
 }
 

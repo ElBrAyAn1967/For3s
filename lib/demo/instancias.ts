@@ -12,7 +12,7 @@
 
 import { db } from "./db";
 import { decryptSecret } from "./crypto";
-import { MAX_CONCURRENT, type DemoKind } from "./types";
+import { MAX_CONCURRENT, INSTANCIAS_SEMILLA, type DemoKind } from "./types";
 import { cacheInstanciasMs } from "./config";
 
 export interface InstanciaConfig {
@@ -45,6 +45,34 @@ export async function getInstancia(instancia: string): Promise<InstanciaConfig |
   const config = row ?? null;
   cache.set(key, { config, expira: now + (await cacheInstanciasMs()) });
   return config;
+}
+
+/**
+ * P1 · ¿Existe esta instancia? Valida en RUNTIME contra demo_instancias, en vez de
+ * comprobar contra una lista fija en el código. Así una instancia nueva creada con
+ * un INSERT es válida al instante, sin tocar ni desplegar código.
+ * Si la BD no responde, cae a las semillas (no bloquea la demo).
+ */
+export async function instanciaValida(instancia: string): Promise<boolean> {
+  const cfg = await getInstancia(instancia);
+  if (cfg) return cfg.activa;
+  return (INSTANCIAS_SEMILLA as readonly string[]).includes(
+    instancia.trim().toLowerCase(),
+  );
+}
+
+/** Lista de instancias activas (desde la BD; semillas si la BD falla). */
+export async function instanciasActivas(): Promise<string[]> {
+  try {
+    const sql = db();
+    const filas = await sql<{ instancia: string }[]>`
+      SELECT instancia FROM demo_instancias WHERE activa = true ORDER BY instancia
+    `;
+    if (filas.length) return filas.map((f) => f.instancia);
+  } catch {
+    /* sin BD → semillas */
+  }
+  return [...INSTANCIAS_SEMILLA];
 }
 
 /** Invalida la cache de una instancia (o toda). Útil tras un UPDATE administrativo. */

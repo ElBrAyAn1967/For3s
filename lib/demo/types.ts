@@ -7,7 +7,17 @@
 // Cada demo corre (Fase 2) en su propio contenedor Docker en el servidor for3s,
 // totalmente aislado: lo que pasa en uno no contagia a los otros.
 
-export type DemoKind = "jazz" | "mashe" | "brian" | "general";
+// P1 · La instancia es un DATO, no una lista fija en el código.
+// Antes: type DemoKind = "jazz" | "mashe" | "brian" | "general" → agregar una
+// instancia en demo_instancias (1 INSERT) funcionaba en la BD pero TypeScript la
+// rechazaba en 27 archivos: la BD escalaba y el código no. Ahora el tipo es
+// abierto y la validez se comprueba en RUNTIME contra demo_instancias
+// (lib/demo/instancias.ts). Se mantiene el nombre DemoKind para no romper firmas.
+export type DemoKind = string;
+
+// Las instancias "base" que existían antes de demo_instancias. SOLO se usan como
+// fallback/semilla cuando no se puede consultar la BD — nunca como fuente de verdad.
+export const INSTANCIAS_SEMILLA = ["general", "brian", "jazz", "mashe"] as const;
 
 // Estado de una sesión de usuario (identificada por cookie). Mapea la máquina
 // de estados del plan: el usuario llega → se identifica → conecta su API key →
@@ -19,21 +29,22 @@ export type SessionStatus =
   | "waiting" // en lista de espera (solo General lleno)
   | "released"; // liberó el cupo (inactividad o salida)
 
-// Capacidad máxima concurrente por tipo de demo.
-export const MAX_CONCURRENT: Record<DemoKind, number> = {
+// ⚠️ FALLBACK, no fuente de verdad. El cupo REAL vive en
+// demo_instancias.max_concurrent y se lee con cupoDe() (lib/demo/instancias.ts).
+// Esto solo cubre el caso de que la BD no responda. Una instancia nueva NO
+// necesita estar aquí.
+export const MAX_CONCURRENT: Record<string, number> = {
   jazz: 1,
   mashe: 1,
   brian: 1,
   general: 10,
 };
 
-// Nombre del contenedor Docker por tipo (Fase 2 lo usa para enrutar al server).
-export const CONTAINER_NAME: Record<DemoKind, string> = {
-  jazz: "for3s-demo-jazz",
-  mashe: "for3s-demo-mashe",
-  brian: "for3s-demo-brian",
-  general: "for3s-demo-general",
-};
+// Nombre del contenedor Docker de una instancia. Se deriva por convención para
+// que una instancia nueva funcione sin tocar código (antes era un mapa fijo).
+export function containerName(instancia: string): string {
+  return `for3s-demo-${instancia}`;
+}
 
 // Una cuenta/demo. Para jazz/mashe el token es el secreto que da acceso;
 // general no tiene token (se entra por /demo directo).
