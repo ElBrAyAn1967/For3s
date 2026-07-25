@@ -88,7 +88,10 @@ export default function ApiKeysPanel() {
         return;
       }
       if (!res.ok || !d.key) {
-        setError(t("error"));
+        // Mostramos el detalle que manda el server (ej. 'red', 'config',
+        // 'http_502') además del mensaje genérico: sin esto, cualquier fallo se
+        // ve igual y no hay forma de diagnosticar qué pasó.
+        setError(d.error ? `${t("error")} (${d.error})` : t("error"));
         return;
       }
       setNuevaKey(d.key); // mostrar UNA vez

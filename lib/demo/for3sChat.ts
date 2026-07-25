@@ -248,6 +248,9 @@ async function canalMiskeysDe(email: string): Promise<{ base: string; key: strin
     // canal.url apunta a /v1/chat de esa instancia → derivamos su base.
     return { base: canal.url.replace(/\/v1\/chat$/, ""), key: canal.key };
   }
+  // Sin canal para su instancia: log server-side para poder diagnosticar (no se
+  // enmascara el fallo). Cae a general solo si hay env (usuario de la pública).
+  console.warn(`[miskeys] sin canal para instancia '${inst}' (${email}); fallback general=${!!GENERAL_KEY}`);
   return GENERAL_KEY ? { base: GENERAL_BASE, key: GENERAL_KEY } : null;
 }
 
@@ -295,9 +298,17 @@ export async function generarMiKey(
       error?: string;
     };
     if (res.status === 409) return { error: "tope" };
-    if (!res.ok || !data.key) return { error: data.error ?? "error" };
+    if (!res.ok || !data.key) {
+      // Diagnóstico server-side: sin esto, cualquier fallo se ve como un genérico
+      // "no pude generar la key" y hay que adivinar la causa.
+      console.warn(
+        `[miskeys] generar falló: HTTP ${res.status} base=${canal.base} error=${data.error ?? "(sin cuerpo)"}`,
+      );
+      return { error: data.error ?? `http_${res.status}` };
+    }
     return { key: data.key, id: data.id ?? "" };
-  } catch {
+  } catch (e) {
+    console.warn(`[miskeys] generar: red falló a ${canal.base}: ${(e as Error).message}`);
     return { error: "red" };
   }
 }
