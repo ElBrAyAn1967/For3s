@@ -176,6 +176,23 @@ export async function registerOrResume(
  * registro erróneo en 'general' (donde entró por la puerta pública antes de verificar).
  * Idempotente. Se llama desde verify/check tras validar el código.
  */
+/**
+ * ⭐ LA INSTANCIA REAL donde vive una persona (por su correo), sin importar el
+ * `kind` de la cookie (que solo dice por dónde ENTRÓ). Un dueño verificado vive en
+ * SU instancia (brian) aunque entró por 'general' → operar con el kind de la cookie
+ * hace que el WHERE no encuentre su fila y la operación se pierda en el vacío.
+ * Devuelve null si la persona no existe. REGLA: toda operación sobre UNA persona
+ * debe ubicarla con esto (o por correo), nunca con el kind de la cookie.
+ */
+export async function instanciaRealDe(email: string): Promise<string | null> {
+  const sql = db();
+  const [u] = await sql<{ instancia: string }[]>`
+    SELECT instancia FROM demo_users WHERE lower(email) = ${email.trim().toLowerCase()}
+    ORDER BY last_seen_at DESC LIMIT 1
+  `;
+  return u?.instancia ?? null;
+}
+
 /** Nombre registrado de un correo (busca su fila más reciente en cualquier instancia). */
 export async function nombreDe(email: string): Promise<string | null> {
   const sql = db();
@@ -260,7 +277,8 @@ export async function endSession(
   const sql = db();
   return sql.begin(async (tx) => {
     const t = tx as unknown as SqlLike;
-    await tx`UPDATE demo_users SET status='released' WHERE instancia = ${kind} AND lower(email) = ${email}`;
+    // Ubica por CORREO (su instancia real manda, no el kind de la cookie).
+    await tx`UPDATE demo_users SET status='released' WHERE lower(email) = ${email}`;
     await reapStale(t, kind, now);
     return promote(t, kind);
   });
@@ -268,7 +286,8 @@ export async function endSession(
 
 export async function markNotified(kind: DemoKind, email: string): Promise<void> {
   const sql = db();
-  await sql`UPDATE demo_users SET notified = true WHERE instancia = ${kind} AND lower(email) = ${email}`;
+  // Ubica por CORREO (su instancia real manda, no el kind de la cookie).
+  await sql`UPDATE demo_users SET notified = true WHERE lower(email) = ${email}`;
 }
 
 // Guarda la API key CIFRADA en la INSTANCIA REAL del usuario (no en el kind de la
@@ -301,7 +320,7 @@ export async function updateName(
   const sql = db();
   await sql`
     UPDATE demo_users SET name = ${newName}
-    WHERE instancia = ${kind} AND lower(email) = ${email}
+    WHERE lower(email) = ${email}
   `;
 }
 
@@ -314,7 +333,7 @@ export async function setAgentState(
   const sql = db();
   await sql`
     UPDATE demo_users SET agent_on = ${on}
-    WHERE instancia = ${kind} AND lower(email) = ${email}
+    WHERE lower(email) = ${email}
   `;
 }
 

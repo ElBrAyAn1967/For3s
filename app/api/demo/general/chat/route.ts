@@ -9,6 +9,7 @@ import type { NextRequest } from "next/server";
 import { readDemoSession, readDuenoVerificado } from "@/lib/demo/session";
 import { chatGeneral, chatDueno, For3sChatError } from "@/lib/demo/for3sChat";
 import { registrarEvento } from "@/lib/demo/eventos";
+import { instanciaRealDe } from "@/lib/demo/userStore";
 
 export async function POST(request: NextRequest) {
   const sess = await readDemoSession();
@@ -39,8 +40,16 @@ export async function POST(request: NextRequest) {
       return Response.json({ reply });
     }
     const { reply } = await chatGeneral(sess.email, message);
-    // C5 · Telemetría: chat de un usuario general.
-    void registrarEvento({ tipo: "chat", instancia: sess.kind, email: sess.email, detalle: { rol: "visitante" } });
+    // C5 · Telemetría: chat de un usuario general. La instancia REAL manda (no el
+    // kind de la cookie); si no se resuelve, cae al kind de la sesión.
+    void instanciaRealDe(sess.email).then((inst) =>
+      registrarEvento({
+        tipo: "chat",
+        instancia: inst ?? sess.kind,
+        email: sess.email,
+        detalle: { rol: "visitante" },
+      }),
+    );
     return Response.json({ reply });
   } catch (e) {
     if (e instanceof For3sChatError) {

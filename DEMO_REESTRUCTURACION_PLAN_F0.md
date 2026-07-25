@@ -427,6 +427,18 @@ como `demo_users.cookie_id` (o tabla de sesiones-por-navegador ligada) — se af
   env vars del puente en Vercel, y la línea `DELETE FROM demo_accounts WHERE kind='privado'` (userStore:301).
   También: cablear conectores/miskeys (GENERAL_BASE/KEY que quedaron en for3sChat.ts).
 
+### 🔴 PENDIENTE SISTÉMICO — "la cookie kind ≠ la instancia real" (2026-07-25)
+Patrón de bug hallado probando en real: varios endpoints usan `sess.kind` (el kind de la
+COOKIE, que dice por dónde entró el usuario) para operar sobre su persona. Pero un DUEÑO
+verificado vive en SU instancia (brian) aunque la cookie diga 'general' → el WHERE no encuentra
+la fila y la operación se pierde en el vacío.
+- ✅ Ya corregidos: `touch()` (sacaba al refrescar) · `saveApiKey()` (perdía la API key).
+- ⏳ FALTA barrer (mismo patrón, aún sin síntoma reportado): `app/api/demo/general/profile`
+  (updateName) · `agent` (setAgentState) · `logout` (endSession) · `markNotified` ·
+  el `registrarEvento` del chat general usa `sess.kind` como instancia.
+- Regla a aplicar: **ubicar a la persona por CORREO** (su instancia real manda), o resolver la
+  instancia real una vez por request y pasarla. La cookie solo dice por dónde entró.
+
 ### Fases de cableado (una por cable, verificar antes de avanzar — igual que la BD)
 - **CB1 · Puente (C1):** helper `instanciaCanal(instancia)` que lee de `demo_instancias` + descifra.
   `for3sChat.ts` lo usa en vez de env/URL-en-código. Fallback a env si la fila no tiene canal (transición).
