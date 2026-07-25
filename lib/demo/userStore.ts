@@ -169,6 +169,50 @@ export async function registerOrResume(
   });
 }
 
+/**
+ * Un dueño verificó su código: su PERSONA debe vivir en SU instancia (no en general).
+ * Cumple la regla "un dueño = su oficina". Crea/actualiza la fila del dueño en su
+ * instancia (rol='dueno', hilo='general' = el hilo base de su agente) y BORRA su
+ * registro erróneo en 'general' (donde entró por la puerta pública antes de verificar).
+ * Idempotente. Se llama desde verify/check tras validar el código.
+ */
+/** Nombre registrado de un correo (busca su fila más reciente en cualquier instancia). */
+export async function nombreDe(email: string): Promise<string | null> {
+  const sql = db();
+  const [u] = await sql<{ name: string }[]>`
+    SELECT name FROM demo_users WHERE lower(email)=${email.trim().toLowerCase()}
+    ORDER BY last_seen_at DESC LIMIT 1
+  `;
+  return u?.name ?? null;
+}
+
+export async function promoverDuenoAsuInstancia(
+  instancia: string,
+  email: string,
+  name: string,
+  now: number,
+): Promise<void> {
+  const sql = db();
+  const correo = email.trim().toLowerCase();
+  const nombre = name.trim().toLowerCase();
+  const seen = new Date(now);
+  await sql.begin(async (tx) => {
+    // 1) Alta/actualización de la persona del dueño EN SU instancia.
+    await tx`
+      INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
+      VALUES (${instancia}, ${instancia}, ${nombre}, ${correo}, 'active', 'dueno', 'general', ${seen}, ${seen})
+      ON CONFLICT (kind, lower(email)) DO UPDATE
+        SET status='active', rol='dueno', hilo_nombre='general', last_seen_at=${seen}
+    `;
+    // 2) Borrar su registro erróneo en 'general' (entró ahí por la puerta pública
+    //    antes de verificar). Su sitio es SU oficina, no el pool general.
+    await tx`
+      DELETE FROM demo_users
+      WHERE instancia='general' AND lower(email)=${correo} AND ${instancia} <> 'general'
+    `;
+  });
+}
+
 export async function touch(
   kind: DemoKind,
   email: string,
