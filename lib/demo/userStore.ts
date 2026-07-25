@@ -271,7 +271,10 @@ export async function markNotified(kind: DemoKind, email: string): Promise<void>
   await sql`UPDATE demo_users SET notified = true WHERE instancia = ${kind} AND lower(email) = ${email}`;
 }
 
-// Guarda la API key CIFRADA (ligada a kind+correo).
+// Guarda la API key CIFRADA en la INSTANCIA REAL del usuario (no en el kind de la
+// cookie). Un dueño verificado vive en su instancia (brian) aunque la cookie diga
+// 'general' → si filtrábamos por el kind de la cookie, el UPDATE no tocaba ninguna
+// fila y la key se perdía. Ahora se ubica por correo y se guarda donde vive.
 export async function saveApiKey(
   kind: DemoKind,
   email: string,
@@ -279,10 +282,13 @@ export async function saveApiKey(
   hint: string,
 ): Promise<void> {
   const sql = db();
-  await sql`
+  const res = await sql`
     UPDATE demo_users SET api_key_enc = ${encBlob}, api_key_hint = ${hint}
-    WHERE instancia = ${kind} AND lower(email) = ${email}
+    WHERE lower(email) = ${email}
   `;
+  // Si por algún caso no existiera la persona, no rompe (0 filas). El caller ya
+  // validó la sesión; en la práctica siempre hay al menos una fila del correo.
+  void res;
 }
 
 // Actualiza el NOMBRE del perfil (se refleja en BD). El correo es la identidad
