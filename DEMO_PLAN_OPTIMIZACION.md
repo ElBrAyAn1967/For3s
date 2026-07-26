@@ -127,11 +127,12 @@ sigue siendo válido, pero se aplica con GET/POST, no con QUERY:
 | `/general/heartbeat` | POST | **mixto**: consulta estado PERO escribe `last_seen_at` | ⚠️ NO es consulta pura → lo arregla O-F5, no el método |
 | `/register` `/chat` `/apikey` `/verify/*` | POST | modifican estado | ✅ correcto como POST |
 
-### ⚡ O-F7 · `check-dueno` a GET (nueva fase, bajo riesgo)
-Único endpoint que es consulta pura y hoy está mal clasificado. Pasarlo a GET lo vuelve cacheable
-y le da semántica correcta (safe + idempotente).
-**Ojo:** el correo iría en la query string → queda en logs. Evaluar si eso es aceptable para un
-correo (dato personal) o si conviene dejarlo POST por privacidad. **Decisión de Brian.**
+### ⚡ O-F7 · `check-dueno` — ❌ CERRADA: se queda en POST (decisión Brian 2026-07-25)
+Es el único endpoint que es consulta pura, y en Next solo los GET se cachean, así que GET sería
+"más correcto". **Se queda en POST a propósito:** con GET el CORREO viajaría en la query string y
+quedaría en logs de Vercel/CDN y en el historial del navegador — es un dato personal. La ganancia
+de caché era marginal (se llama una vez al entrar, no en bucle) → **la privacidad pesa más**.
+Documentado en el propio `route.ts` para que nadie lo "corrija" después sin resolver eso.
 
 ---
 
