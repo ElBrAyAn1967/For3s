@@ -39,6 +39,30 @@ interface OpCtx {
   activos?: number;
 }
 
+/**
+ * O-F5 · Freno del mantenimiento en el heartbeat.
+ * El latido corre cada 5 s POR USUARIO: con 100 usuarios son 20 latidos/seg, y en
+ * cada uno se liberaban sesiones muertas y se promovía la cola aunque no hubiera
+ * nada que hacer. Ahora ese mantenimiento corre como mucho una vez cada
+ * MANTENIMIENTO_MS POR INSTANCIA (no por usuario).
+ *
+ * Efecto observable idéntico: el TTL de sesión no cambia, así que una sesión muerta
+ * se libera igual; solo se DETECTA en la siguiente pasada. Con 15 s de intervalo el
+ * retraso máximo es de 15 s sobre un TTL de 60 s — imperceptible para el usuario.
+ *
+ * El registro/logout NO pasan por este freno: ahí el mantenimiento corre siempre
+ * (son eventos raros donde sí importa la exactitud inmediata del cupo).
+ */
+const MANTENIMIENTO_MS = 15_000;
+const ultimoMantenimiento = new Map<string, number>();
+
+function tocaMantenimiento(instancia: string, now: number): boolean {
+  const prev = ultimoMantenimiento.get(instancia) ?? 0;
+  if (now - prev < MANTENIMIENTO_MS) return false;
+  ultimoMantenimiento.set(instancia, now);
+  return true;
+}
+
 /** Cupo de la instancia, memoizado en el contexto de la operación. */
 async function cupoDeCtx(kind: DemoKind, ctx?: OpCtx): Promise<number> {
   if (ctx?.cupo !== undefined) return ctx.cupo;
@@ -130,6 +154,9 @@ async function buildResult(
   returning: boolean,
   ctx?: OpCtx, // O-F3: reusa cupo/activos ya resueltos en esta operación
 ): Promise<RegisterResult> {
+  // O-F4 · UNA sola query: los datos de la persona + el conteo de activos de su
+  // instancia salían en 2 viajes; ahora van juntos (el count es un subselect sobre
+  // la misma tabla). Si el conteo ya estaba memoizado (O-F3) se reusa ese valor.
   const [u] = await sql<
     {
       status: string;
@@ -137,12 +164,18 @@ async function buildResult(
       api_key_enc: string | null;
       api_key_hint: string | null;
       agent_on: boolean;
+      activos: number;
     }[]
   >`
-    SELECT status, position, api_key_enc, api_key_hint, agent_on
+    SELECT status, position, api_key_enc, api_key_hint, agent_on,
+           (SELECT count(*)::int FROM demo_users
+             WHERE instancia = ${kind} AND status = 'active') AS activos
     FROM demo_users WHERE instancia = ${kind} AND lower(email) = ${email}
   `;
-  const active = await activeCount(sql, kind, ctx); // O-F3: memoizado
+  // Si la persona no existe en esta instancia, el count viene sin fila → se pide aparte.
+  const active =
+    u?.activos ?? ctx?.activos ?? (await activeCount(sql, kind, ctx));
+  if (ctx && u?.activos !== undefined) ctx.activos = u.activos; // alimenta el memo
   return {
     status: (u?.status ?? "released") as RegisterResult["status"],
     position: u?.position ?? null,
@@ -329,8 +362,15 @@ export async function touch(
     const inst = u.instancia as DemoKind;
     const ctx: OpCtx = {}; // O-F3: memo para todo el latido
     await tx`UPDATE demo_users SET last_seen_at = ${new Date(now)} WHERE id = ${u.id}`;
-    await reapStale(t, inst, now);
-    await promote(t, inst, ctx); // O-F2: sale barato si no hay cola
+    // O-F5 · El latido (cada 5 s por usuario) es el 90% del tráfico a Neon. El
+    // MANTENIMIENTO (liberar sesiones muertas + promover cola) no necesita correr
+    // en cada latido: basta con hacerlo cada MANTENIMIENTO_MS por instancia.
+    // Efecto observable idéntico: una sesión muerta se libera igual (el TTL sigue
+    // siendo el mismo), solo que se detecta en la siguiente pasada de mantenimiento.
+    if (tocaMantenimiento(inst, now)) {
+      await reapStale(t, inst, now);
+      await promote(t, inst, ctx); // O-F2: sale barato si no hay cola
+    }
     return buildResult(t, inst, email, true, ctx);
   });
 }

@@ -100,7 +100,43 @@ compartido (Upstash/Redis) para el estado vivo.
 
 ---
 
+## 3-BIS · HALLAZGO: HTTP QUERY (RFC 10008) — NO viable en Next 16 ❌
+
+Brian pidió evaluar el método **QUERY** (RFC 10008 + repo midudev/query-http-demo) como vía para
+optimizar la capa navegador↔servidor. **Verificado contra la doc de Next 16 instalada**
+(`node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md`):
+
+> *"The following HTTP methods are supported: GET, POST, PUT, PATCH, DELETE, HEAD, and OPTIONS.
+> **If an unsupported method is called, Next.js will return a 405 Method Not Allowed**."*
+
+**`QUERY` no está en la lista → devolvería 405.** Por eso el repo demo de midudev usa Express 5 +
+Node 26: un stack donde se pueden manejar métodos arbitrarios. **Descartado por ahora**; reevaluar
+cuando Next lo soporte de forma nativa.
+
+### Lo que SÍ sacamos de esa investigación (la doc lo dice explícito)
+> *"Route Handlers are not cached by default. You can opt into caching for **GET** methods.
+> Other supported HTTP methods are **not** cached."*
+
+En Next **solo `GET` es cacheable**. Entonces el criterio de "clasificar lecturas vs escrituras"
+sigue siendo válido, pero se aplica con GET/POST, no con QUERY:
+
+| Endpoint | Hoy | Qué es de verdad | Acción |
+|---|---|---|---|
+| `/check-dueno` | POST | **consulta pura** (solo lee demo_duenos) | 🟢 pasar a **GET** → cacheable |
+| `/general/keys` (listar) | GET | consulta | ✅ ya correcto |
+| `/general/heartbeat` | POST | **mixto**: consulta estado PERO escribe `last_seen_at` | ⚠️ NO es consulta pura → lo arregla O-F5, no el método |
+| `/register` `/chat` `/apikey` `/verify/*` | POST | modifican estado | ✅ correcto como POST |
+
+### ⚡ O-F7 · `check-dueno` a GET (nueva fase, bajo riesgo)
+Único endpoint que es consulta pura y hoy está mal clasificado. Pasarlo a GET lo vuelve cacheable
+y le da semántica correcta (safe + idempotente).
+**Ojo:** el correo iría en la query string → queda en logs. Evaluar si eso es aceptable para un
+correo (dato personal) o si conviene dejarlo POST por privacidad. **Decisión de Brian.**
+
+---
+
 ## 4 · LO QUE **NO** SE HACE EN ESTA RONDA (decidido)
+- ❌ **HTTP QUERY**: Next 16 responde 405 (ver §3-BIS). Reevaluar cuando haya soporte nativo.
 - ❌ **Mover la lógica de negocio a Postgres** (funciones/triggers): rinde, pero vuelve el sistema
   difícil de versionar, probar y depurar. La config va en la BD; la LÓGICA se queda en código.
 - ❌ Reescribir `userStore.ts` desde cero. Se optimiza lo medido, se conserva lo que funciona.
