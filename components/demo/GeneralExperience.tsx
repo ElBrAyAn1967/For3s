@@ -97,7 +97,24 @@ export default function GeneralExperience({
       if (res.ok) apply((await res.json()) as RegisterResult);
     };
     const id = window.setInterval(tick, 5000);
-    return () => window.clearInterval(id);
+
+    // 🐛 Medido 2026-07-26: el intervalo REAL no es 5s. Los navegadores frenan
+    // setInterval a ~1/min en pestañas que no están visibles, y se midieron latidos
+    // cada ~65s — por encima del TTL de sesión. Resultado: la sesión cruzaba a
+    // 'released' entre latidos y la UI parpadeaba (antes del fix de revivir, eso
+    // mandaba a pedir código otra vez).
+    //
+    // El TTL se subió para dar margen, pero la causa se ataca aquí: al VOLVER a la
+    // pestaña se late de inmediato, sin esperar el siguiente tick frenado. Así el
+    // caso que el usuario percibe (volver y seguir dentro) es instantáneo.
+    const alVolver = () => {
+      if (document.visibilityState === "visible") void tick();
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", alVolver);
+    };
   }, [phase, apply]);
 
   // NOTA (fix sesión persistente): antes se hacía logout en 'pagehide'. Pero
