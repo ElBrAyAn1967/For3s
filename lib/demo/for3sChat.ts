@@ -1,27 +1,35 @@
-// Cliente del canal API de For3s para la demo General (Pieza B, 2026-07-20).
+// Cliente del canal API de For3s: el ÚNICO teléfono con el que la web habla con
+// un agente For3s (chat, BYOK, conectores, keys f3k_).
 //
-// General multi-tenant: cada usuario de la demo conversa con el agente 'general'
-// COMPARTIDO, pero con SU correo como X-Client-Id → su hilo aislado (doctrina AI1
-// del canal API). El agente es lo único compartido; cada correo su memoria.
+// ── ESTRUCTURA (refactor 2026-07-25) ─────────────────────────────────────────
+// Antes cada función reimplementaba el "cómo llamar al agente": resolver el canal,
+// derivar el client-id, armar los mismos 3 headers, poner el timeout y envolver en
+// try/catch. Eso era el 40% del archivo (116 de 286 líneas de puro andamiaje
+// repetido 9 veces) y hacía que agregar un endpoint costara ~25 líneas de copia.
 //
-// La web llega al general por el Funnel público (for3s.tail6749e5.ts.net → el
-// canal API del general en 127.0.0.1:8788 del server). Auth con la key demo del
-// general. La conversación reusa /v1/chat (la web es un cliente más, como NavigoX).
+// Ahora hay UNA capa base — `llamarAgente()` — que sabe el CÓMO, y cada función
+// pública solo declara el QUÉ (ruta, método, cuerpo). Un endpoint nuevo son 3
+// líneas, y los timeouts/headers/errores se tocan en un solo lugar.
+//
+// ── A QUÉ AGENTE SE LLAMA ────────────────────────────────────────────────────
+// SIEMPRE al agente DONDE VIVE el usuario (su instancia real, leída de
+// demo_instancias), nunca "a general por defecto". Un dueño vive en su propio
+// agente: mandar su key/conectores a general los guardaba en el agente equivocado.
+// GENERAL_BASE/KEY quedan solo como red de seguridad para el usuario de la demo
+// pública cuando no se puede resolver su instancia.
 
 import { createHash } from "node:crypto";
 import { canalDe } from "./instancias";
 import { instanciaRealDe } from "./userStore";
 
-// C1 + P7 · TODO va al agente DEL USUARIO, leído de demo_instancias:
-//   • chat        → canalDe(instancia)      (chatGeneral / chatDueno)
-//   • keys f3k_   → canalDelUsuario(email)  (listar/generar/revocar)
-//   • conectores  → canalDelUsuario(email)  (guardar/estado/borrar)
-//   • BYOK        → canalDelUsuario(email)  (registrarByok)
-// GENERAL_BASE/KEY quedan SOLO como red de seguridad dentro de canalDelUsuario()
-// para el usuario de la demo pública cuando no se puede resolver su instancia.
 const GENERAL_BASE =
   process.env.FOR3S_GENERAL_BASE ?? "https://for3s.tail6749e5.ts.net";
 const GENERAL_KEY = process.env.FOR3S_GENERAL_API_KEY ?? "";
+
+// Timeouts por tipo de operación (un solo lugar).
+const TIMEOUT_CHAT_MS = 95_000; // el LLM puede tardar; corta antes que el edge
+const TIMEOUT_LECTURA_MS = 10_000;
+const TIMEOUT_ESCRITURA_MS = 15_000;
 
 // 🔴 BUG DE AISLAMIENTO CAZADO (2026-07-20): el canal API sanea el X-Client-Id con
 // _limpiar_id, que BORRA @ . + (solo deja [a-z0-9_-]) y trunca a 32. Con correos
@@ -46,15 +54,120 @@ export class For3sChatError extends Error {
   }
 }
 
-/** Envía un mensaje del usuario al agente general y devuelve su respuesta.
- * clientId = el CORREO del usuario (viene de la sesión, nunca del body) → su hilo.
- * Fail-closed: sin key configurada → error de config (no manda nada). */
+// ── CAPA BASE ────────────────────────────────────────────────────────────────
+
+interface Canal {
+  base: string; // sin /v1/...
+  key: string;
+}
+
+/**
+ * Canal del agente DONDE VIVE el usuario. Resuelve su instancia real por correo y
+ * devuelve la base + la key descifrada de ESE agente. Cae a general (env) solo si
+ * no se puede resolver, dejando rastro en el log para poder diagnosticar.
+ */
+async function canalDelUsuario(email: string): Promise<Canal | null> {
+  const inst = (await instanciaRealDe(email)) ?? "general";
+  const canal = await canalDe(inst);
+  if (canal) {
+    // canal.url apunta a /v1/chat de esa instancia → derivamos su base.
+    return { base: canal.url.replace(/\/v1\/chat$/, ""), key: canal.key };
+  }
+  console.warn(
+    `[canal] sin canal para instancia '${inst}' (${email}); fallback general=${!!GENERAL_KEY}`,
+  );
+  return GENERAL_KEY ? { base: GENERAL_BASE, key: GENERAL_KEY } : null;
+}
+
+interface Respuesta<T> {
+  ok: boolean;
+  status: number;
+  data: T | null;
+}
+
+/**
+ * ⭐ LA capa base: llama al agente del usuario. Sabe el CÓMO (canal, identidad,
+ * headers, timeout, parseo, errores) para que las funciones de abajo solo declaren
+ * el QUÉ. NUNCA lanza: devuelve { ok, status, data } y quien llama decide.
+ *   status 0   → no se pudo resolver el canal (config)
+ *   status -1  → fallo de red / timeout
+ */
+async function llamarAgente<T>(
+  email: string,
+  ruta: string,
+  opts: {
+    method?: "GET" | "POST" | "DELETE";
+    body?: unknown;
+    query?: Record<string, string>;
+    timeoutMs?: number;
+    canal?: Canal; // para el chat, que ya resolvió su canal (dueño vs general)
+  } = {},
+): Promise<Respuesta<T>> {
+  const canal = opts.canal ?? (await canalDelUsuario(email));
+  if (!canal) return { ok: false, status: 0, data: null };
+
+  const qs = opts.query
+    ? "?" + new URLSearchParams(opts.query).toString()
+    : "";
+  const method = opts.method ?? "GET";
+
+  try {
+    const res = await fetch(`${canal.base}${ruta}${qs}`, {
+      method,
+      headers: {
+        ...(opts.body !== undefined ? { "Content-Type": "application/json" } : {}),
+        "X-API-Key": canal.key,
+        "X-Client-Id": clientIdDeCorreo(email),
+      },
+      ...(opts.body !== undefined ? { body: JSON.stringify(opts.body) } : {}),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? TIMEOUT_LECTURA_MS),
+    });
+    const data = (await res.json().catch(() => null)) as T | null;
+    if (!res.ok) {
+      console.warn(`[canal] ${method} ${ruta} → HTTP ${res.status} en ${canal.base}`);
+    }
+    return { ok: res.ok, status: res.status, data };
+  } catch (e) {
+    console.warn(`[canal] ${method} ${ruta} falló en ${canal.base}: ${(e as Error).message}`);
+    return { ok: false, status: -1, data: null };
+  }
+}
+
+// ── CHAT ─────────────────────────────────────────────────────────────────────
+
+/** Manda un mensaje a un canal ya resuelto y devuelve la respuesta del agente.
+ * Lanza For3sChatError tipado: el chat SÍ necesita distinguir config/red/api para
+ * que la UI muestre el mensaje correcto (a diferencia del resto, que es best-effort). */
+async function enviarMensaje(
+  email: string,
+  canal: Canal,
+  message: string,
+  dondeFalla: string,
+): Promise<{ reply: string }> {
+  if (!message.trim()) {
+    throw new For3sChatError("faltan clientId o message", "api", 400);
+  }
+  const r = await llamarAgente<{ reply?: string }>(email, "/v1/chat", {
+    method: "POST",
+    body: { message: message.trim() },
+    timeoutMs: TIMEOUT_CHAT_MS,
+    canal,
+  });
+  if (r.status === -1) throw new For3sChatError(dondeFalla, "red");
+  if (r.status === 401) throw new For3sChatError("key inválida", "api", 401);
+  if (r.status === 429) {
+    throw new For3sChatError("demasiadas solicitudes, intenta en un momento", "api", 429);
+  }
+  if (!r.ok) throw new For3sChatError(`el agente respondió ${r.status}`, "api", r.status);
+  return { reply: r.data?.reply ?? "" };
+}
+
+/** Chat de un usuario de la demo General con el agente compartido.
+ * clientId = su correo (de la sesión, nunca del body) → su hilo aislado. */
 export async function chatGeneral(
   email: string,
   message: string,
 ): Promise<{ reply: string }> {
-  const clientId = clientIdDeCorreo(email);
-  // C1 · Puente: general también sale de demo_instancias (fallback a env en transición).
   const canal = await canalDe("general");
   if (!canal) {
     throw new For3sChatError(
@@ -62,168 +175,76 @@ export async function chatGeneral(
       "config",
     );
   }
-  if (!clientId || !message.trim()) {
-    throw new For3sChatError("faltan clientId o message", "api", 400);
-  }
-
-  let res: Response;
-  try {
-    res = await fetch(canal.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": canal.key,
-        "X-Client-Id": clientId, // el correo → identidad → hilo aislado (AI1)
-      },
-      body: JSON.stringify({ message: message.trim() }),
-      signal: AbortSignal.timeout(95_000), // el LLM puede tardar; corta antes que el edge
-    });
-  } catch {
-    throw new For3sChatError("no llego al agente general", "red");
-  }
-
-  if (res.status === 401) {
-    throw new For3sChatError("key del general inválida", "api", 401);
-  }
-  if (res.status === 429) {
-    throw new For3sChatError("demasiadas solicitudes, intenta en un momento", "api", 429);
-  }
-  if (!res.ok) {
-    throw new For3sChatError(`el agente respondió ${res.status}`, "api", res.status);
-  }
-
-  const data = (await res.json().catch(() => ({}))) as { reply?: string };
-  return { reply: data.reply ?? "" };
+  return enviarMensaje(
+    email,
+    { base: canal.url.replace(/\/v1\/chat$/, ""), key: canal.key },
+    message,
+    "no llego al agente general",
+  );
 }
 
-/** Ronda F0 Pieza 3: chat de un DUEÑO verificado con SU instancia (brian/jazz/…).
- * Enruta a /i/<instancia> con la key de esa instancia. El X-Client-Id sigue siendo
- * el hash de su correo → su hilo aislado en SU instancia (mismo mecanismo que general).
- * Si la instancia no está configurada (sin key en env) → error de config (fail-closed:
- * NO cae a general silenciosamente, para no mezclar el dueño con el pool público). */
+/** Ronda F0 Pieza 3: chat de un DUEÑO verificado con SU instancia.
+ * Fail-closed: si su instancia no está expuesta, NO cae a general (no se mezcla
+ * al dueño con el pool público). */
 export async function chatDueno(
   email: string,
   instancia: string,
   message: string,
 ): Promise<{ reply: string }> {
-  // C1 · Puente: lee canal (url + key descifrada) de demo_instancias (con fallback
-  // a env durante la transición). Antes: canalDeInstancia() leía de env + armaba URL.
   const canal = await canalDe(instancia);
   if (!canal) {
     throw new For3sChatError(`instancia '${instancia}' no expuesta a web`, "config");
   }
-  const clientId = clientIdDeCorreo(email);
-  if (!clientId || !message.trim()) {
-    throw new For3sChatError("faltan clientId o message", "api", 400);
-  }
-
-  let res: Response;
-  try {
-    res = await fetch(canal.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": canal.key,
-        "X-Client-Id": clientId,
-      },
-      body: JSON.stringify({ message: message.trim() }),
-      signal: AbortSignal.timeout(95_000),
-    });
-  } catch {
-    throw new For3sChatError(`no llego a la instancia ${instancia}`, "red");
-  }
-
-  if (res.status === 401) throw new For3sChatError("key de la instancia inválida", "api", 401);
-  if (res.status === 429) throw new For3sChatError("demasiadas solicitudes, intenta en un momento", "api", 429);
-  if (!res.ok) throw new For3sChatError(`la instancia respondió ${res.status}`, "api", res.status);
-
-  const data = (await res.json().catch(() => ({}))) as { reply?: string };
-  return { reply: data.reply ?? "" };
+  return enviarMensaje(
+    email,
+    { base: canal.url.replace(/\/v1\/chat$/, ""), key: canal.key },
+    message,
+    `no llego a la instancia ${instancia}`,
+  );
 }
 
-/** Guarda el token de un conector (ej. github) del usuario en el vault del canal,
- * ligado a SU clientId (correo). Pieza C. Devuelve true si el canal lo aceptó. */
+// ── CONECTORES (Pieza C) ─────────────────────────────────────────────────────
+// Best-effort: devuelven boolean. El detalle del fallo queda en el log del server.
+
+/** Guarda el token de un conector (ej. github) en el vault del agente del usuario. */
 export async function guardarConector(
   email: string,
   tipo: string,
   token: string,
 ): Promise<boolean> {
-  const clientId = clientIdDeCorreo(email);
   if (!token.trim()) return false;
-  // P7 · al agente DEL USUARIO (antes siempre a general → el conector se guardaba
-  // en el agente equivocado para un dueño).
-  const canal = await canalDelUsuario(email);
-  if (!canal) return false;
-  try {
-    const res = await fetch(`${canal.base}/v1/conector`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": canal.key,
-        "X-Client-Id": clientId,
-      },
-      body: JSON.stringify({ tipo, token: token.trim() }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+  const r = await llamarAgente(email, "/v1/conector", {
+    method: "POST",
+    body: { tipo, token: token.trim() },
+    timeoutMs: TIMEOUT_ESCRITURA_MS,
+  });
+  return r.ok;
 }
 
-/** ¿El usuario tiene un conector conectado? (no devuelve el token, solo el estado) */
+/** ¿El usuario tiene ese conector conectado? (no devuelve el token, solo el estado) */
 export async function estadoConector(
   email: string,
   tipo: string,
 ): Promise<boolean> {
-  const clientId = clientIdDeCorreo(email);
-  // P7 · consulta el estado en el agente DEL USUARIO, no en general.
-  const canal = await canalDelUsuario(email);
-  if (!canal) return false;
-  try {
-    const res = await fetch(
-      `${canal.base}/v1/conector?tipo=${encodeURIComponent(tipo)}`,
-      {
-        headers: { "X-API-Key": canal.key, "X-Client-Id": clientId },
-        signal: AbortSignal.timeout(10_000),
-      },
-    );
-    if (!res.ok) return false;
-    const data = (await res.json().catch(() => ({}))) as { conectado?: boolean };
-    return !!data.conectado;
-  } catch {
-    return false;
-  }
+  const r = await llamarAgente<{ conectado?: boolean }>(email, "/v1/conector", {
+    query: { tipo },
+  });
+  return r.ok && !!r.data?.conectado;
 }
 
-/** Desconecta un conector del usuario (borra su token del vault). Pieza C. */
+/** Desconecta un conector (borra su token del vault del agente del usuario). */
 export async function borrarConector(
   email: string,
   tipo: string,
 ): Promise<boolean> {
-  const clientId = clientIdDeCorreo(email);
-  // P7 · borra el conector en el agente DEL USUARIO (antes borraba en general, así
-  // que el conector del dueño seguía vivo en su instancia).
-  const canal = await canalDelUsuario(email);
-  if (!canal) return false;
-  try {
-    const res = await fetch(`${canal.base}/v1/conector`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": canal.key,
-        "X-Client-Id": clientId,
-      },
-      body: JSON.stringify({ tipo }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+  const r = await llamarAgente(email, "/v1/conector", {
+    method: "DELETE",
+    body: { tipo },
+  });
+  return r.ok;
 }
 
-// ── Pieza D · API keys f3k_ self-service (tu For3s en tu app) ─────────────────
+// ── Pieza D · API keys f3k_ self-service (tu For3s en tu app) ────────────────
 
 // Un punto de la serie de uso (por día) → la línea que sube/baja.
 export interface UsoPunto {
@@ -245,139 +266,58 @@ export interface MiKey {
   serie?: UsoPunto[];
 }
 
-/** Lista las keys f3k_ del usuario (sin la key plana). */
-/**
- * ⭐ Canal del agente DONDE VIVE el usuario (no siempre general).
- *
- * P7 · TODA operación contra el agente de una persona debe ir a SU instancia. Un
- * dueño (ej. de brian) vive en su propio agente; usar el canal general falla
- * silenciosamente porque ese agente no lo conoce: su key BYOK, sus conectores y sus
- * keys f3k_ se guardaban en el agente EQUIVOCADO.
- * Devuelve la base del canal (sin /v1/chat) + la key descifrada de esa instancia.
- * Cae a general por env si no se puede resolver (usuario normal de la demo pública).
- */
-async function canalDelUsuario(email: string): Promise<{ base: string; key: string } | null> {
-  const inst = (await instanciaRealDe(email)) ?? "general";
-  const canal = await canalDe(inst);
-  if (canal) {
-    // canal.url apunta a /v1/chat de esa instancia → derivamos su base.
-    return { base: canal.url.replace(/\/v1\/chat$/, ""), key: canal.key };
-  }
-  // Sin canal para su instancia: log server-side para poder diagnosticar (no se
-  // enmascara el fallo). Cae a general solo si hay env (usuario de la pública).
-  console.warn(`[canal] sin canal para instancia '${inst}' (${email}); fallback general=${!!GENERAL_KEY}`);
-  return GENERAL_KEY ? { base: GENERAL_BASE, key: GENERAL_KEY } : null;
-}
-
+/** Lista las keys f3k_ del usuario (sin la key plana). null si no se pudo leer. */
 export async function listarMisKeys(
   email: string,
 ): Promise<{ keys: MiKey[]; activas: number; tope: number } | null> {
-  const clientId = clientIdDeCorreo(email);
-  const canal = await canalDelUsuario(email);
-  if (!canal) return null;
-  try {
-    const res = await fetch(`${canal.base}/v1/miskeys`, {
-      headers: { "X-API-Key": canal.key, "X-Client-Id": clientId },
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as { keys: MiKey[]; activas: number; tope: number };
-  } catch {
-    return null;
-  }
+  const r = await llamarAgente<{ keys: MiKey[]; activas: number; tope: number }>(
+    email,
+    "/v1/miskeys",
+  );
+  return r.ok ? r.data : null;
 }
 
-/** Genera una key f3k_ del usuario. Devuelve la key PLANA (mostrar 1 vez) o un
- * error (ej. 'tope' si ya tiene 3). */
+/** Genera una key f3k_. Devuelve la key PLANA (se muestra una sola vez) o un error
+ * ('tope' si ya tiene 3, 'red', 'config', 'http_<código>'). */
 export async function generarMiKey(
   email: string,
   nombre: string,
 ): Promise<{ key: string; id: string } | { error: string }> {
-  const clientId = clientIdDeCorreo(email);
-  const canal = await canalDelUsuario(email);
-  if (!canal) return { error: "config" };
-  try {
-    const res = await fetch(`${canal.base}/v1/miskeys`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": canal.key,
-        "X-Client-Id": clientId,
-      },
-      body: JSON.stringify({ nombre }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    const data = (await res.json().catch(() => ({}))) as {
-      key?: string;
-      id?: string;
-      error?: string;
-    };
-    if (res.status === 409) return { error: "tope" };
-    if (!res.ok || !data.key) {
-      // Diagnóstico server-side: sin esto, cualquier fallo se ve como un genérico
-      // "no pude generar la key" y hay que adivinar la causa.
-      console.warn(
-        `[miskeys] generar falló: HTTP ${res.status} base=${canal.base} error=${data.error ?? "(sin cuerpo)"}`,
-      );
-      return { error: data.error ?? `http_${res.status}` };
-    }
-    return { key: data.key, id: data.id ?? "" };
-  } catch (e) {
-    console.warn(`[miskeys] generar: red falló a ${canal.base}: ${(e as Error).message}`);
-    return { error: "red" };
-  }
+  const r = await llamarAgente<{ key?: string; id?: string; error?: string }>(
+    email,
+    "/v1/miskeys",
+    { method: "POST", body: { nombre }, timeoutMs: TIMEOUT_ESCRITURA_MS },
+  );
+  if (r.status === 409) return { error: "tope" };
+  if (r.status === 0) return { error: "config" };
+  if (r.status === -1) return { error: "red" };
+  if (!r.ok || !r.data?.key) return { error: r.data?.error ?? `http_${r.status}` };
+  return { key: r.data.key, id: r.data.id ?? "" };
 }
 
 /** Revoca una key f3k_ del usuario (solo la suya; el canal valida propiedad). */
 export async function revocarMiKey(email: string, id: string): Promise<boolean> {
-  const clientId = clientIdDeCorreo(email);
-  const canal = await canalDelUsuario(email);
-  if (!canal) return false;
-  try {
-    const res = await fetch(`${canal.base}/v1/miskeys`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": canal.key,
-        "X-Client-Id": clientId,
-      },
-      body: JSON.stringify({ id }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+  const r = await llamarAgente(email, "/v1/miskeys", {
+    method: "DELETE",
+    body: { id },
+  });
+  return r.ok;
 }
 
-/** Registra la API key de Claude del usuario en el canal (BYOK) para SU clientId.
- * Así /v1/chat responde con SU billing. La key va DESCIFRADA una sola vez por el
- * túnel interno (el canal la re-cifra en su vault). clientId = el correo. */
+// ── BYOK ─────────────────────────────────────────────────────────────────────
+
+/** Registra la API key de Claude del usuario en SU agente (BYOK) para que /v1/chat
+ * responda con SU billing. La key va descifrada una sola vez por el túnel interno
+ * (el agente la re-cifra en su vault). Best-effort: si falla, el chat cae a cortesía. */
 export async function registrarByok(
   email: string,
   claudeKey: string,
 ): Promise<boolean> {
-  const clientId = clientIdDeCorreo(email);
   if (!claudeKey.trim()) return false;
-  // P7 · ⭐ EL MÁS IMPORTANTE: la key BYOK se registraba SIEMPRE en el agente
-  // general. Para un dueño (que chatea con SU instancia) eso significaba que su key
-  // quedaba en el agente equivocado → "meto mi API key pero el agente no la usa".
-  // Ahora se registra en el agente DONDE VIVE el usuario.
-  const canal = await canalDelUsuario(email);
-  if (!canal) return false;
-  try {
-    const res = await fetch(`${canal.base}/v1/token`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": canal.key,
-        "X-Client-Id": clientId,
-      },
-      body: JSON.stringify({ token: claudeKey.trim() }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    return res.ok;
-  } catch {
-    return false; // BYOK es best-effort: si falla, el chat cae a cortesía
-  }
+  const r = await llamarAgente(email, "/v1/token", {
+    method: "POST",
+    body: { token: claudeKey.trim() },
+    timeoutMs: TIMEOUT_ESCRITURA_MS,
+  });
+  return r.ok;
 }
