@@ -75,6 +75,38 @@ function tocaMantenimiento(instancia: string, now: number): boolean {
   return true;
 }
 
+// ── U2 · CAPA BASE ───────────────────────────────────────────────────────────
+// Antes había 16 `const sql = db()` repartidos: cada función abría su propio acceso
+// y escribía su propio SQL, así que "cómo se habla con demo_users" lo sabían 22
+// funciones por separado en vez de un solo sitio. Es la misma plomería repetida que
+// `llamarAgente()` eliminó en for3sChat.ts (−79%).
+//
+// Estas dos funciones son ese sitio único para el caso más repetido: "toca la fila de
+// esta PERSONA". Las transacciones (registro, promoción, latido) siguen abriendo su
+// `sql.begin` — ahí el acceso directo es correcto y no se toca.
+
+/**
+ * Actualiza campos de la persona identificada por CORREO y devuelve cuántas filas
+ * cambiaron. UNA puerta para los UPDATE simples.
+ *
+ * ⭐ Por CORREO, nunca por instancia: un dueño verificado vive en SU instancia
+ * (brian) aunque la cookie diga 'general'. Filtrar por la instancia de la cookie
+ * hacía que el UPDATE no tocara ninguna fila y la key/el nombre se perdieran en
+ * silencio — el bug d5dc778/b61e3d0. Esta puerta hace imposible repetirlo.
+ */
+async function actualizarPersona(
+  email: string,
+  campos: Record<string, unknown>,
+): Promise<number> {
+  const correo = email.trim().toLowerCase();
+  const sql = db();
+  // sql(objeto) genera el "SET col = valor, ..." de forma segura (parametrizado).
+  const filas = await sql`
+    UPDATE demo_users SET ${sql(campos)} WHERE lower(email) = ${correo}
+  `;
+  return filas.count ?? 0;
+}
+
 /** Cupo de la instancia, memoizado en el contexto de la operación. */
 async function cupoDeCtx(instancia: DemoKind, ctx?: OpCtx): Promise<number> {
   if (ctx?.cupo !== undefined) return ctx.cupo;
@@ -437,9 +469,8 @@ export async function endSession(
 }
 
 export async function markNotified(instancia: DemoKind, email: string): Promise<void> {
-  const sql = db();
-  // Ubica por CORREO (su instancia real manda, no el kind de la cookie).
-  await sql`UPDATE demo_users SET notified = true WHERE lower(email) = ${email}`;
+  void instancia; // se ubica por CORREO; la instancia queda por compatibilidad de firma
+  await actualizarPersona(email, { notified: true });
 }
 
 // Guarda la API key CIFRADA en la INSTANCIA REAL del usuario (no en el kind de la
@@ -452,14 +483,9 @@ export async function saveApiKey(
   encBlob: string,
   hint: string,
 ): Promise<void> {
-  const sql = db();
-  const res = await sql`
-    UPDATE demo_users SET api_key_enc = ${encBlob}, api_key_hint = ${hint}
-    WHERE lower(email) = ${email}
-  `;
-  // Si por algún caso no existiera la persona, no rompe (0 filas). El caller ya
-  // validó la sesión; en la práctica siempre hay al menos una fila del correo.
-  void res;
+  void instancia; // se ubica por CORREO (ver actualizarPersona)
+  // Si no existiera la persona, no rompe (0 filas). El caller ya validó la sesión.
+  await actualizarPersona(email, { api_key_enc: encBlob, api_key_hint: hint });
 }
 
 // Actualiza el NOMBRE del perfil (se refleja en BD). El correo es la identidad
@@ -469,11 +495,8 @@ export async function updateName(
   email: string,
   newName: string,
 ): Promise<void> {
-  const sql = db();
-  await sql`
-    UPDATE demo_users SET name = ${newName}
-    WHERE lower(email) = ${email}
-  `;
+  void instancia; // se ubica por CORREO (ver actualizarPersona)
+  await actualizarPersona(email, { name: newName });
 }
 
 // Enciende/apaga el agente (estado del contenedor Docker). Solo demos 1:1.
@@ -482,11 +505,8 @@ export async function setAgentState(
   email: string,
   on: boolean,
 ): Promise<void> {
-  const sql = db();
-  await sql`
-    UPDATE demo_users SET agent_on = ${on}
-    WHERE lower(email) = ${email}
-  `;
+  void instancia; // se ubica por CORREO (ver actualizarPersona)
+  await actualizarPersona(email, { agent_on: on });
 }
 
 // --- Edición desde el panel admin (por id de fila) ---
@@ -513,13 +533,14 @@ export async function editarUsuario(
       if (clash) return "email_en_uso" as const;
     }
 
-    // Actualiza solo los campos provistos.
-    if (cambios.name !== undefined && cambios.email !== undefined) {
-      await tx`UPDATE demo_users SET name = ${cambios.name}, email = ${cambios.email} WHERE id = ${id}`;
-    } else if (cambios.name !== undefined) {
-      await tx`UPDATE demo_users SET name = ${cambios.name} WHERE id = ${id}`;
-    } else if (cambios.email !== undefined) {
-      await tx`UPDATE demo_users SET email = ${cambios.email} WHERE id = ${id}`;
+    // U2 · Actualiza solo los campos provistos. Antes eran tres ramas if/else con el
+    // mismo UPDATE escrito de tres formas (name, email, ambos): agregar un cuarto
+    // campo editable habría exigido siete ramas. Ahora se arma el SET desde el objeto.
+    const set: Record<string, unknown> = {};
+    if (cambios.name !== undefined) set.name = cambios.name;
+    if (cambios.email !== undefined) set.email = cambios.email;
+    if (Object.keys(set).length) {
+      await tx`UPDATE demo_users SET ${tx(set)} WHERE id = ${id}`;
     }
     return "ok" as const;
   });
