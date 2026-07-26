@@ -26,6 +26,27 @@ import { db } from "./db";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SqlLike = Sql<any>;
 
+/**
+ * O-F3 · Contexto de UNA operación (memoización por request).
+ * Dentro de una misma operación, el cupo de la instancia y el nº de activos se
+ * consultaban varias veces (cupoDe 4×, activeCount 3×) — el mismo dato, varios
+ * viajes a Neon. Este contexto lo resuelve UNA vez y lo reusa.
+ * Se invalida a mano (`ctx.activos = undefined`) cuando una escritura lo cambia,
+ * para no servir un valor viejo. Vive solo lo que dura la operación.
+ */
+interface OpCtx {
+  cupo?: number;
+  activos?: number;
+}
+
+/** Cupo de la instancia, memoizado en el contexto de la operación. */
+async function cupoDeCtx(kind: DemoKind, ctx?: OpCtx): Promise<number> {
+  if (ctx?.cupo !== undefined) return ctx.cupo;
+  const v = await cupoDe(kind);
+  if (ctx) ctx.cupo = v;
+  return v;
+}
+
 // Marca como 'released' las sesiones activas sin heartbeat reciente (de un kind).
 // El TTL sale de demo_config.sesion_ttl_seg (editable sin push; default 60s).
 async function reapStale(sql: SqlLike, kind: DemoKind, now: number): Promise<void> {
@@ -36,33 +57,62 @@ async function reapStale(sql: SqlLike, kind: DemoKind, now: number): Promise<voi
   `;
 }
 
-async function activeCount(sql: SqlLike, kind: DemoKind): Promise<number> {
+// O-F3 · memoizado por operación: el mismo conteo se pedía hasta 3 veces.
+async function activeCount(
+  sql: SqlLike,
+  kind: DemoKind,
+  ctx?: OpCtx,
+): Promise<number> {
+  if (ctx?.activos !== undefined) return ctx.activos;
   const [row] = await sql<{ n: number }[]>`
     SELECT count(*)::int AS n FROM demo_users WHERE instancia = ${kind} AND status = 'active'
   `;
-  return row?.n ?? 0;
+  const n = row?.n ?? 0;
+  if (ctx) ctx.activos = n;
+  return n;
 }
 
 // Promueve de la cola (FIFO) mientras haya cupo en ese kind. Recalcula posiciones.
 // Devuelve los correos recién promovidos (para notificar — stub email).
-async function promote(sql: SqlLike, kind: DemoKind): Promise<string[]> {
-  const max = await cupoDe(kind); // C3: cupo desde demo_instancias (antes MAX_CONCURRENT[kind])
-  const active = await activeCount(sql, kind);
-  let free = max - active;
-  const promoted: string[] = [];
+// O-F1 · sin N+1: promueve a TODOS los que caben en UN solo UPDATE (antes era un
+//        UPDATE por persona → 10 en cola = 10 viajes a Neon).
+// O-F2 · sin trabajo inútil: si NO hay nadie esperando, sale sin tocar nada (el caso
+//        del 99% de los latidos). Antes recalculaba posiciones siempre.
+// Mismo comportamiento observable: FIFO por last_seen_at, posiciones recalculadas.
+async function promote(
+  sql: SqlLike,
+  kind: DemoKind,
+  ctx?: OpCtx,
+): Promise<string[]> {
+  // ¿Hay alguien en cola? Una consulta barata que evita TODO el resto si no.
+  const [espera] = await sql<{ n: number }[]>`
+    SELECT count(*)::int AS n FROM demo_users
+    WHERE instancia = ${kind} AND status = 'waiting'
+  `;
+  if ((espera?.n ?? 0) === 0) return []; // O-F2: nada que promover ni renumerar
 
+  const max = await cupoDeCtx(kind, ctx); // O-F3: memoizado por operación
+  const active = await activeCount(sql, kind, ctx);
+  const free = max - active;
+
+  let promoted: string[] = [];
   if (free > 0) {
-    const waiting = await sql<{ id: string; email: string }[]>`
-      SELECT id, email FROM demo_users WHERE instancia = ${kind} AND status = 'waiting'
-      ORDER BY last_seen_at ASC LIMIT ${free}
+    // O-F1: un solo UPDATE para todos los que caben (CTE con el orden FIFO).
+    const filas = await sql<{ email: string }[]>`
+      WITH elegidos AS (
+        SELECT id FROM demo_users
+        WHERE instancia = ${kind} AND status = 'waiting'
+        ORDER BY last_seen_at ASC LIMIT ${free}
+      )
+      UPDATE demo_users u SET status='active', position=NULL
+      FROM elegidos e WHERE u.id = e.id
+      RETURNING u.email
     `;
-    for (const w of waiting) {
-      await sql`UPDATE demo_users SET status='active', position=NULL WHERE id=${w.id}`;
-      promoted.push(w.email);
-      free--;
-    }
+    promoted = filas.map((f) => f.email);
+    if (ctx) ctx.activos = undefined; // el conteo cambió → invalidar memo
   }
 
+  // Renumerar la cola restante (solo si aún queda gente esperando).
   await sql`
     WITH ordered AS (
       SELECT id, row_number() OVER (ORDER BY last_seen_at ASC) AS rn
@@ -78,6 +128,7 @@ async function buildResult(
   kind: DemoKind,
   email: string,
   returning: boolean,
+  ctx?: OpCtx, // O-F3: reusa cupo/activos ya resueltos en esta operación
 ): Promise<RegisterResult> {
   const [u] = await sql<
     {
@@ -91,13 +142,13 @@ async function buildResult(
     SELECT status, position, api_key_enc, api_key_hint, agent_on
     FROM demo_users WHERE instancia = ${kind} AND lower(email) = ${email}
   `;
-  const active = await activeCount(sql, kind);
+  const active = await activeCount(sql, kind, ctx); // O-F3: memoizado
   return {
     status: (u?.status ?? "released") as RegisterResult["status"],
     position: u?.position ?? null,
     returning,
     activeCount: active,
-    maxConcurrent: await cupoDe(kind), // C3: cupo desde demo_instancias
+    maxConcurrent: await cupoDeCtx(kind, ctx), // O-F3: memoizado
     hasApiKey: !!u?.api_key_enc,
     apiKeyHint: u?.api_key_hint ?? null,
     agentOn: u?.agent_on ?? true,
@@ -117,9 +168,10 @@ export async function registerOrResume(
   const sql = db();
   return sql.begin(async (tx) => {
     const t = tx as unknown as SqlLike;
+    const ctx: OpCtx = {}; // O-F3: memo de cupo/activos para TODA esta operación
     await reapStale(t, kind, now);
     const seen = new Date(now);
-    const max = await cupoDe(kind); // C3: cupo desde demo_instancias
+    const max = await cupoDeCtx(kind, ctx); // O-F3: memoizado
 
     const [existing] = await tx<{ id: string; name: string }[]>`
       SELECT id, name FROM demo_users WHERE instancia = ${kind} AND lower(email) = ${email}
@@ -153,11 +205,11 @@ export async function registerOrResume(
             END
         WHERE id = ${existing.id}
       `;
-      await promote(t, kind);
-      return buildResult(t, kind, email, true);
+      await promote(t, kind, ctx);
+      return buildResult(t, kind, email, true, ctx);
     }
 
-    const active = await activeCount(t, kind);
+    const active = await activeCount(t, kind, ctx);
     const status = active < max ? "active" : "waiting";
     // C2 · doble-escritura (transición): escribe kind (viejo) E instancia/rol/
     // hilo_nombre (nuevo) a la vez. rol = 'dueno' si el correo está en demo_duenos
@@ -176,8 +228,9 @@ export async function registerOrResume(
       INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
       VALUES (${kind}, ${kind}, ${name}, ${email}, ${status}, ${rol}, ${hilo}, ${seen}, ${seen})
     `;
-    await promote(t, kind);
-    return buildResult(t, kind, email, false);
+    ctx.activos = undefined; // se insertó una fila → invalidar memo
+    await promote(t, kind, ctx);
+    return buildResult(t, kind, email, false, ctx);
   });
 }
 
@@ -274,10 +327,11 @@ export async function touch(
     `;
     if (!u) return null;
     const inst = u.instancia as DemoKind;
+    const ctx: OpCtx = {}; // O-F3: memo para todo el latido
     await tx`UPDATE demo_users SET last_seen_at = ${new Date(now)} WHERE id = ${u.id}`;
     await reapStale(t, inst, now);
-    await promote(t, inst);
-    return buildResult(t, inst, email, true);
+    await promote(t, inst, ctx); // O-F2: sale barato si no hay cola
+    return buildResult(t, inst, email, true, ctx);
   });
 }
 
