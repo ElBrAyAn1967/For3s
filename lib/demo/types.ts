@@ -43,10 +43,15 @@ export const MAX_CONCURRENT: Record<string, number> = {
   general: 10,
 };
 
-// Nombre del contenedor Docker de una instancia. Se deriva por convención para
-// que una instancia nueva funcione sin tocar código (antes era un mapa fijo).
+// Nombre del contenedor Docker de una instancia. Se deriva por CONVENCIÓN para que
+// una instancia nueva funcione sin tocar código (antes era un mapa fijo).
+// P6 · el prefijo vive AQUÍ y solo aquí: antes estaba repetido en 4 sitios (2 en
+// TypeScript y 2 dentro de SQL de accountStore). Si cambia la convención de
+// nombres de contenedor, se cambia en un único lugar.
+export const CONTAINER_PREFIJO = "for3s-demo-";
+
 export function containerName(instancia: string): string {
-  return `for3s-demo-${instancia}`;
+  return `${CONTAINER_PREFIJO}${instancia}`;
 }
 
 // Una cuenta/demo. Para jazz/mashe el token es el secreto que da acceso;

@@ -21,6 +21,7 @@
 import { randomBytes } from "node:crypto";
 import { db } from "./db";
 import { nombreDeHilo } from "./hilos"; // estándar único del nombre de hilo
+import { CONTAINER_PREFIJO, containerName } from "./types"; // P6: prefijo en un solo lugar
 
 // Instancias válidas a las que una demo 1:1 puede apuntar (lista fija).
 // ⚠️ 'foresito' NO está: es la instancia INTERNA de la empresa y es riesgoso
@@ -66,7 +67,7 @@ export async function listAccounts(): Promise<CuentaPrivada[]> {
     -- panel las muestre). El cupo sale de demo_instancias (fuente de verdad).
     SELECT 'privado'::text AS kind, l.token, l.nombre_persona, l.email_autorizado,
            l.instancia, i.max_concurrent,
-           'for3s-demo-'||l.instancia AS container_name
+           ${CONTAINER_PREFIJO}||l.instancia AS container_name
     FROM demo_llaves l
     JOIN demo_instancias i ON i.instancia = l.instancia
     ORDER BY l.instancia
@@ -103,7 +104,7 @@ export async function resolvePrivadaByToken(token: string): Promise<CuentaPrivad
     -- verdad). Una llave REVOCADA no resuelve (el dueño apagó el acceso).
     SELECT 'privado'::text AS kind, l.token, l.nombre_persona, l.email_autorizado,
            l.instancia, i.max_concurrent,
-           'for3s-demo-'||l.instancia AS container_name
+           ${CONTAINER_PREFIJO}||l.instancia AS container_name
     FROM demo_llaves l
     JOIN demo_instancias i ON i.instancia = l.instancia
     WHERE l.revocada = false AND l.token = ${token}
@@ -178,7 +179,7 @@ export async function crearPrivada(input: {
   const email = input.email.trim().toLowerCase();
   const nombreVisible = input.nombre.trim();
   const nombreNorm = nombreVisible.toLowerCase(); // demo_users guarda name en minúsculas
-  const container = `for3s-demo-${input.instancia}`;
+  const container = containerName(input.instancia);
   const now = new Date();
 
   return sql.begin(async (tx) => {

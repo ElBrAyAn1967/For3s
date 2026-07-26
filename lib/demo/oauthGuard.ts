@@ -23,6 +23,12 @@
 import type { DemoKind } from "./types";
 
 // Solo estas demos 1:1 conocidas pueden usar OAuth. General jamás.
+//
+// P6 · ⚠️ ESTA LISTA SE QUEDA FIJA A PROPÓSITO. En el resto del código las
+// instancias salen de demo_instancias (cero hardcodeo), pero aquí NO: es un
+// candado de seguridad. Si se leyera de la BD, cualquier instancia nueva heredaría
+// el permiso de usar el OAuth de suscripción — justo lo que este guard impide.
+// Añadir una instancia aquí debe ser una decisión CONSCIENTE con riesgo asumido.
 export const OAUTH_KINDS: DemoKind[] = ["jazz", "mashe", "brian"];
 
 // Interruptor maestro. Debe activarse a mano en el entorno de pruebas.
