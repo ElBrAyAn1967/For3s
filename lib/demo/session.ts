@@ -1,43 +1,12 @@
-// Helper de cookie de sesión de demo (server-side).
+// Cookies de sesión de la demo (server-side). Todas httpOnly: el JS del cliente
+// no las puede leer ni falsificar.
 //
-// Identidad ligera: cada navegador recibe un cookie_id opaco. Con él el server
-// rastrea "quién está activo" sin login pesado. Cookie httpOnly para que JS del
-// cliente no la lea (defensa básica). En Fase 2 este id es la PK natural en
-// demo_sessions.cookie_id.
+// P5 · Se retiró la cookie `for3s_demo_sid` (cookie_id opaco por navegador) junto
+// con getOrCreateSessionId/readSessionId: era la identidad del diseño viejo, cuya
+// PK vivía en demo_sessions — tabla eliminada en F5. La identidad real hoy es el
+// CORREO (cookie for3s_demo_email) + la verificación de dueño.
 
 import { cookies } from "next/headers";
-
-const COOKIE_NAME = "for3s_demo_sid";
-
-// Genera un id de sesión opaco. randomUUID está disponible en el runtime del
-// server (Node/edge), a diferencia de los scripts de workflow.
-function newSessionId(): string {
-  return crypto.randomUUID();
-}
-
-// Lee el cookie_id existente o crea uno nuevo (y lo setea). Debe llamarse desde
-// un Route Handler o Server Action (donde se pueden escribir cookies).
-export async function getOrCreateSessionId(): Promise<string> {
-  const store = await cookies();
-  const existing = store.get(COOKIE_NAME)?.value;
-  if (existing) return existing;
-
-  const id = newSessionId();
-  store.set(COOKIE_NAME, id, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24, // 24h
-  });
-  return id;
-}
-
-// Solo lectura (para Server Components que no pueden escribir cookies).
-export async function readSessionId(): Promise<string | null> {
-  const store = await cookies();
-  return store.get(COOKIE_NAME)?.value ?? null;
-}
 
 // --- Cookie de sesión de demo (correo + kind) para sesión persistente ---
 // Guarda "kind:email" normalizado, para que heartbeat/logout/apikey sepan a qué

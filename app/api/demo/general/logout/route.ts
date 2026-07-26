@@ -3,7 +3,11 @@
 // El registro persiste: puede volver con su nombre+correo.
 
 import { endSession, listUsers } from "@/lib/demo/userStore";
-import { readDemoSession, clearDemoEmail } from "@/lib/demo/session";
+import {
+  readDemoSession,
+  clearDemoEmail,
+  clearDuenoVerificado,
+} from "@/lib/demo/session";
 import { notifySpotAvailable } from "@/lib/demo/email";
 import type { DemoKind } from "@/lib/demo/types";
 
@@ -19,6 +23,10 @@ export async function POST() {
       if (u) await notifySpotAvailable(kind, u.email, u.name);
     }
     await clearDemoEmail();
+    // BUG hallado en P5: solo se limpiaba la cookie de correo, NO la de dueño
+    // verificado → tras "Cerrar sesión" el navegador seguía marcado como dueño y
+    // podía volver a entrar a esa instancia SIN pedir código otra vez.
+    await clearDuenoVerificado();
   }
   return Response.json({ ok: true });
 }

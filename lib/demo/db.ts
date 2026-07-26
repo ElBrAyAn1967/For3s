@@ -39,6 +39,4 @@ export function db() {
   return g.__for3sDemoSql;
 }
 
-export function hasDb(): boolean {
-  return !!process.env.DEMO_DATABASE_URL;
-}
+// P5 · se retiró hasDb(): nadie comprobaba con ella la presencia de la BD.

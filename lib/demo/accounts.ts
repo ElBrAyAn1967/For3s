@@ -5,8 +5,8 @@
 //
 // FASE 1: los tokens viven aquí como seed leído de env vars (con un fallback de
 // desarrollo). En Fase 2 migran a la tabla `demo_accounts` en Postgres y este
-// módulo consultará la BD en vez de las env vars. El contrato (resolveByToken /
-// getAccount) no cambia.
+// módulo consultará la BD en vez de las env vars. El contrato (resolveByToken)
+// no cambia.
 
 import {
   containerName,
@@ -40,7 +40,7 @@ function tokenFor(kind: string): string {
 }
 
 // P3 · el cupo sale de demo_instancias (fuente única) vía cupoDe(); ya no de la
-// constante MAX_CONCURRENT. Por eso buildAccount/getAccount pasan a async.
+// constante MAX_CONCURRENT. Por eso buildAccount pasa a async.
 async function buildAccount(kind: DemoKind): Promise<DemoAccount> {
   return {
     kind,
@@ -50,9 +50,8 @@ async function buildAccount(kind: DemoKind): Promise<DemoAccount> {
   };
 }
 
-export async function getAccount(kind: DemoKind): Promise<DemoAccount> {
-  return buildAccount(kind);
-}
+// P5 · se retiró getAccount(): era un envoltorio de buildAccount() que nadie
+// llamaba. buildAccount sigue siendo interna (la usa resolveByToken).
 
 // Resultado de resolver un link 1:1: la cuenta de runtime + (si es una privada
 // creada desde el panel) el nombre de la persona y su correo autorizado, que la
