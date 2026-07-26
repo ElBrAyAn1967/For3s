@@ -9,6 +9,7 @@ import type { NextRequest } from "next/server";
 import { requireSession, readDuenoVerificado } from "@/lib/demo/session";
 import { chatGeneral, chatDueno, For3sChatError } from "@/lib/demo/for3sChat";
 import { registrarEvento } from "@/lib/demo/eventos";
+import { agenteEncendidoDe } from "@/lib/demo/userStore";
 
 export async function POST(request: NextRequest) {
   const { sess, error } = await requireSession();
@@ -31,6 +32,16 @@ export async function POST(request: NextRequest) {
     // El correo del dueño verificado debe coincidir con el de la sesión (misma persona).
     const dueno = await readDuenoVerificado();
     if (dueno && dueno.email === sess.email) {
+      // 🐛 Hallazgo auditoría 2026-07-26: si el dueño APAGÓ su agente, esto mandaba
+      // la petición a un contenedor muerto y devolvía "no llegó a la instancia X" —
+      // un error de RED que tapaba la causa real. El dato estaba en la BD sin usarse.
+      // Solo aplica al dueño: es el único que puede apagar su agente.
+      if (!(await agenteEncendidoDe(sess.email))) {
+        return Response.json(
+          { error: "agente_apagado", instancia: dueno.instancia },
+          { status: 409 },
+        );
+      }
       const { reply } = await chatDueno(sess.email, dueno.instancia, message);
       // C5 · Telemetría: chat del dueño → su instancia.
       void registrarEvento({ tipo: "chat", instancia: dueno.instancia, email: sess.email, detalle: { rol: "dueno" } });

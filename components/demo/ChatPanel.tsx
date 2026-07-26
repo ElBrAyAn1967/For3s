@@ -51,7 +51,14 @@ export default function ChatPanel() {
         error?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? t("error"));
+        // Hallazgo auditoría 2026-07-26: el backend devolvía un error de RED cuando
+        // en realidad el agente estaba APAGADO. Ahora manda 'agente_apagado' (409) y
+        // aquí se traduce a algo accionable, en vez de pintar el código crudo.
+        setError(
+          data.error === "agente_apagado"
+            ? "Tu agente está apagado. Enciéndelo en Perfil para volver a conversar."
+            : (data.error ?? t("error")),
+        );
         return;
       }
       setTurns((prev) => [...prev, { role: "agent", text: data.reply ?? "" }]);

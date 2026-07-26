@@ -353,13 +353,14 @@ async function personaPorCorreo(email: string): Promise<{
   instancia: string;
   hilo_nombre: string | null;
   name: string;
+  agent_on: boolean;
 } | null> {
   try {
     const sql = db();
     const [u] = await sql<
-      { instancia: string; hilo_nombre: string | null; name: string }[]
+      { instancia: string; hilo_nombre: string | null; name: string; agent_on: boolean }[]
     >`
-      SELECT instancia, hilo_nombre, name FROM demo_users
+      SELECT instancia, hilo_nombre, name, agent_on FROM demo_users
       WHERE lower(email) = ${email.trim().toLowerCase()}
       ORDER BY last_seen_at DESC LIMIT 1
     `;
@@ -387,6 +388,25 @@ export async function hiloDe(email: string): Promise<string | null> {
 /** Nombre registrado de un correo (busca su fila más reciente en cualquier instancia). */
 export async function nombreDe(email: string): Promise<string | null> {
   return (await personaPorCorreo(email))?.name ?? null;
+}
+
+/**
+ * ¿El agente de esta persona está encendido? (`demo_users.agent_on`).
+ *
+ * 🐛 Existe por un hallazgo de la auditoría 2026-07-26: el chat NO consultaba este
+ * dato, así que con el agente apagado mandaba la petición a un puerto muerto y el
+ * usuario veía "no llegó a la instancia X" — un error de RED tapando la causa real.
+ * El sistema tenía el dato y no lo usaba.
+ *
+ * Sale de la MISMA consulta que hiloDe/instanciaRealDe (personaPorCorreo), así que
+ * no añade ningún viaje a Neon en el camino caliente del chat.
+ *
+ * `true` si no hay fila: no bloquear a quien no tenemos registrado (el chat fallará
+ * por su propio camino con su mensaje). Solo bloqueamos cuando SABEMOS que está OFF.
+ */
+export async function agenteEncendidoDe(email: string): Promise<boolean> {
+  const p = await personaPorCorreo(email);
+  return p ? p.agent_on : true;
 }
 
 export async function promoverDuenoAsuInstancia(

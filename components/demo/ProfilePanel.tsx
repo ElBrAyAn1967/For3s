@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   User,
   Mail,
@@ -65,6 +65,19 @@ export default function ProfilePanel({
   const [saving, setSaving] = useState(false);
   const [busyAgent, setBusyAgent] = useState(false);
   const [showPaidNote, setShowPaidNote] = useState(false);
+  // Estado en TRÁNSITO: a qué valor vamos mientras el server lo aplica (~10-15s).
+  const [agentPendiente, setAgentPendiente] = useState<boolean | null>(null);
+  const [agentError, setAgentError] = useState("");
+
+  // El heartbeat refresca `initialAgentOn` con el estado REAL del contenedor. Cuando
+  // coincide con lo que pedimos, el tránsito terminó de verdad.
+  useEffect(() => {
+    setAgentOn(initialAgentOn);
+    if (agentPendiente !== null && initialAgentOn === agentPendiente) {
+      setAgentPendiente(null);
+      setBusyAgent(false);
+    }
+  }, [initialAgentOn, agentPendiente]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onPickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,20 +116,53 @@ export default function ProfilePanel({
     }
   };
 
+  // Encender/apagar el agente. La orden es ASÍNCRONA: la web solo la escribe en la
+  // BD y el servicio for3s-agente-sync del server la aplica en su ciclo (~10-15s).
+  //
+  // Hallazgo auditoría 2026-07-26: esto pintaba el estado final al instante (`if
+  // (res.ok) setAgentOn(next)`), así que el interruptor decía "apagado" mientras el
+  // agente seguía respondiendo ~13s. Ahora se muestra el tránsito y se confirma con
+  // el estado REAL, que llega por el heartbeat (prop agentOn).
   const toggleAgent = async () => {
     if (!isPaid) {
       setShowPaidNote(true);
       return;
     }
+    setAgentError("");
     setBusyAgent(true);
     const next = !agentOn;
-    const res = await fetch("/api/demo/general/agent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ on: next }),
-    });
-    setBusyAgent(false);
-    if (res.ok) setAgentOn(next);
+    try {
+      const res = await fetch("/api/demo/general/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ on: next }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        aplicado?: boolean;
+        error?: string;
+      };
+      if (!res.ok) {
+        setBusyAgent(false);
+        setAgentError(
+          data.error === "solo_el_dueno"
+            ? "Solo el dueño de esta instancia puede encender o apagar su agente."
+            : "No se pudo cambiar el estado del agente.",
+        );
+        return;
+      }
+      // Optimista SOLO si el server confirma que ya se aplicó (caso síncrono).
+      if (data.aplicado) {
+        setAgentOn(next);
+        setBusyAgent(false);
+        return;
+      }
+      // Caso normal: en camino. `pendiente` guarda a qué estado vamos, para poder
+      // decir "Encendiendo…"/"Apagando…" hasta que el heartbeat traiga la verdad.
+      setAgentPendiente(next);
+    } catch {
+      setBusyAgent(false);
+      setAgentError("No llegamos al servidor. Revisa tu conexión.");
+    }
   };
 
   return (
@@ -198,6 +244,7 @@ export default function ProfilePanel({
         {!editing && (
           <div className="flex flex-col items-start sm:items-end gap-1 w-full sm:w-auto sm:ml-auto">
             {isPaid ? (
+              <>
               <button
                 type="button"
                 onClick={toggleAgent}
@@ -208,9 +255,24 @@ export default function ProfilePanel({
                     : "border-edge-primary bg-surface-primary text-foreground-tertiary"
                 }`}
               >
-                <Power className="size-3.5" />
-                {agentOn ? t("agentOn") : t("agentOff")}
+                <Power className={`size-3.5 ${agentPendiente !== null ? "animate-pulse" : ""}`} />
+                {agentPendiente !== null
+                  ? agentPendiente
+                    ? "Encendiendo…"
+                    : "Apagando…"
+                  : agentOn
+                    ? t("agentOn")
+                    : t("agentOff")}
               </button>
+              {agentPendiente !== null && (
+                <span className="text-[10px] text-foreground-tertiary">
+                  El servidor lo aplica en unos segundos.
+                </span>
+              )}
+              {agentError && (
+                <span className="text-[10px] text-red-400">{agentError}</span>
+              )}
+              </>
             ) : (
               <>
                 <button
