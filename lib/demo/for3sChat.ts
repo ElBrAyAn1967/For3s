@@ -15,16 +15,20 @@
 // SIEMPRE al agente DONDE VIVE el usuario (su instancia real, leída de
 // demo_instancias), nunca "a general por defecto". Un dueño vive en su propio
 // agente: mandar su key/conectores a general los guardaba en el agente equivocado.
-// GENERAL_BASE/KEY quedan solo como red de seguridad para el usuario de la demo
-// pública cuando no se puede resolver su instancia.
+// Si su instancia no tiene canal configurado, se falla claro en vez de reencaminar
+// a otro agente: mandar a alguien al agente equivocado es peor que no responder.
 
 import { createHash } from "node:crypto";
 import { canalDe } from "./instancias";
 import { instanciaRealDe, hiloDe } from "./userStore";
 
-const GENERAL_BASE =
-  process.env.FOR3S_GENERAL_BASE ?? "https://for3s.tail6749e5.ts.net";
-const GENERAL_KEY = process.env.FOR3S_GENERAL_API_KEY ?? "";
+// I4a · Se retiraron GENERAL_BASE/GENERAL_KEY (env vars + URL del tailnet escrita
+// en código). El canal de CADA instancia — general incluida — vive en
+// demo_instancias (canal_url + canal_key_enc cifrada) y se resuelve con canalDe().
+// Ese fallback ya no protegía ningún caso: las 4 instancias tienen su canal en la
+// BD y responden HTTP 200 (verificado E2E 2026-07-26). Además apuntaba al agente
+// de general con la key de general, así que un usuario cuya instancia no se pudiera
+// resolver acababa en el agente equivocado — el bug que P7 cerró.
 
 // Timeouts por tipo de operación (un solo lugar).
 const TIMEOUT_CHAT_MS = 95_000; // el LLM puede tardar; corta antes que el edge
@@ -63,20 +67,19 @@ interface Canal {
 
 /**
  * Canal del agente DONDE VIVE el usuario. Resuelve su instancia real por correo y
- * devuelve la base + la key descifrada de ESE agente. Cae a general (env) solo si
- * no se puede resolver, dejando rastro en el log para poder diagnosticar.
+ * devuelve la base + la key descifrada de ESE agente, o null si esa instancia no
+ * tiene canal configurado — null es una falla CLARA que la UI sabe traducir
+ * ("canal no configurado"), y es preferible a mandar el mensaje a un agente ajeno.
  */
 async function canalDelUsuario(email: string): Promise<Canal | null> {
   const inst = (await instanciaRealDe(email)) ?? "general";
   const canal = await canalDe(inst);
-  if (canal) {
-    // canal.url apunta a /v1/chat de esa instancia → derivamos su base.
-    return { base: canal.url.replace(/\/v1\/chat$/, ""), key: canal.key };
+  if (!canal) {
+    console.warn(`[canal] sin canal configurado para instancia '${inst}' (${email})`);
+    return null;
   }
-  console.warn(
-    `[canal] sin canal para instancia '${inst}' (${email}); fallback general=${!!GENERAL_KEY}`,
-  );
-  return GENERAL_KEY ? { base: GENERAL_BASE, key: GENERAL_KEY } : null;
+  // canal.url apunta a /v1/chat de esa instancia → derivamos su base.
+  return { base: canal.url.replace(/\/v1\/chat$/, ""), key: canal.key };
 }
 
 interface Respuesta<T> {
@@ -177,7 +180,7 @@ export async function chatGeneral(
   const canal = await canalDe("general");
   if (!canal) {
     throw new For3sChatError(
-      "canal general no configurado (demo_instancias.general o FOR3S_GENERAL_API_KEY)",
+      "canal general no configurado (demo_instancias.general: canal_url + canal_key_enc)",
       "config",
     );
   }
