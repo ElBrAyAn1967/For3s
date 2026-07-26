@@ -462,14 +462,42 @@ export async function touch(
     // cookie). Un dueño verificado vive en SU instancia (brian), no en el 'general'
     // de la cookie → si filtrábamos por kind, al refrescar no se encontraba y la UI
     // sacaba al usuario. Su instancia REAL manda para el estado/cupo.
-    const [u] = await tx<{ id: string; instancia: string }[]>`
-      SELECT id, instancia FROM demo_users WHERE lower(email) = ${email}
+    const [u] = await tx<{ id: string; instancia: string; status: string }[]>`
+      SELECT id, instancia, status FROM demo_users WHERE lower(email) = ${email}
       ORDER BY last_seen_at DESC LIMIT 1
     `;
     if (!u) return null;
     const inst = u.instancia as DemoKind;
     const ctx: OpCtx = {}; // O-F3: memo para todo el latido
     await tx`UPDATE demo_users SET last_seen_at = ${new Date(now)} WHERE id = ${u.id}`;
+
+    // 🐛 REVIVIR LA SESIÓN (hallazgo 2026-07-26: "refrescar me pide código otra vez").
+    //
+    // reapStale marca 'released' a los sesion_ttl_seg (60s) sin latido — correcto,
+    // así se libera el cupo. Pero este camino es el que la UI usa para REHIDRATAR al
+    // montar: si devolvía 'released', la UI no entraba en fase 'active' y mandaba al
+    // registro → el dueño tenía que pedir código de nuevo, aunque su cookie de dueño
+    // siguiera viva (12h). Bastaba dejar la pestaña quieta 60s, o esperar un deploy
+    // de Vercel (que no borra cookies: solo te deja quieto lo suficiente).
+    //
+    // Volver RECLAMA el sitio, igual que ya hacía registerOrResume cuando entras con
+    // tu correo. No afloja nada: el cupo se sigue liberando a los 60s, y si está
+    // lleno se va a la cola en vez de colarse.
+    if (u.status === "released") {
+      const max = await cupoDeCtx(inst, ctx);
+      const activos = await activeCount(t, inst, ctx);
+      if (activos < max) {
+        await tx`UPDATE demo_users SET status='active', position=NULL WHERE id = ${u.id}`;
+        ctx.activos = undefined; // cambió el conteo → invalidar memo (O-F3)
+      } else {
+        // Sin cupo: a la cola, al final. No se le expulsa al registro.
+        const [pos] = await tx<{ n: number }[]>`
+          SELECT COALESCE(max(position), 0) + 1 AS n FROM demo_users
+          WHERE instancia = ${inst} AND status = 'waiting'
+        `;
+        await tx`UPDATE demo_users SET status='waiting', position=${pos?.n ?? 1} WHERE id = ${u.id}`;
+      }
+    }
     // O-F5 · El latido (cada 5 s por usuario) es el 90% del tráfico a Neon. El
     // MANTENIMIENTO (liberar sesiones muertas + promover cola) no necesita correr
     // en cada latido: basta con hacerlo cada MANTENIMIENTO_MS por instancia.
