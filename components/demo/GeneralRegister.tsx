@@ -215,9 +215,14 @@ export default function GeneralRegister({
       // el dueño ya conectó su key antes, debe reconocerse y NO volver a pedirla.
       // Pedimos el estado REAL a heartbeat (lee la cookie → Neon) y lo pasamos tal
       // cual. Si por lo que sea no responde, caemos a "sin key" (pide conectar).
+      // S4a · este camino es el del DUEÑO verificado, y un dueño siempre vive en
+      // una instancia 1:1 → esPago true, maxConcurrent 1 (antes decía 10, el cupo
+      // de general). Es solo la semilla: el heartbeat de abajo trae los valores
+      // reales de la BD y sobrescribe todo esto.
       let estado: RegisterResult = {
         status: "active", position: null, returning: true, activeCount: 1,
-        maxConcurrent: 10, hasApiKey: false, apiKeyHint: null, agentOn: true,
+        maxConcurrent: 1, hasApiKey: false, apiKeyHint: null, agentOn: true,
+        esPago: true,
       };
       try {
         const hb = await fetch("/api/demo/general/heartbeat", { method: "POST" });
@@ -232,15 +237,25 @@ export default function GeneralRegister({
     }
   };
 
+  // V2 · antes esta función IGNORABA la respuesta (ni siquiera miraba res.ok): si
+  // el envío fallaba, la UI no decía nada y el usuario esperaba un correo que no
+  // iba a llegar. Ahora informa, y distingue el freno de reenvío (429) del fallo.
   const reenviarCodigo = async () => {
     setReenviando(true);
     setCodigoError("");
     try {
-      await fetch("/api/demo/verify/send", {
+      const res = await fetch("/api/demo/verify/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      if (res.status === 429) {
+        setCodigoError("Acabamos de enviarte uno. Espera un momento antes de pedir otro.");
+      } else if (!res.ok) {
+        setCodigoError("No pudimos reenviar el código. Intenta de nuevo.");
+      }
+    } catch {
+      setCodigoError("No pudimos reenviar el código. Revisa tu conexión.");
     } finally {
       setReenviando(false);
     }

@@ -23,7 +23,11 @@ export async function POST(request: Request) {
 
   const r = await enviarCodigo({ email, instancia: dueno.instancia, nombre: dueno.nombre });
   if (!r.ok) {
-    return Response.json({ error: r.error }, { status: 502 });
+    // V2 · el freno de reenvío NO es un fallo del servidor: es 429 (demasiadas
+    // peticiones) para que la UI pueda decir "espera un momento" en vez de
+    // "error al enviar". El resto (correo mal configurado, Resend caído) sigue 502.
+    const status = r.error === "espera_para_reenviar" ? 429 : 502;
+    return Response.json({ error: r.error }, { status });
   }
   // No devolvemos el código ni la instancia con detalle: solo confirmamos el envío.
   return Response.json({ ok: true, enviado_a: email });

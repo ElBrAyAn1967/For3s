@@ -55,5 +55,9 @@ export const cacheInstanciasMs = async () => (await configInt("cache_config_seg"
 export const codigoValidezMs = async () => (await configInt("codigo_validez_min", 10)) * 60_000;
 /** Intentos permitidos antes de bloquear el código. */
 export const codigoMaxIntentos = async () => configInt("codigo_max_intentos", 5);
+/** Minutos de validez del código, para MOSTRARLOS en el correo (V1: que no mienta). */
+export const codigoValidezMin = async () => configInt("codigo_validez_min", 10);
+/** Segundos que hay que esperar entre dos envíos de código al mismo correo (V2). */
+export const codigoReenvioSeg = async () => configInt("codigo_reenvio_seg", 60);
 /** Cómo calcula el panel el cupo: 'suma' (todas las instancias) | 'general'. */
 export const panelCupoModo = async () => configTexto("panel_cupo_modo", "suma");
