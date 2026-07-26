@@ -133,13 +133,14 @@ export async function crearGeneral(input: {
   const email = input.email.trim().toLowerCase();
   const nombreNorm = input.nombre.trim().toLowerCase();
   const now = new Date();
-  // C2 · doble-escritura: kind (viejo) E instancia (nuevo). Persona de la 1:1 que
-  // vive sobre 'general' (rol visitante por defecto; su hilo se nombra por su nombre).
+  // U6 · sin doble-escritura (la columna `kind` ya no existe) y el ON CONFLICT usa el
+  // índice de identidad real. Persona que vive sobre 'general' (rol visitante por
+  // defecto; su hilo se nombra por su nombre).
   const [row] = await sql<{ inserted: boolean }[]>`
-    INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
-    VALUES ('general', 'general', ${nombreNorm}, ${email}, 'released', 'visitante',
+    INSERT INTO demo_users (instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
+    VALUES ('general', ${nombreNorm}, ${email}, 'released', 'visitante',
             ${nombreDeHilo("visitante", nombreNorm, email)}, ${now}, ${now})
-    ON CONFLICT (kind, lower(email)) DO NOTHING
+    ON CONFLICT (instancia, lower(email)) DO NOTHING
     RETURNING true AS inserted
   `;
   return { yaExistia: !row };
@@ -183,16 +184,13 @@ export async function crearPrivada(input: {
   const now = new Date();
 
   return sql.begin(async (tx) => {
-    // 1) La puerta (llave privada). C4 · doble-escritura: se escribe en demo_accounts
-    //    (viejo) Y en demo_llaves (nuevo, la fuente que ya lee el código). emitida_por
-    //    = el dueño de esa instancia (si tiene). En demo_llaves NO va el cupo/container:
-    //    esos salen de demo_instancias (fuente de verdad).
-    await tx`
-      INSERT INTO demo_accounts
-        (kind, token, max_concurrent, container_name, nombre_persona, email_autorizado, instancia)
-      VALUES
-        ('privado', ${token}, 1, ${container}, ${nombreVisible}, ${email}, ${input.instancia})
-    `;
+    // 1) La puerta (llave privada) → demo_llaves, la ÚNICA fuente.
+    //    U6 · Se retiró la doble-escritura de C4: ya no se inserta en demo_accounts.
+    //    Esa tabla era un espejo SIN la columna `revocada`, y el código que decide el
+    //    acceso (esCorreoDePrivada) lee de demo_llaves respetando la revocación desde
+    //    C4 — así que escribir el espejo solo servía para poder desincronizarse.
+    //    emitida_por = el dueño de esa instancia (si tiene). El cupo/container NO van
+    //    aquí: salen de demo_instancias (fuente de verdad).
     await tx`
       INSERT INTO demo_llaves (token, instancia, email_autorizado, nombre_persona, emitida_por)
       VALUES (${token}, ${input.instancia}, ${email}, ${nombreVisible},
@@ -201,12 +199,14 @@ export async function crearPrivada(input: {
     `;
     // 2) La persona: un usuario más, sobre la instancia elegida. 'released' hasta
     //    que entre por su link (entonces la máquina de estados la activa).
-    // C2 · doble-escritura: kind (viejo) E instancia (nuevo, = la instancia elegida).
+    // U6 · Se retiró la doble-escritura C2 (kind + instancia con el mismo valor) y el
+    // ON CONFLICT pasó al índice de identidad real (instancia, lower(email)), igual
+    // que en userStore. La columna `kind` ya no existe.
     await tx`
-      INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
-      VALUES (${input.instancia}, ${input.instancia}, ${nombreNorm}, ${email}, 'released', 'visitante',
+      INSERT INTO demo_users (instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
+      VALUES (${input.instancia}, ${nombreNorm}, ${email}, 'released', 'visitante',
               ${nombreDeHilo("visitante", nombreNorm, email)}, ${now}, ${now})
-      ON CONFLICT (kind, lower(email)) DO NOTHING
+      ON CONFLICT (instancia, lower(email)) DO NOTHING
     `;
     return { token };
   });

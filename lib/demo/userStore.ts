@@ -567,10 +567,18 @@ export async function eliminarUsuario(id: string): Promise<"ok" | "no_existe"> {
     `;
     if (!u) return "no_existe" as const;
     await tx`DELETE FROM demo_users WHERE id = ${id}`;
-    // Si tenía una demo 1:1 privada con ese correo, borra también la puerta.
+    // Si tenía una demo 1:1 privada con ese correo, revoca también su puerta.
+    //
+    // 🐛 U6 · BUG CERRADO: esto borraba la puerta de demo_accounts (el espejo viejo)
+    // pero dejaba VIVA la de demo_llaves — que es la que de verdad decide el acceso
+    // (esCorreoDePrivada la lee). O sea: eliminabas a la persona del panel y su
+    // llave seguía funcionando. Ahora se revoca donde importa.
+    //
+    // Se REVOCA en vez de borrar: demo_llaves tiene `revocada` justamente para dejar
+    // rastro de quién tuvo acceso (el espejo viejo no podía, por eso se retiró).
     await tx`
-      DELETE FROM demo_accounts
-      WHERE kind = 'privado' AND lower(email_autorizado) = ${u.email.toLowerCase()}
+      UPDATE demo_llaves SET revocada = true
+      WHERE lower(email_autorizado) = ${u.email.toLowerCase()} AND NOT revocada
     `;
     return "ok" as const;
   });
@@ -613,10 +621,14 @@ async function listUsersInterno(now: number): Promise<DemoUser[]> {
   for (const inst of await instanciasActivas()) {
     await reapStale(sql, inst.instancia, now);
   }
+  // U6 · se lee `instancia`, NO la columna legado `kind`. Eran el mismo valor (el
+  // trigger de U4 lo garantiza), pero mientras alguien la SELECTara no se podía
+  // hacer DROP COLUMN. Este era el ÚNICO lector real que quedaba.
+  // El campo público sigue llamándose `kind` en DemoUser para no romper la UI.
   const rows = await sql<
     {
       id: string;
-      kind: string;
+      instancia: string;
       kind_ui: string | null;
       name: string;
       email: string;
@@ -628,14 +640,14 @@ async function listUsersInterno(now: number): Promise<DemoUser[]> {
       last_seen_at: Date;
     }[]
   >`
-    SELECT id, kind, kind_ui, name, email, status, position, notified, agent_on, created_at, last_seen_at
+    SELECT id, instancia, kind_ui, name, email, status, position, notified, agent_on, created_at, last_seen_at
     FROM demo_users ORDER BY created_at DESC
   `;
   return rows.map((r) => ({
     id: r.id,
-    kind: r.kind as DemoKind,
-    // kind_ui puede venir null en filas viejas → cae al real.
-    kindUi: (r.kind_ui ?? r.kind) as DemoKind,
+    kind: r.instancia as DemoKind,
+    // kind_ui puede venir null en filas viejas → cae a la instancia real.
+    kindUi: (r.kind_ui ?? r.instancia) as DemoKind,
     name: r.name,
     email: r.email,
     status: r.status as DemoUser["status"],
