@@ -15,9 +15,19 @@
 // telemetría (eventos con user_id NULL) y los de "la key acabó en el agente
 // equivocado". Mientras el parámetro se llamara `kind`, el patrón reaparecía.
 //
-// ⚠️ La COLUMNA `kind` de la tabla sigue existiendo (deuda C6p2): se escribe con el
-// mismo valor que `instancia` y el índice único `ON CONFLICT (kind, lower(email))`
-// depende de ella. Eso lo desmonta la pieza U4 — aquí NO se tocó el SQL.
+// ── U4 · LA IDENTIDAD YA NO DEPENDE DE `kind` ───────────────────────────────
+// La tabla tenía DOS columnas con el mismo valor: `kind` (legado) e `instancia` (la
+// buena, con FK a demo_instancias). El código escribía las dos y el índice único de
+// identidad era sobre la VIEJA — por eso C6p2 ("borrar kind") llevaba bloqueado.
+// Migración `db/demo/0002_u4_indice_instancia.sql`:
+//   · índice único nuevo sobre (instancia, lower(email)); el viejo, retirado.
+//   · el código ya NO escribe `kind` en los INSERT.
+//   · un TRIGGER la mantiene en espejo de `instancia` mientras la columna exista:
+//     es NOT NULL con default 'general', así que sin él las filas nuevas habrían
+//     quedado con kind='general' aunque la instancia fuera otra (divergencia
+//     silenciosa — justo lo que esta ronda evita).
+// ⚠️ La columna NO se borró: `listUsers` todavía la SELECTa. El DROP COLUMN va en
+// una migración posterior, cuando lleve tiempo sin escribirse.
 //
 // Una sesión "ocupa cupo" si status='active' y last_seen_at es reciente. Las que
 // dejan de dar señales (cerraron pestaña) se reapean a 'released' pero su
@@ -306,8 +316,8 @@ export async function registerOrResume(
     // correo (antes solo el nombre → dos personas homónimas compartían hilo).
     const hilo = nombreDeHilo(rol, name, email);
     await tx`
-      INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
-      VALUES (${instancia}, ${instancia}, ${name}, ${email}, ${status}, ${rol}, ${hilo}, ${seen}, ${seen})
+      INSERT INTO demo_users (instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
+      VALUES (${instancia}, ${name}, ${email}, ${status}, ${rol}, ${hilo}, ${seen}, ${seen})
     `;
     ctx.activos = undefined; // se insertó una fila → invalidar memo
     await promote(t, instancia, ctx);
@@ -404,9 +414,9 @@ export async function promoverDuenoAsuInstancia(
     // 1) Alta/actualización de la persona del dueño EN SU instancia, con su key
     //    rescatada. En UPDATE, solo pisa la key si la fila destino no tenía una.
     await tx`
-      INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, api_key_enc, api_key_hint, created_at, last_seen_at)
-      VALUES (${instancia}, ${instancia}, ${nombre}, ${correo}, 'active', 'dueno', 'general', ${keyEnc}, ${keyHint}, ${seen}, ${seen})
-      ON CONFLICT (kind, lower(email)) DO UPDATE
+      INSERT INTO demo_users (instancia, name, email, status, rol, hilo_nombre, api_key_enc, api_key_hint, created_at, last_seen_at)
+      VALUES (${instancia}, ${nombre}, ${correo}, 'active', 'dueno', 'general', ${keyEnc}, ${keyHint}, ${seen}, ${seen})
+      ON CONFLICT (instancia, lower(email)) DO UPDATE
         SET status='active', rol='dueno', hilo_nombre='general', last_seen_at=${seen},
             api_key_enc = COALESCE(demo_users.api_key_enc, EXCLUDED.api_key_enc),
             api_key_hint = COALESCE(demo_users.api_key_hint, EXCLUDED.api_key_hint)
