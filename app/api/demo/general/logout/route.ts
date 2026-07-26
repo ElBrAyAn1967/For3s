@@ -9,6 +9,7 @@ import {
   clearDuenoVerificado,
 } from "@/lib/demo/session";
 import { notifySpotAvailable } from "@/lib/demo/email";
+import { registrarEvento } from "@/lib/demo/eventos";
 import type { DemoKind } from "@/lib/demo/types";
 
 export async function POST() {
@@ -27,6 +28,14 @@ export async function POST() {
     // verificado → tras "Cerrar sesión" el navegador seguía marcado como dueño y
     // podía volver a entrar a esa instancia SIN pedir código otra vez.
     await clearDuenoVerificado();
+    // C5 · Telemetría: la salida es un momento del flujo y NO se registraba (el tipo
+    // 'logout' existía sin usarse), así que en demo_eventos las sesiones nunca cerraban.
+    void registrarEvento({
+      tipo: "logout",
+      instancia: kind,
+      email: sess.email,
+      detalle: { promovidos: promoted.length },
+    });
   }
   return Response.json({ ok: true });
 }

@@ -10,6 +10,7 @@ import { saveApiKey } from "@/lib/demo/userStore";
 import { encryptSecret } from "@/lib/demo/crypto";
 import { isValidApiKeyFormat, apiKeyHint } from "@/lib/demo/apiKey";
 import { registrarByok } from "@/lib/demo/for3sChat";
+import { registrarEvento } from "@/lib/demo/eventos";
 
 export async function POST(request: NextRequest) {
   const { sess, error } = await requireSession();
@@ -36,6 +37,15 @@ export async function POST(request: NextRequest) {
   // — un nombre de instancia hardcodeado comparado contra un valor de cookie, que
   // dejaba a los dueños sin BYOK.
   void registrarByok(sess.email, key);
+  // C5 · Telemetría: conectar la propia key es un momento clave del flujo y no dejaba
+  // rastro. registrarEvento resuelve la instancia REAL por correo, así que el evento
+  // queda en el agente donde de verdad se guardó (no en el kind de la cookie).
+  void registrarEvento({
+    tipo: "byok",
+    instancia: sess.kind,
+    email: sess.email,
+    detalle: { hint },
+  });
 
   return Response.json({ ok: true, hint });
 }

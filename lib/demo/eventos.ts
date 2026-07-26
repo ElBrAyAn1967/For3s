@@ -14,7 +14,8 @@ export type TipoEvento =
   | "verify" // dueño verificó su código
   | "chat" // mensaje al agente
   | "logout" // salida explícita
-  | "waitlist"; // quedó en cola
+  | "waitlist" // quedó en cola
+  | "byok"; // conectó su propia API key de Claude
 
 interface EventoInput {
   tipo: TipoEvento;
@@ -24,24 +25,43 @@ interface EventoInput {
 }
 
 /**
- * Registra un evento en demo_eventos. Resuelve user_id por (instancia,email) si se
- * dan ambos. NO lanza: si algo falla, lo traga (la telemetría no rompe el flujo).
+ * Registra un evento en demo_eventos. NO lanza: si algo falla, lo traga (la
+ * telemetría no rompe el flujo).
+ *
+ * 🐛 BUG CERRADO (2026-07-26) · la persona se ubica por CORREO, no por (instancia,email).
+ * Antes se buscaba con la instancia que pasaba el llamador — que en /register es el
+ * `kind` de la petición ('general'), mientras el DUEÑO vive en `instancia='brian'`.
+ * Resultado: el SELECT no encontraba a nadie y se insertaban eventos con **user_id
+ * NULL** (9 de 9 registros medidos), perdiendo la trazabilidad de quién entró.
+ *
+ * Es el mismo patrón "cookie kind ≠ instancia real" que ya obligó al barrido b61e3d0
+ * y que S2 atacó en session.ts: sobrevivía aquí. La regla del barrido es "ubicar a la
+ * persona por CORREO — su instancia real manda", y eso es lo que se aplica ahora.
+ *
+ * La instancia del evento también sale de dónde vive REALMENTE la persona; la que
+ * pasa el llamador queda solo como respaldo (para eventos sin persona conocida, p.ej.
+ * un registro que aún no creó fila). Así el llamador ya no tiene que resolverla por su
+ * cuenta antes de llamar, como hacía chat/route.ts.
  */
 export async function registrarEvento(ev: EventoInput): Promise<void> {
   try {
     const sql = db();
-    const instancia = ev.instancia?.trim().toLowerCase() ?? null;
+    const instanciaDicha = ev.instancia?.trim().toLowerCase() ?? null;
     const email = ev.email?.trim().toLowerCase() ?? null;
 
-    // user_id: solo si tenemos instancia + email y la persona existe.
+    // La identidad es el CORREO. Si la persona existe, su fila manda (id + instancia).
     let userId: string | null = null;
-    if (instancia && email) {
-      const [u] = await sql<{ id: string }[]>`
-        SELECT id FROM demo_users
-        WHERE instancia = ${instancia} AND lower(email) = ${email}
-        LIMIT 1
+    let instancia = instanciaDicha;
+    if (email) {
+      const [u] = await sql<{ id: string; instancia: string }[]>`
+        SELECT id, instancia FROM demo_users
+        WHERE lower(email) = ${email}
+        ORDER BY last_seen_at DESC LIMIT 1
       `;
-      userId = u?.id ?? null;
+      if (u) {
+        userId = u.id;
+        instancia = u.instancia ?? instanciaDicha;
+      }
     }
 
     // JSON.stringify → jsonb (evita el tipo estricto de sql.json). El cast lo hace PG.
