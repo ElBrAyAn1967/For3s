@@ -20,7 +20,7 @@
 
 import { createHash } from "node:crypto";
 import { canalDe } from "./instancias";
-import { instanciaRealDe } from "./userStore";
+import { instanciaRealDe, hiloDe } from "./userStore";
 
 const GENERAL_BASE =
   process.env.FOR3S_GENERAL_BASE ?? "https://for3s.tail6749e5.ts.net";
@@ -147,9 +147,15 @@ async function enviarMensaje(
   if (!message.trim()) {
     throw new For3sChatError("faltan clientId o message", "api", 400);
   }
+  // El TEMA (hilo) va SIEMPRE explícito. Antes no se mandaba y el agente aplicaba
+  // su default — que era "hoteles", un resto del Incubathon que acababa en el
+  // session_id de todas las instancias. El tema correcto ya lo sabe la BD:
+  // dueño → 'general' (su memoria de siempre); invitado → 'hilo-<nombre>-<sufijo>'.
+  // Si la persona no existe todavía, NO inventamos un tema: que el agente decida.
+  const tema = await hiloDe(email);
   const r = await llamarAgente<{ reply?: string }>(email, "/v1/chat", {
     method: "POST",
-    body: { message: message.trim() },
+    body: { message: message.trim(), ...(tema ? { tema } : {}) },
     timeoutMs: TIMEOUT_CHAT_MS,
     canal,
   });

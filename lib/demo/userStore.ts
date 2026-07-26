@@ -291,6 +291,21 @@ export async function instanciaRealDe(email: string): Promise<string | null> {
   return u?.instancia ?? null;
 }
 
+/**
+ * Hilo (tema) donde conversa esta persona en su agente. Es el nombre que el sitio
+ * manda EXPLÍCITAMENTE al canal API: dueño → 'general' (su memoria de siempre);
+ * invitado/visitante → 'hilo-<nombre>-<sufijo>' (aislado, ver lib/demo/hilos.ts).
+ * Devuelve null si la persona no existe → el caller NO debe inventar un tema.
+ */
+export async function hiloDe(email: string): Promise<string | null> {
+  const sql = db();
+  const [u] = await sql<{ hilo_nombre: string | null }[]>`
+    SELECT hilo_nombre FROM demo_users WHERE lower(email)=${email.trim().toLowerCase()}
+    ORDER BY last_seen_at DESC LIMIT 1
+  `;
+  return u?.hilo_nombre ?? null;
+}
+
 /** Nombre registrado de un correo (busca su fila más reciente en cualquier instancia). */
 export async function nombreDe(email: string): Promise<string | null> {
   const sql = db();
