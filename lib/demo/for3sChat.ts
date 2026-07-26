@@ -12,11 +12,13 @@ import { createHash } from "node:crypto";
 import { canalDe } from "./instancias";
 import { instanciaRealDe } from "./userStore";
 
-// C1 · Puente CABLEADO (2026-07-24): el CHAT (chatGeneral/chatDueno) toma el canal
-// (url + key) de cada instancia desde demo_instancias vía canalDe() (con fallback a
-// env en transición). Ver lib/demo/instancias.ts.
-// NOTA: las funciones de CONECTORES/KEYS de abajo siguen usando GENERAL_BASE/KEY de
-// env por ahora — su cableado es parte de C4/C5 (ronda posterior de conectores).
+// C1 + P7 · TODO va al agente DEL USUARIO, leído de demo_instancias:
+//   • chat        → canalDe(instancia)      (chatGeneral / chatDueno)
+//   • keys f3k_   → canalDelUsuario(email)  (listar/generar/revocar)
+//   • conectores  → canalDelUsuario(email)  (guardar/estado/borrar)
+//   • BYOK        → canalDelUsuario(email)  (registrarByok)
+// GENERAL_BASE/KEY quedan SOLO como red de seguridad dentro de canalDelUsuario()
+// para el usuario de la demo pública cuando no se puede resolver su instancia.
 const GENERAL_BASE =
   process.env.FOR3S_GENERAL_BASE ?? "https://for3s.tail6749e5.ts.net";
 const GENERAL_KEY = process.env.FOR3S_GENERAL_API_KEY ?? "";
@@ -147,13 +149,17 @@ export async function guardarConector(
   token: string,
 ): Promise<boolean> {
   const clientId = clientIdDeCorreo(email);
-  if (!GENERAL_KEY || !token.trim()) return false;
+  if (!token.trim()) return false;
+  // P7 · al agente DEL USUARIO (antes siempre a general → el conector se guardaba
+  // en el agente equivocado para un dueño).
+  const canal = await canalDelUsuario(email);
+  if (!canal) return false;
   try {
-    const res = await fetch(`${GENERAL_BASE}/v1/conector`, {
+    const res = await fetch(`${canal.base}/v1/conector`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": GENERAL_KEY,
+        "X-API-Key": canal.key,
         "X-Client-Id": clientId,
       },
       body: JSON.stringify({ tipo, token: token.trim() }),
@@ -171,12 +177,14 @@ export async function estadoConector(
   tipo: string,
 ): Promise<boolean> {
   const clientId = clientIdDeCorreo(email);
-  if (!GENERAL_KEY) return false;
+  // P7 · consulta el estado en el agente DEL USUARIO, no en general.
+  const canal = await canalDelUsuario(email);
+  if (!canal) return false;
   try {
     const res = await fetch(
-      `${GENERAL_BASE}/v1/conector?tipo=${encodeURIComponent(tipo)}`,
+      `${canal.base}/v1/conector?tipo=${encodeURIComponent(tipo)}`,
       {
-        headers: { "X-API-Key": GENERAL_KEY, "X-Client-Id": clientId },
+        headers: { "X-API-Key": canal.key, "X-Client-Id": clientId },
         signal: AbortSignal.timeout(10_000),
       },
     );
@@ -194,13 +202,16 @@ export async function borrarConector(
   tipo: string,
 ): Promise<boolean> {
   const clientId = clientIdDeCorreo(email);
-  if (!GENERAL_KEY) return false;
+  // P7 · borra el conector en el agente DEL USUARIO (antes borraba en general, así
+  // que el conector del dueño seguía vivo en su instancia).
+  const canal = await canalDelUsuario(email);
+  if (!canal) return false;
   try {
-    const res = await fetch(`${GENERAL_BASE}/v1/conector`, {
+    const res = await fetch(`${canal.base}/v1/conector`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": GENERAL_KEY,
+        "X-API-Key": canal.key,
         "X-Client-Id": clientId,
       },
       body: JSON.stringify({ tipo }),
@@ -236,12 +247,16 @@ export interface MiKey {
 
 /** Lista las keys f3k_ del usuario (sin la key plana). */
 /**
- * Canal /v1/miskeys de la instancia DONDE VIVE el usuario (no siempre general).
- * Un dueño (ej. de brian) debe gestionar sus keys f3k_ contra SU instancia; usar
- * el canal general fallaba porque ese agente no lo conoce. Cae a general si no se
- * puede resolver su instancia (usuario normal de la demo pública).
+ * ⭐ Canal del agente DONDE VIVE el usuario (no siempre general).
+ *
+ * P7 · TODA operación contra el agente de una persona debe ir a SU instancia. Un
+ * dueño (ej. de brian) vive en su propio agente; usar el canal general falla
+ * silenciosamente porque ese agente no lo conoce: su key BYOK, sus conectores y sus
+ * keys f3k_ se guardaban en el agente EQUIVOCADO.
+ * Devuelve la base del canal (sin /v1/chat) + la key descifrada de esa instancia.
+ * Cae a general por env si no se puede resolver (usuario normal de la demo pública).
  */
-async function canalMiskeysDe(email: string): Promise<{ base: string; key: string } | null> {
+async function canalDelUsuario(email: string): Promise<{ base: string; key: string } | null> {
   const inst = (await instanciaRealDe(email)) ?? "general";
   const canal = await canalDe(inst);
   if (canal) {
@@ -250,7 +265,7 @@ async function canalMiskeysDe(email: string): Promise<{ base: string; key: strin
   }
   // Sin canal para su instancia: log server-side para poder diagnosticar (no se
   // enmascara el fallo). Cae a general solo si hay env (usuario de la pública).
-  console.warn(`[miskeys] sin canal para instancia '${inst}' (${email}); fallback general=${!!GENERAL_KEY}`);
+  console.warn(`[canal] sin canal para instancia '${inst}' (${email}); fallback general=${!!GENERAL_KEY}`);
   return GENERAL_KEY ? { base: GENERAL_BASE, key: GENERAL_KEY } : null;
 }
 
@@ -258,7 +273,7 @@ export async function listarMisKeys(
   email: string,
 ): Promise<{ keys: MiKey[]; activas: number; tope: number } | null> {
   const clientId = clientIdDeCorreo(email);
-  const canal = await canalMiskeysDe(email);
+  const canal = await canalDelUsuario(email);
   if (!canal) return null;
   try {
     const res = await fetch(`${canal.base}/v1/miskeys`, {
@@ -279,7 +294,7 @@ export async function generarMiKey(
   nombre: string,
 ): Promise<{ key: string; id: string } | { error: string }> {
   const clientId = clientIdDeCorreo(email);
-  const canal = await canalMiskeysDe(email);
+  const canal = await canalDelUsuario(email);
   if (!canal) return { error: "config" };
   try {
     const res = await fetch(`${canal.base}/v1/miskeys`, {
@@ -316,7 +331,7 @@ export async function generarMiKey(
 /** Revoca una key f3k_ del usuario (solo la suya; el canal valida propiedad). */
 export async function revocarMiKey(email: string, id: string): Promise<boolean> {
   const clientId = clientIdDeCorreo(email);
-  const canal = await canalMiskeysDe(email);
+  const canal = await canalDelUsuario(email);
   if (!canal) return false;
   try {
     const res = await fetch(`${canal.base}/v1/miskeys`, {
@@ -343,13 +358,19 @@ export async function registrarByok(
   claudeKey: string,
 ): Promise<boolean> {
   const clientId = clientIdDeCorreo(email);
-  if (!GENERAL_KEY || !claudeKey.trim()) return false;
+  if (!claudeKey.trim()) return false;
+  // P7 · ⭐ EL MÁS IMPORTANTE: la key BYOK se registraba SIEMPRE en el agente
+  // general. Para un dueño (que chatea con SU instancia) eso significaba que su key
+  // quedaba en el agente equivocado → "meto mi API key pero el agente no la usa".
+  // Ahora se registra en el agente DONDE VIVE el usuario.
+  const canal = await canalDelUsuario(email);
+  if (!canal) return false;
   try {
-    const res = await fetch(`${GENERAL_BASE}/v1/token`, {
+    const res = await fetch(`${canal.base}/v1/token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": GENERAL_KEY,
+        "X-API-Key": canal.key,
         "X-Client-Id": clientId,
       },
       body: JSON.stringify({ token: claudeKey.trim() }),
