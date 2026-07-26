@@ -29,6 +29,7 @@ export default function DemoShell({
   email,
   initialKeyHint = null,
   agentOn = true,
+  esPago = false,
   onLogout,
 }: {
   kind: DemoKind;
@@ -36,6 +37,7 @@ export default function DemoShell({
   email: string;
   initialKeyHint?: string | null; // si ya tenía SK guardada, entra directo
   agentOn?: boolean;
+  esPago?: boolean; // S4a · instancia 1:1 según demo_instancias (dato del server)
   onLogout: () => void;
 }) {
   const t = useTranslations("Demo.shell");
@@ -138,6 +140,7 @@ export default function DemoShell({
                 email={email}
                 keyHint={keyHint}
                 agentOn={agentOn}
+                esPago={esPago}
               />
             ) : section === "connectors" ? (
               <ConnectorsPanel />

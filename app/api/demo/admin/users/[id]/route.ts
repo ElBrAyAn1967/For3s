@@ -10,9 +10,7 @@
 import { isAdminAuthorized } from "@/lib/demo/admin";
 import { editarUsuario, cambiarDemoMock, eliminarUsuario } from "@/lib/demo/userStore";
 import { normalizeEmail, normalizeName, isValidEmail } from "@/lib/demo/normalize";
-import type { DemoKind } from "@/lib/demo/types";
-
-const DEMOS: DemoKind[] = ["jazz", "mashe", "brian", "general"];
+import { instanciaValida } from "@/lib/demo/instancias";
 
 export async function PATCH(
   request: Request,
@@ -38,10 +36,12 @@ export async function PATCH(
 
   // Caso MOCKUP: cambiar el demo mostrado.
   if (demoUi !== undefined) {
-    if (typeof demoUi !== "string" || !DEMOS.includes(demoUi as DemoKind)) {
+    // S4a · la validez sale de demo_instancias (runtime), no de una lista fija:
+    // antes el admin no podía mover a nadie a una instancia creada con un INSERT.
+    if (typeof demoUi !== "string" || !(await instanciaValida(demoUi))) {
       return Response.json({ error: "demo_invalido" }, { status: 400 });
     }
-    const r = await cambiarDemoMock(id, demoUi as DemoKind);
+    const r = await cambiarDemoMock(id, demoUi.trim().toLowerCase());
     if (r === "no_existe") return Response.json({ error: "no_existe" }, { status: 404 });
     return Response.json({ ok: true, mock: true });
   }

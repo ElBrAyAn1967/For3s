@@ -32,15 +32,20 @@ export default function ProfilePanel({
   email,
   keyHint: initialHint,
   agentOn: initialAgentOn,
+  esPago = false,
 }: {
   kind: DemoKind;
   name: string;
   email: string;
   keyHint: string | null;
   agentOn: boolean;
+  esPago?: boolean;
 }) {
   const t = useTranslations("Demo.shell.profile");
-  const isPaid = kind === "jazz" || kind === "mashe" || kind === "brian";
+  // S4a · "de pago" = instancia 1:1, según demo_instancias (dato que manda el
+  // server). Antes era `kind === "jazz" || "mashe" || "brian"`: una instancia 1:1
+  // nueva creada con un INSERT se veía como gratuita y perdía su panel de agente.
+  const isPaid = esPago;
 
   const [name, setName] = useState(initialName);
   const [keyHint, setKeyHint] = useState(initialHint);

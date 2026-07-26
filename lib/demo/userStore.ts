@@ -12,7 +12,7 @@
 // registro persiste (pueden volver con su correo).
 
 import type { Sql } from "postgres";
-import { cupoDe } from "./instancias"; // C3: cupo desde demo_instancias
+import { cupoDe, cupoTotalActivas, instanciasActivas, getInstancia } from "./instancias"; // C3: cupo desde demo_instancias
 import { sesionTtlMs, panelCupoModo } from "./config"; // parámetros desde demo_config
 import { nombreDeHilo } from "./hilos"; // estándar único del nombre de hilo
 import {
@@ -185,6 +185,10 @@ async function buildResult(
     hasApiKey: !!u?.api_key_enc,
     apiKeyHint: u?.api_key_hint ?? null,
     agentOn: u?.agent_on ?? true,
+    // S4a · "es de pago" = la instancia es 1:1, según demo_instancias. Va como DATO
+    // al cliente para que la UI no tenga que deducirlo del nombre. getInstancia
+    // está cacheada (10s), así que no añade viaje a Neon en la práctica.
+    esPago: (await getInstancia(kind))?.modo === "1:1",
   };
 }
 
@@ -532,9 +536,12 @@ export async function cambiarDemoMock(
 // --- Lectura para el dashboard admin (todas las demos) ---
 export async function listUsers(now: number): Promise<DemoUser[]> {
   const sql = db();
-  // reap de todas las demos
-  for (const k of ["general", "jazz", "mashe", "brian"] as DemoKind[]) {
-    await reapStale(sql, k, now);
+  // S4a · reap de todas las instancias ACTIVAS, leídas de demo_instancias.
+  // Antes era la lista fija ["general","jazz","mashe","brian"]: una instancia nueva
+  // creada con un INSERT nunca veía limpiadas sus sesiones muertas, así que su cupo
+  // se quedaba ocupado por gente que ya se fue.
+  for (const inst of await instanciasActivas()) {
+    await reapStale(sql, inst.instancia, now);
   }
   const rows = await sql<
     {
@@ -586,17 +593,14 @@ export async function counts(now: number) {
   //   'suma'    → suma de todas las instancias activas (10+1+1+1 = 13)
   //   'general' → solo el cupo de general (10)
   // Cambiarlo = UPDATE en demo_config, sin push ni redeploy.
+  // I5b · la suma sale de cupoTotalActivas() (lib/demo/instancias.ts), no de un
+  // SELECT propio: antes esta rama consultaba demo_instancias por su cuenta, sin
+  // cache y sin try/catch, así que con la BD caída tumbaba el panel entero —
+  // mientras la rama 'general' sí degradaba. Ahora ambas ramas usan la misma
+  // puerta a la BD y degradan igual.
   const modo = await panelCupoModo();
-  let maxConcurrent: number;
-  if (modo === "general") {
-    maxConcurrent = await cupoDe("general");
-  } else {
-    const [cap] = await sql<{ suma: number }[]>`
-      SELECT COALESCE(sum(max_concurrent), 0)::int AS suma
-      FROM demo_instancias WHERE activa = true
-    `;
-    maxConcurrent = cap?.suma ?? 0;
-  }
+  const maxConcurrent =
+    modo === "general" ? await cupoDe("general") : await cupoTotalActivas();
   return {
     total: row?.total ?? 0,
     active: row?.active ?? 0,

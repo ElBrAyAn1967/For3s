@@ -38,6 +38,9 @@ export default function GeneralExperience({
   const [hasApiKey, setHasApiKey] = useState(false);
   const [keyHint, setKeyHint] = useState<string | null>(null);
   const [agentOn, setAgentOn] = useState(true);
+  // S4a · "de pago" (instancia 1:1) llega del SERVER como dato (demo_instancias.modo),
+  // en vez de deducirse del nombre de la instancia en el cliente.
+  const [esPago, setEsPago] = useState(false);
 
   const apply = useCallback(
     (r: RegisterResult, who?: { name: string; email: string }) => {
@@ -48,6 +51,7 @@ export default function GeneralExperience({
       if (typeof r.hasApiKey === "boolean") setHasApiKey(r.hasApiKey);
       if (r.apiKeyHint !== undefined) setKeyHint(r.apiKeyHint);
       if (typeof r.agentOn === "boolean") setAgentOn(r.agentOn);
+      if (typeof r.esPago === "boolean") setEsPago(r.esPago);
       setMaxConcurrent(r.maxConcurrent);
       if (r.status === "waiting") {
         setPhase("waitlist");
@@ -130,6 +134,7 @@ export default function GeneralExperience({
       email={email}
       initialKeyHint={hasApiKey ? keyHint : null}
       agentOn={agentOn}
+      esPago={esPago}
       onLogout={logout}
     />
   );

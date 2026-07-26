@@ -100,6 +100,10 @@ export interface RegisterResult {
   hasApiKey: boolean; // true si este correo ya tiene su SK guardada (entra directo)
   apiKeyHint: string | null; // últimos 4 de la SK guardada (para mostrar sin descifrar)
   agentOn: boolean; // estado del agente For3s OS (contenedor on/off) — relevante en 1:1
+  // S4a · ¿es una instancia 1:1 (de pago)? Sale de demo_instancias.modo, NO del
+  // nombre: la UI hacía `kind === "jazz" || "mashe" || "brian"`, así que una
+  // instancia 1:1 nueva se veía como gratuita y perdía su panel de agente.
+  esPago: boolean;
 }
 
 // Error de acceso: correo existe pero el nombre no coincide.

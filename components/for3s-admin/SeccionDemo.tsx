@@ -34,10 +34,13 @@ const STATUS_LABEL: Record<string, string> = {
   ready: "Listo",
 };
 
-// Instancias a las que una demo 1:1 privada puede apuntar (lista fija).
-// Debe coincidir con INSTANCIAS en lib/demo/accountStore.ts. 'foresito' NO está:
-// es la instancia interna de la empresa, no demo-able (Brian 2026-07-22).
-const INSTANCIAS = ["general", "jazz", "mashe", "brian"] as const;
+// S4a · Las instancias salen de la BD (`GET /api/demo/admin/instancias`), no de una
+// lista fija duplicada aquí y en accountStore.ts con la nota "deben coincidir".
+// Una instancia creada con un INSERT aparece sola en los selectores.
+// 🛡️ 'foresito' sigue fuera porque NO está en demo_instancias (es la instancia
+// interna de la empresa, no demo-able — Brian 2026-07-22): lo garantiza el DATO.
+// Semilla para el primer render, hasta que responde el fetch.
+const INSTANCIAS_FALLBACK = ["general", "brian", "jazz", "mashe"];
 
 // Color de la etiqueta de demo, para identificar de un vistazo (Brian 2026-07-22):
 // jazz morado · mashe verde · brian amarillo · general gris. Tintes suaves con
@@ -95,7 +98,9 @@ export default function SeccionDemo() {
   const [okGeneral, setOkGeneral] = useState<{ nombre: string; yaExistia: boolean } | null>(null);
 
   // --- Filtro por instancia + edición de persona ---
-  const [filtro, setFiltro] = useState<string>("todos"); // "todos" | jazz | mashe | brian | general
+  const [filtro, setFiltro] = useState<string>("todos"); // "todos" | <cualquier instancia>
+  // S4a · instancias demo-ables (de la BD; la semilla cubre el primer render).
+  const [instancias, setInstancias] = useState<string[]>(INSTANCIAS_FALLBACK);
   const [editando, setEditando] = useState<DemoUser | null>(null); // fila en edición (modal)
 
   const ERRORES: Record<string, string> = {
@@ -205,6 +210,29 @@ export default function SeccionDemo() {
     }
   }
 
+  // S4a · Carga las instancias demo-ables de la BD (una vez por sesión de panel).
+  // Si falla, se queda con la semilla: el panel nunca se queda sin selectores.
+  useEffect(() => {
+    if (!pass) return;
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/demo/admin/instancias", {
+          headers: { "x-admin-password": pass },
+        });
+        if (!alive || !res.ok) return;
+        const data = (await res.json()) as { instancias?: { instancia: string }[] };
+        const lista = (data.instancias ?? []).map((i) => i.instancia);
+        if (lista.length) setInstancias(lista);
+      } catch {
+        /* sin BD → se conserva la semilla */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [pass]);
+
   // Auto-refresca cada 5s mientras haya contraseña. Cancela con un flag al
   // desmontar (evita setState sobre componente desmontado tras el await).
   useEffect(() => {
@@ -312,6 +340,7 @@ export default function SeccionDemo() {
       {abierto && (
         <FormAgregar
           fNombre={fNombre}
+          instancias={instancias}
           setFNombre={setFNombre}
           fCorreo={fCorreo}
           setFCorreo={setFCorreo}
@@ -351,7 +380,7 @@ export default function SeccionDemo() {
           usa el demo MOSTRADO (kindUi), que es lo que el admin ve. */}
       {users && users.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
-          {(["todos", ...INSTANCIAS] as const).map((f) => {
+          {(["todos", ...instancias]).map((f) => {
             const n =
               f === "todos" ? users.length : users.filter((u) => u.kindUi === f).length;
             const activo = filtro === f;
@@ -453,6 +482,7 @@ export default function SeccionDemo() {
       {editando && (
         <ModalEditar
           user={editando}
+          instancias={instancias}
           onClose={() => setEditando(null)}
           onGuardar={guardarEdicion}
           onEliminar={eliminarPersona}
@@ -473,6 +503,7 @@ function FormAgregar(props: {
   setFPrivada: (v: boolean) => void;
   fInstancia: string;
   setFInstancia: (v: string) => void;
+  instancias: string[]; // S4a · demo-ables desde la BD
   guardando: boolean;
   formError: string;
   linkGenerado: string | null;
@@ -490,6 +521,7 @@ function FormAgregar(props: {
     fPrivada,
     setFPrivada,
     fInstancia,
+    instancias,
     setFInstancia,
     guardando,
     formError,
@@ -630,7 +662,7 @@ function FormAgregar(props: {
             onChange={(e) => setFInstancia(e.target.value)}
             className={`${inputCls} cursor-pointer`}
           >
-            {INSTANCIAS.map((i) => (
+            {instancias.map((i) => (
               <option key={i} value={i}>
                 {i}
               </option>
@@ -671,11 +703,13 @@ function FormAgregar(props: {
 //      claramente que el hilo NO se mueve (migrar hilos = pendiente a futuro).
 function ModalEditar({
   user,
+  instancias,
   onClose,
   onGuardar,
   onEliminar,
 }: {
   user: DemoUser;
+  instancias: string[]; // S4a · demo-ables desde la BD
   onClose: () => void;
   onGuardar: (
     id: string,
@@ -787,7 +821,7 @@ function ModalEditar({
               onChange={(e) => setDemoUi(e.target.value)}
               className={`${inputCls} cursor-pointer`}
             >
-              {INSTANCIAS.map((i) => (
+              {instancias.map((i) => (
                 <option key={i} value={i}>{i}</option>
               ))}
             </select>
