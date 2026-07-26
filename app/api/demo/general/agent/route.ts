@@ -3,22 +3,22 @@
 // General → 403 (función de pago). Body: { on: boolean }.
 
 import type { NextRequest } from "next/server";
-import { readDemoSession } from "@/lib/demo/session";
+import { requireSession } from "@/lib/demo/session";
 import { setAgentState } from "@/lib/demo/userStore";
 import { setContainerRunning } from "@/lib/demo/container";
-import type { DemoKind } from "@/lib/demo/types";
-
-const ONE_TO_ONE: DemoKind[] = ["jazz", "mashe", "brian"];
+import { getInstancia } from "@/lib/demo/instancias";
 
 export async function POST(request: NextRequest) {
-  const sess = await readDemoSession();
-  if (!sess) {
-    return Response.json({ error: "no_session" }, { status: 401 });
-  }
-  const kind = sess.kind as DemoKind;
+  const { sess, error } = await requireSession();
+  if (error) return error;
+  const kind = sess.kind; // ya validado contra demo_instancias (S2)
 
-  // General no puede manipular el agente (función solo para usuarios de pago).
-  if (!ONE_TO_ONE.includes(kind)) {
+  // Solo las instancias 1:1 pueden manipular su agente; las abiertas (1:M) no
+  // (función de pago). El MODO sale de demo_instancias, no de una lista fija:
+  // antes era `["jazz","mashe","brian"]` en código, así que una instancia 1:1
+  // nueva creada con un INSERT recibía 403 hasta tocar y desplegar este archivo.
+  const cfg = await getInstancia(kind);
+  if (cfg?.modo !== "1:1") {
     return Response.json({ error: "paid_only" }, { status: 403 });
   }
 

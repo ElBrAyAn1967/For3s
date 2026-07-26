@@ -2,15 +2,12 @@
 // Identifica la demo (kind) y la persona (correo) por la cookie de sesión.
 
 import { touch } from "@/lib/demo/userStore";
-import { readDemoSession } from "@/lib/demo/session";
-import type { DemoKind } from "@/lib/demo/types";
+import { requireSession } from "@/lib/demo/session";
 
 export async function POST() {
-  const sess = await readDemoSession();
-  if (!sess) {
-    return Response.json({ error: "no_session" }, { status: 401 });
-  }
-  const result = await touch(sess.kind as DemoKind, sess.email, Date.now());
+  const { sess, error } = await requireSession();
+  if (error) return error;
+  const result = await touch(sess.kind, sess.email, Date.now());
   if (!result) {
     return Response.json({ error: "session_not_found" }, { status: 404 });
   }

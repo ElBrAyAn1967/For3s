@@ -4,12 +4,12 @@
 // (Pieza D) API keys self-service. Identidad = correo de la SESIÓN (no del body).
 
 import type { NextRequest } from "next/server";
-import { readDemoSession } from "@/lib/demo/session";
+import { requireSession } from "@/lib/demo/session";
 import { listarMisKeys, generarMiKey, revocarMiKey } from "@/lib/demo/for3sChat";
 
 export async function GET() {
-  const sess = await readDemoSession();
-  if (!sess) return Response.json({ error: "no_session" }, { status: 401 });
+  const { sess, error } = await requireSession();
+  if (error) return error;
   const data = await listarMisKeys(sess.email);
   if (data === null) {
     return Response.json({ error: "no llego al canal" }, { status: 502 });
@@ -18,8 +18,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const sess = await readDemoSession();
-  if (!sess) return Response.json({ error: "no_session" }, { status: 401 });
+  const { sess, error } = await requireSession();
+  if (error) return error;
   const { nombre } = (await request.json().catch(() => ({}))) as { nombre?: string };
   const limpio = (nombre ?? "").trim();
   if (!limpio) return Response.json({ error: "falta el nombre" }, { status: 400 });
@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const sess = await readDemoSession();
-  if (!sess) return Response.json({ error: "no_session" }, { status: 401 });
+  const { sess, error } = await requireSession();
+  if (error) return error;
   const { id } = (await request.json().catch(() => ({}))) as { id?: string };
   if (!id) return Response.json({ error: "falta id" }, { status: 400 });
   const ok = await revocarMiKey(sess.email, id);

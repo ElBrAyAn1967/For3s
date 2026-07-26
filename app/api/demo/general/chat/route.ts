@@ -6,16 +6,14 @@
 // Body: { message }. Responde { reply }. Solo demo General (las 1:1 tienen su flujo).
 
 import type { NextRequest } from "next/server";
-import { readDemoSession, readDuenoVerificado } from "@/lib/demo/session";
+import { requireSession, readDuenoVerificado } from "@/lib/demo/session";
 import { chatGeneral, chatDueno, For3sChatError } from "@/lib/demo/for3sChat";
 import { registrarEvento } from "@/lib/demo/eventos";
 import { instanciaRealDe } from "@/lib/demo/userStore";
 
 export async function POST(request: NextRequest) {
-  const sess = await readDemoSession();
-  if (!sess) {
-    return Response.json({ error: "no_session" }, { status: 401 });
-  }
+  const { sess, error } = await requireSession();
+  if (error) return error;
   // La identidad = correo de la SESIÓN (httpOnly). NO del body. Riesgo #1 del plan.
   // chatGeneral deriva el client_id ESTABLE del correo (hash) — ver clientIdDeCorreo.
   const { message } = (await request.json().catch(() => ({}))) as {

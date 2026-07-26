@@ -3,19 +3,16 @@
 // La foto NO pasa por aquí: vive solo en localStorage del navegador.
 
 import type { NextRequest } from "next/server";
-import { readDemoSession } from "@/lib/demo/session";
+import { requireSession } from "@/lib/demo/session";
 import { updateName, saveApiKey } from "@/lib/demo/userStore";
 import { encryptSecret } from "@/lib/demo/crypto";
 import { isValidApiKeyFormat, apiKeyHint } from "@/lib/demo/apiKey";
 import { normalizeName } from "@/lib/demo/normalize";
-import type { DemoKind } from "@/lib/demo/types";
 
 export async function POST(request: NextRequest) {
-  const sess = await readDemoSession();
-  if (!sess) {
-    return Response.json({ error: "no_session" }, { status: 401 });
-  }
-  const kind = sess.kind as DemoKind;
+  const { sess, error } = await requireSession();
+  if (error) return error;
+  const kind = sess.kind; // ya validado contra demo_instancias (S2)
 
   const body = (await request.json().catch(() => ({}))) as {
     name?: string;

@@ -3,7 +3,7 @@
 // Solo con sesión de demo (el correo será el dueño del conector).
 
 import { cookies } from "next/headers";
-import { readDemoSession } from "@/lib/demo/session";
+import { requireSession } from "@/lib/demo/session";
 import {
   isGithubOAuthConfigured,
   newState,
@@ -13,10 +13,8 @@ import {
 const STATE_COOKIE = "for3s_gh_oauth_state";
 
 export async function GET() {
-  const sess = await readDemoSession();
-  if (!sess) {
-    return Response.json({ error: "no_session" }, { status: 401 });
-  }
+  const { sess, error } = await requireSession();
+  if (error) return error;
   if (!isGithubOAuthConfigured()) {
     return Response.json({ error: "github_oauth_not_configured" }, { status: 503 });
   }

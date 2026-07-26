@@ -5,7 +5,7 @@
 
 import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
-import { readDemoSession } from "@/lib/demo/session";
+import { requireSession } from "@/lib/demo/session";
 import { exchangeGithubCode } from "@/lib/demo/githubOAuth";
 import { guardarConector } from "@/lib/demo/for3sChat";
 
@@ -21,10 +21,8 @@ function volverAlPanel(request: NextRequest, ok: boolean): Response {
 }
 
 export async function GET(request: NextRequest) {
-  const sess = await readDemoSession();
-  if (!sess) {
-    return Response.json({ error: "no_session" }, { status: 401 });
-  }
+  const { sess, error } = await requireSession();
+  if (error) return error;
 
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
