@@ -1,11 +1,23 @@
-// Store de usuarios de las demos — respaldado por Postgres (for3s_demo).
+// Store de personas de las demos — respaldado por Postgres (Neon).
 //
-// Identidad por (kind, correo normalizado). Cada demo tiene su tope:
-//   general = 10 (con lista de espera) · jazz/mashe/brian = 1 (1:1).
+// Identidad por (instancia, correo normalizado). El cupo de cada instancia sale de
+// demo_instancias (1:M general = 10 con lista de espera · 1:1 = 1).
 // Sesión persistente: volver con el mismo nombre+correo continúa donde se quedó.
 //
-// Toda la lógica de capacidad/cola vive en SQL, SIEMPRE filtrada por `kind`
-// (las sesiones de una demo no afectan el cupo de otra).
+// Toda la lógica de capacidad/cola vive en SQL, SIEMPRE filtrada por instancia
+// (las sesiones de una no afectan el cupo de otra).
+//
+// ── U3 · POR QUÉ EL PARÁMETRO SE LLAMA `instancia` Y NO `kind` ───────────────
+// 12 funciones recibían un parámetro `kind` que en realidad ERA la instancia:
+// `reapStale(sql, kind)` consultaba `WHERE instancia = ${kind}`. El nombre decía
+// una cosa y el uso otra, y esa ambigüedad es la raíz del patrón "cookie kind ≠
+// instancia real" que ya obligó a un barrido completo (b61e3d0), produjo el bug de
+// telemetría (eventos con user_id NULL) y los de "la key acabó en el agente
+// equivocado". Mientras el parámetro se llamara `kind`, el patrón reaparecía.
+//
+// ⚠️ La COLUMNA `kind` de la tabla sigue existiendo (deuda C6p2): se escribe con el
+// mismo valor que `instancia` y el índice único `ON CONFLICT (kind, lower(email))`
+// depende de ella. Eso lo desmonta la pieza U4 — aquí NO se tocó el SQL.
 //
 // Una sesión "ocupa cupo" si status='active' y last_seen_at es reciente. Las que
 // dejan de dar señales (cerraron pestaña) se reapean a 'released' pero su
@@ -64,32 +76,32 @@ function tocaMantenimiento(instancia: string, now: number): boolean {
 }
 
 /** Cupo de la instancia, memoizado en el contexto de la operación. */
-async function cupoDeCtx(kind: DemoKind, ctx?: OpCtx): Promise<number> {
+async function cupoDeCtx(instancia: DemoKind, ctx?: OpCtx): Promise<number> {
   if (ctx?.cupo !== undefined) return ctx.cupo;
-  const v = await cupoDe(kind);
+  const v = await cupoDe(instancia);
   if (ctx) ctx.cupo = v;
   return v;
 }
 
 // Marca como 'released' las sesiones activas sin heartbeat reciente (de un kind).
 // El TTL sale de demo_config.sesion_ttl_seg (editable sin push; default 60s).
-async function reapStale(sql: SqlLike, kind: DemoKind, now: number): Promise<void> {
+async function reapStale(sql: SqlLike, instancia: DemoKind, now: number): Promise<void> {
   const cutoff = new Date(now - (await sesionTtlMs()));
   await sql`
     UPDATE demo_users SET status = 'released'
-    WHERE instancia = ${kind} AND status = 'active' AND last_seen_at < ${cutoff}
+    WHERE instancia = ${instancia} AND status = 'active' AND last_seen_at < ${cutoff}
   `;
 }
 
 // O-F3 · memoizado por operación: el mismo conteo se pedía hasta 3 veces.
 async function activeCount(
   sql: SqlLike,
-  kind: DemoKind,
+  instancia: DemoKind,
   ctx?: OpCtx,
 ): Promise<number> {
   if (ctx?.activos !== undefined) return ctx.activos;
   const [row] = await sql<{ n: number }[]>`
-    SELECT count(*)::int AS n FROM demo_users WHERE instancia = ${kind} AND status = 'active'
+    SELECT count(*)::int AS n FROM demo_users WHERE instancia = ${instancia} AND status = 'active'
   `;
   const n = row?.n ?? 0;
   if (ctx) ctx.activos = n;
@@ -105,18 +117,18 @@ async function activeCount(
 // Mismo comportamiento observable: FIFO por last_seen_at, posiciones recalculadas.
 async function promote(
   sql: SqlLike,
-  kind: DemoKind,
+  instancia: DemoKind,
   ctx?: OpCtx,
 ): Promise<string[]> {
   // ¿Hay alguien en cola? Una consulta barata que evita TODO el resto si no.
   const [espera] = await sql<{ n: number }[]>`
     SELECT count(*)::int AS n FROM demo_users
-    WHERE instancia = ${kind} AND status = 'waiting'
+    WHERE instancia = ${instancia} AND status = 'waiting'
   `;
   if ((espera?.n ?? 0) === 0) return []; // O-F2: nada que promover ni renumerar
 
-  const max = await cupoDeCtx(kind, ctx); // O-F3: memoizado por operación
-  const active = await activeCount(sql, kind, ctx);
+  const max = await cupoDeCtx(instancia, ctx); // O-F3: memoizado por operación
+  const active = await activeCount(sql, instancia, ctx);
   const free = max - active;
 
   let promoted: string[] = [];
@@ -125,7 +137,7 @@ async function promote(
     const filas = await sql<{ email: string }[]>`
       WITH elegidos AS (
         SELECT id FROM demo_users
-        WHERE instancia = ${kind} AND status = 'waiting'
+        WHERE instancia = ${instancia} AND status = 'waiting'
         ORDER BY last_seen_at ASC LIMIT ${free}
       )
       UPDATE demo_users u SET status='active', position=NULL
@@ -140,7 +152,7 @@ async function promote(
   await sql`
     WITH ordered AS (
       SELECT id, row_number() OVER (ORDER BY last_seen_at ASC) AS rn
-      FROM demo_users WHERE instancia = ${kind} AND status = 'waiting'
+      FROM demo_users WHERE instancia = ${instancia} AND status = 'waiting'
     )
     UPDATE demo_users u SET position = o.rn FROM ordered o WHERE u.id = o.id
   `;
@@ -149,7 +161,7 @@ async function promote(
 
 async function buildResult(
   sql: SqlLike,
-  kind: DemoKind,
+  instancia: DemoKind,
   email: string,
   returning: boolean,
   ctx?: OpCtx, // O-F3: reusa cupo/activos ya resueltos en esta operación
@@ -169,26 +181,26 @@ async function buildResult(
   >`
     SELECT status, position, api_key_enc, api_key_hint, agent_on,
            (SELECT count(*)::int FROM demo_users
-             WHERE instancia = ${kind} AND status = 'active') AS activos
-    FROM demo_users WHERE instancia = ${kind} AND lower(email) = ${email}
+             WHERE instancia = ${instancia} AND status = 'active') AS activos
+    FROM demo_users WHERE instancia = ${instancia} AND lower(email) = ${email}
   `;
   // Si la persona no existe en esta instancia, el count viene sin fila → se pide aparte.
   const active =
-    u?.activos ?? ctx?.activos ?? (await activeCount(sql, kind, ctx));
+    u?.activos ?? ctx?.activos ?? (await activeCount(sql, instancia, ctx));
   if (ctx && u?.activos !== undefined) ctx.activos = u.activos; // alimenta el memo
   return {
     status: (u?.status ?? "released") as RegisterResult["status"],
     position: u?.position ?? null,
     returning,
     activeCount: active,
-    maxConcurrent: await cupoDeCtx(kind, ctx), // O-F3: memoizado
+    maxConcurrent: await cupoDeCtx(instancia, ctx), // O-F3: memoizado
     hasApiKey: !!u?.api_key_enc,
     apiKeyHint: u?.api_key_hint ?? null,
     agentOn: u?.agent_on ?? true,
     // S4a · "es de pago" = la instancia es 1:1, según demo_instancias. Va como DATO
     // al cliente para que la UI no tenga que deducirlo del nombre. getInstancia
     // está cacheada (10s), así que no añade viaje a Neon en la práctica.
-    esPago: (await getInstancia(kind))?.modo === "1:1",
+    esPago: (await getInstancia(instancia))?.modo === "1:1",
   };
 }
 
@@ -197,7 +209,7 @@ async function buildResult(
 //  - Correo existe (en este kind) + nombre distinto → 'name_mismatch'.
 //  - Correo no existe → registro nuevo (vincula nombre↔correo).
 export async function registerOrResume(
-  kind: DemoKind,
+  instancia: DemoKind,
   name: string,
   email: string,
   now: number,
@@ -206,12 +218,12 @@ export async function registerOrResume(
   return sql.begin(async (tx) => {
     const t = tx as unknown as SqlLike;
     const ctx: OpCtx = {}; // O-F3: memo de cupo/activos para TODA esta operación
-    await reapStale(t, kind, now);
+    await reapStale(t, instancia, now);
     const seen = new Date(now);
-    const max = await cupoDeCtx(kind, ctx); // O-F3: memoizado
+    const max = await cupoDeCtx(instancia, ctx); // O-F3: memoizado
 
     const [existing] = await tx<{ id: string; name: string }[]>`
-      SELECT id, name FROM demo_users WHERE instancia = ${kind} AND lower(email) = ${email}
+      SELECT id, name FROM demo_users WHERE instancia = ${instancia} AND lower(email) = ${email}
     `;
 
     if (existing) {
@@ -224,7 +236,7 @@ export async function registerOrResume(
       // demo_duenos de esta instancia, se corrige (y su hilo pasa al base 'general').
       const [d] = await tx<{ n: number }[]>`
         SELECT count(*)::int AS n FROM demo_duenos
-        WHERE lower(email)=${email} AND instancia=${kind}
+        WHERE lower(email)=${email} AND instancia=${instancia}
       `;
       const rolAhora = (d?.n ?? 0) > 0 ? "dueno" : "visitante";
       await tx`
@@ -234,7 +246,7 @@ export async function registerOrResume(
             last_seen_at = ${seen},
             status = CASE
               WHEN status IN ('released','connecting') AND
-                   (SELECT count(*) FROM demo_users WHERE instancia = ${kind} AND status='active') < ${max}
+                   (SELECT count(*) FROM demo_users WHERE instancia = ${instancia} AND status='active') < ${max}
                 THEN 'active'
               WHEN status IN ('released','connecting')
                 THEN 'waiting'
@@ -242,11 +254,11 @@ export async function registerOrResume(
             END
         WHERE id = ${existing.id}
       `;
-      await promote(t, kind, ctx);
-      return buildResult(t, kind, email, true, ctx);
+      await promote(t, instancia, ctx);
+      return buildResult(t, instancia, email, true, ctx);
     }
 
-    const active = await activeCount(t, kind, ctx);
+    const active = await activeCount(t, instancia, ctx);
     const status = active < max ? "active" : "waiting";
     // C2 · doble-escritura (transición): escribe kind (viejo) E instancia/rol/
     // hilo_nombre (nuevo) a la vez. rol = 'dueno' si el correo está en demo_duenos
@@ -254,7 +266,7 @@ export async function registerOrResume(
     // Derivado en SQL para que sea atómico y no cambie la firma de la función.
     const esDueno = await tx<{ n: number }[]>`
       SELECT count(*)::int AS n FROM demo_duenos
-      WHERE lower(email)=${email} AND instancia=${kind}
+      WHERE lower(email)=${email} AND instancia=${instancia}
     `;
     const rol = (esDueno[0]?.n ?? 0) > 0 ? "dueno" : "visitante";
     // HALLAZGO 3 · nombre de hilo por el estándar único (lib/demo/hilos.ts):
@@ -263,11 +275,11 @@ export async function registerOrResume(
     const hilo = nombreDeHilo(rol, name, email);
     await tx`
       INSERT INTO demo_users (kind, instancia, name, email, status, rol, hilo_nombre, created_at, last_seen_at)
-      VALUES (${kind}, ${kind}, ${name}, ${email}, ${status}, ${rol}, ${hilo}, ${seen}, ${seen})
+      VALUES (${instancia}, ${instancia}, ${name}, ${email}, ${status}, ${rol}, ${hilo}, ${seen}, ${seen})
     `;
     ctx.activos = undefined; // se insertó una fila → invalidar memo
-    await promote(t, kind, ctx);
-    return buildResult(t, kind, email, false, ctx);
+    await promote(t, instancia, ctx);
+    return buildResult(t, instancia, email, false, ctx);
   });
 }
 
@@ -377,7 +389,7 @@ export async function promoverDuenoAsuInstancia(
 }
 
 export async function touch(
-  kind: DemoKind,
+  instancia: DemoKind,
   email: string,
   now: number,
 ): Promise<RegisterResult | null> {
@@ -410,7 +422,7 @@ export async function touch(
 }
 
 export async function endSession(
-  kind: DemoKind,
+  instancia: DemoKind,
   email: string,
   now: number,
 ): Promise<string[]> {
@@ -419,12 +431,12 @@ export async function endSession(
     const t = tx as unknown as SqlLike;
     // Ubica por CORREO (su instancia real manda, no el kind de la cookie).
     await tx`UPDATE demo_users SET status='released' WHERE lower(email) = ${email}`;
-    await reapStale(t, kind, now);
-    return promote(t, kind);
+    await reapStale(t, instancia, now);
+    return promote(t, instancia);
   });
 }
 
-export async function markNotified(kind: DemoKind, email: string): Promise<void> {
+export async function markNotified(instancia: DemoKind, email: string): Promise<void> {
   const sql = db();
   // Ubica por CORREO (su instancia real manda, no el kind de la cookie).
   await sql`UPDATE demo_users SET notified = true WHERE lower(email) = ${email}`;
@@ -435,7 +447,7 @@ export async function markNotified(kind: DemoKind, email: string): Promise<void>
 // 'general' → si filtrábamos por el kind de la cookie, el UPDATE no tocaba ninguna
 // fila y la key se perdía. Ahora se ubica por correo y se guarda donde vive.
 export async function saveApiKey(
-  kind: DemoKind,
+  instancia: DemoKind,
   email: string,
   encBlob: string,
   hint: string,
@@ -453,7 +465,7 @@ export async function saveApiKey(
 // Actualiza el NOMBRE del perfil (se refleja en BD). El correo es la identidad
 // y no se cambia (cambiarlo sería otra sesión).
 export async function updateName(
-  kind: DemoKind,
+  instancia: DemoKind,
   email: string,
   newName: string,
 ): Promise<void> {
@@ -466,7 +478,7 @@ export async function updateName(
 
 // Enciende/apaga el agente (estado del contenedor Docker). Solo demos 1:1.
 export async function setAgentState(
-  kind: DemoKind,
+  instancia: DemoKind,
   email: string,
   on: boolean,
 ): Promise<void> {
