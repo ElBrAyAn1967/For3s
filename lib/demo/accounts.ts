@@ -10,10 +10,10 @@
 
 import {
   containerName,
-  MAX_CONCURRENT,
   type DemoAccount,
   type DemoKind,
 } from "./types";
+import { cupoDe } from "./instancias"; // P3: el cupo sale de demo_instancias
 
 // Tokens secretos de las demos 1:1. En producción se setean por env var
 // (DEMO_JAZZ_TOKEN / DEMO_MASHE_TOKEN). El fallback solo aplica en desarrollo
@@ -39,16 +39,18 @@ function tokenFor(kind: string): string {
   return (envKey ? process.env[envKey] : undefined) ?? fallback ?? "";
 }
 
-function buildAccount(kind: DemoKind): DemoAccount {
+// P3 · el cupo sale de demo_instancias (fuente única) vía cupoDe(); ya no de la
+// constante MAX_CONCURRENT. Por eso buildAccount/getAccount pasan a async.
+async function buildAccount(kind: DemoKind): Promise<DemoAccount> {
   return {
     kind,
     token: kind === "general" ? null : tokenFor(kind),
-    maxConcurrent: MAX_CONCURRENT[kind],
+    maxConcurrent: await cupoDe(kind),
     containerName: containerName(kind),
   };
 }
 
-export function getAccount(kind: DemoKind): DemoAccount {
+export async function getAccount(kind: DemoKind): Promise<DemoAccount> {
   return buildAccount(kind);
 }
 
@@ -82,7 +84,7 @@ export async function resolveByToken(token: string): Promise<ResolvedDemo | null
       ? (priv.instancia as DemoKind)
       : "general";
     return {
-      ...buildAccount(inst),
+      ...(await buildAccount(inst)),
       nombrePersona: priv.nombrePersona,
       emailAutorizado: priv.emailAutorizado,
     };
@@ -90,7 +92,7 @@ export async function resolveByToken(token: string): Promise<ResolvedDemo | null
 
   // 2) Legado por env var.
   for (const kind of ["jazz", "mashe", "brian"] as const) {
-    if (tokenFor(kind) === token) return buildAccount(kind);
+    if (tokenFor(kind) === token) return await buildAccount(kind);
   }
   return null;
 }

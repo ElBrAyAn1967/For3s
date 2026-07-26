@@ -29,10 +29,13 @@ export type SessionStatus =
   | "waiting" // en lista de espera (solo General lleno)
   | "released"; // liberó el cupo (inactividad o salida)
 
-// ⚠️ FALLBACK, no fuente de verdad. El cupo REAL vive en
-// demo_instancias.max_concurrent y se lee con cupoDe() (lib/demo/instancias.ts).
-// Esto solo cubre el caso de que la BD no responda. Una instancia nueva NO
-// necesita estar aquí.
+// ⚠️⚠️ P3 · ESTO NO ES LA FUENTE DE VERDAD DEL CUPO. NO LO USES DIRECTO.
+// El cupo real vive en `demo_instancias.max_concurrent` y SIEMPRE se lee con
+// `cupoDe(instancia)` (lib/demo/instancias.ts), que además cachea y permite
+// cambiarlo con un UPDATE sin redeploy.
+// Este mapa existe SOLO como red de seguridad para el caso de que la BD no
+// responda, y solo cubre las instancias semilla. Una instancia nueva NO va aquí.
+// Único consumidor legítimo: el fallback dentro de cupoDe().
 export const MAX_CONCURRENT: Record<string, number> = {
   jazz: 1,
   mashe: 1,
