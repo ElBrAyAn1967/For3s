@@ -286,13 +286,38 @@ export async function registerOrResume(
  * Devuelve null si la persona no existe. REGLA: toda operación sobre UNA persona
  * debe ubicarla con esto (o por correo), nunca con el kind de la cookie.
  */
+/**
+ * U1/U2 · LA consulta "¿quién es este correo?" — antes escrita 3 veces idéntica
+ * (instanciaRealDe, hiloDe, nombreDe): mismo WHERE, mismo ORDER BY, distinta columna.
+ * Ahora una sola, y los tres getters leen de su resultado.
+ *
+ * U1 · Degrada: si Neon no responde devuelve null en vez de LANZAR. Estos tres
+ * getters los llama el chat (for3sChat) y verify/check; que un parpadeo de la BD
+ * tumbe la conversación es peor que responder "no sé quién es".
+ */
+async function personaPorCorreo(email: string): Promise<{
+  instancia: string;
+  hilo_nombre: string | null;
+  name: string;
+} | null> {
+  try {
+    const sql = db();
+    const [u] = await sql<
+      { instancia: string; hilo_nombre: string | null; name: string }[]
+    >`
+      SELECT instancia, hilo_nombre, name FROM demo_users
+      WHERE lower(email) = ${email.trim().toLowerCase()}
+      ORDER BY last_seen_at DESC LIMIT 1
+    `;
+    return u ?? null;
+  } catch (e) {
+    console.warn(`[userStore] BD no responde al buscar '${email}': ${(e as Error).message}`);
+    return null;
+  }
+}
+
 export async function instanciaRealDe(email: string): Promise<string | null> {
-  const sql = db();
-  const [u] = await sql<{ instancia: string }[]>`
-    SELECT instancia FROM demo_users WHERE lower(email) = ${email.trim().toLowerCase()}
-    ORDER BY last_seen_at DESC LIMIT 1
-  `;
-  return u?.instancia ?? null;
+  return (await personaPorCorreo(email))?.instancia ?? null;
 }
 
 /**
@@ -302,22 +327,12 @@ export async function instanciaRealDe(email: string): Promise<string | null> {
  * Devuelve null si la persona no existe → el caller NO debe inventar un tema.
  */
 export async function hiloDe(email: string): Promise<string | null> {
-  const sql = db();
-  const [u] = await sql<{ hilo_nombre: string | null }[]>`
-    SELECT hilo_nombre FROM demo_users WHERE lower(email)=${email.trim().toLowerCase()}
-    ORDER BY last_seen_at DESC LIMIT 1
-  `;
-  return u?.hilo_nombre ?? null;
+  return (await personaPorCorreo(email))?.hilo_nombre ?? null;
 }
 
 /** Nombre registrado de un correo (busca su fila más reciente en cualquier instancia). */
 export async function nombreDe(email: string): Promise<string | null> {
-  const sql = db();
-  const [u] = await sql<{ name: string }[]>`
-    SELECT name FROM demo_users WHERE lower(email)=${email.trim().toLowerCase()}
-    ORDER BY last_seen_at DESC LIMIT 1
-  `;
-  return u?.name ?? null;
+  return (await personaPorCorreo(email))?.name ?? null;
 }
 
 export async function promoverDuenoAsuInstancia(
@@ -534,7 +549,19 @@ export async function cambiarDemoMock(
 }
 
 // --- Lectura para el dashboard admin (todas las demos) ---
+// U1 · Degrada a lista vacía si la BD no responde: el panel muestra "sin datos" en
+// vez de reventar con un 500. También la usa logout (para notificar promovidos), y
+// ahí un fallo de lectura NO debe impedir que alguien cierre sesión.
 export async function listUsers(now: number): Promise<DemoUser[]> {
+  try {
+    return await listUsersInterno(now);
+  } catch (e) {
+    console.warn(`[userStore] listUsers degrada (BD): ${(e as Error).message}`);
+    return [];
+  }
+}
+
+async function listUsersInterno(now: number): Promise<DemoUser[]> {
   const sql = db();
   // S4a · reap de todas las instancias ACTIVAS, leídas de demo_instancias.
   // Antes era la lista fija ["general","jazz","mashe","brian"]: una instancia nueva
@@ -577,18 +604,23 @@ export async function listUsers(now: number): Promise<DemoUser[]> {
   }));
 }
 
+// U1 · Degrada a ceros si la BD no responde (el panel dibuja "0 de N" en vez de
+// romperse). `cupoTotalActivas`/`cupoDe` ya degradan por su cuenta (I5b).
 export async function counts(now: number) {
-  const sql = db();
-  await reapStale(sql, "general", now);
-  const [row] = await sql<
-    { total: number; active: number; waiting: number }[]
-  >`
-    SELECT
-      count(*)::int AS total,
-      count(*) FILTER (WHERE status='active')::int AS active,
-      count(*) FILTER (WHERE status='waiting')::int AS waiting
-    FROM demo_users
-  `;
+  let row: { total: number; active: number; waiting: number } | undefined;
+  try {
+    const sql = db();
+    await reapStale(sql, "general", now);
+    [row] = await sql<{ total: number; active: number; waiting: number }[]>`
+      SELECT
+        count(*)::int AS total,
+        count(*) FILTER (WHERE status='active')::int AS active,
+        count(*) FILTER (WHERE status='waiting')::int AS waiting
+      FROM demo_users
+    `;
+  } catch (e) {
+    console.warn(`[userStore] counts degrada (BD): ${(e as Error).message}`);
+  }
   // Cupo que muestra el panel: lo decide demo_config.panel_cupo_modo (NO el código).
   //   'suma'    → suma de todas las instancias activas (10+1+1+1 = 13)
   //   'general' → solo el cupo de general (10)
