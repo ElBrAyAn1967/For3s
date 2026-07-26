@@ -8,13 +8,10 @@ import type { NextRequest } from "next/server";
 import { registerOrResume } from "@/lib/demo/userStore";
 import { setDemoEmail } from "@/lib/demo/session";
 import { normalizeEmail, normalizeName, isValidEmail } from "@/lib/demo/normalize";
-import { isEmailAllowed } from "@/lib/demo/allowedEmails";
-import { esCorreoDePrivada } from "@/lib/demo/accountStore";
-import { instanciaDe } from "@/lib/demo/duenos";
 import { registrarEvento } from "@/lib/demo/eventos";
+import { resolverAcceso } from "@/lib/demo/acceso"; // P2: puerta única de acceso
+import { instanciaValida } from "@/lib/demo/instancias"; // P1: validación runtime
 import type { DemoKind } from "@/lib/demo/types";
-
-const VALID: DemoKind[] = ["jazz", "mashe", "brian", "general"];
 
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as {
@@ -24,7 +21,9 @@ export async function POST(request: NextRequest) {
   };
 
   const kind = (body.kind ?? "general") as DemoKind;
-  if (!VALID.includes(kind)) {
+  // P1 · la instancia se valida contra demo_instancias (runtime), no contra una
+  // lista fija: una instancia nueva creada con un INSERT es válida al instante.
+  if (!(await instanciaValida(kind))) {
     return Response.json({ error: "invalid_kind" }, { status: 400 });
   }
 
@@ -35,24 +34,21 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "invalid_input" }, { status: 400 });
   }
 
-  // Demos 1:1: solo el correo autorizado entra. Si no, 404 (hermético).
-  // El correo puede estar autorizado de dos formas: por env var legado
-  // (jazz/mashe/brian) o por ser el correo de una 1:1 privada creada en el panel
-  // (guardada en demo_accounts). General no restringe.
-  if (!isEmailAllowed(kind, email) && !(await esCorreoDePrivada(email))) {
+  // P2 · UNA sola puerta decide el acceso (lib/demo/acceso.ts). Antes esto eran dos
+  // bloques que consultaban 3 fuentes distintas (env vars, demo_llaves, demo_duenos)
+  // en cascada — de esa dispersión salieron los bugs del dueño entrando a general.
+  // Las respuestas al cliente NO cambian: mismo 404 hermético y mismo 409 es_dueno.
+  const acceso = await resolverAcceso(kind, email);
+  if (!acceso.permitido) {
+    if (acceso.razon === "es_dueno_de_otra") {
+      // Es dueño de OTRA instancia: debe verificar su código y entrar a la suya.
+      return Response.json(
+        { error: "es_dueno", instancia: acceso.instancia },
+        { status: 409 },
+      );
+    }
+    // 1:1 sin autorización → hermético (no revela si el correo existe).
     return Response.json({ error: "not_found" }, { status: 404 });
-  }
-
-  // REGLA "un dueño = su oficina" (defensa en servidor): si este correo es dueño de
-  // una instancia, NO puede registrarse en otra (p.ej. entrar a general como uno más).
-  // Debe verificar su código y entrar a la suya. Evita filas duplicadas del mismo
-  // correo en general + su instancia.
-  const dueno = await instanciaDe(email);
-  if (dueno && dueno.instancia !== kind) {
-    return Response.json(
-      { error: "es_dueno", instancia: dueno.instancia },
-      { status: 409 },
-    );
   }
 
   const result = await registerOrResume(kind, name, email, Date.now());
