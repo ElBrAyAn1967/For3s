@@ -44,6 +44,7 @@ export default function ConnectorsPanel() {
   const t = useTranslations("Demo.shell.connectors");
   const [githubConnected, setGithubConnected] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   // Estado real del conector GitHub al montar (y tras volver del OAuth callback,
   // que redirige a /demo?github=connected → el shell remonta el panel).
@@ -65,11 +66,22 @@ export default function ConnectorsPanel() {
     window.location.href = "/api/demo/connectors/github/start";
   }
 
+  // 🐛 Radiografía 2026-07-26: esto NO miraba la respuesta, así que pintaba
+  // "desconectado" aunque el DELETE hubiera fallado — el usuario creía haber
+  // revocado GitHub y el conector seguía vivo en su agente. Mismo patrón que ya
+  // se cazó en reenviarCodigo y en el toggle del agente.
   async function desconectarGithub() {
     setBusy(true);
+    setError("");
     try {
-      await fetch("/api/demo/connectors/github", { method: "DELETE" });
+      const res = await fetch("/api/demo/connectors/github", { method: "DELETE" });
+      if (!res.ok) {
+        setError("No se pudo desconectar GitHub. Intenta de nuevo.");
+        return;
+      }
       setGithubConnected(false);
+    } catch {
+      setError("No llegamos al servidor. Revisa tu conexión.");
     } finally {
       setBusy(false);
     }
@@ -81,6 +93,12 @@ export default function ConnectorsPanel() {
         {t("title")}
       </h2>
       <p className="text-sm text-foreground-secondary mb-6">{t("subtitle")}</p>
+
+      {error && (
+        <p className="mb-4 text-xs text-red-400" role="alert">
+          {error}
+        </p>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {CONNECTORS.map(({ key, label, Icon, live }, i) => {

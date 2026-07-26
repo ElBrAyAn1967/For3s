@@ -109,7 +109,16 @@ export default function GeneralExperience({
   // "Cerrar sesión" (logout) sigue liberando el cupo de forma explícita.
 
   const logout = useCallback(async () => {
-    await fetch("/api/demo/general/logout", { method: "POST" });
+    // Radiografía 2026-07-26: no se miraba la respuesta. Aquí es MENOS grave que en
+    // otros sitios (salir de la UI es lo que el usuario pidió, y el cupo se libera
+    // igual por TTL a los 60s), pero si el POST falla la sesión sigue viva en el
+    // server: conviene dejar rastro para poder diagnosticarlo.
+    try {
+      const res = await fetch("/api/demo/general/logout", { method: "POST" });
+      if (!res.ok) console.warn(`[logout] el server respondió ${res.status}`);
+    } catch (e) {
+      console.warn(`[logout] no llegó al server: ${(e as Error).message}`);
+    }
     setPhase("register");
     setPosition(null);
     onActiveChange?.(false);
