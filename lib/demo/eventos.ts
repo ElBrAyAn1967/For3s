@@ -15,7 +15,8 @@ export type TipoEvento =
   | "chat" // mensaje al agente
   | "logout" // salida explícita
   | "waitlist" // quedó en cola
-  | "byok"; // conectó su propia API key de Claude
+  | "byok" // conectó su propia API key de Claude
+  | "agente"; // el DUEÑO pidió encender/apagar su agente
 
 interface EventoInput {
   tipo: TipoEvento;
