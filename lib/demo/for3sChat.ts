@@ -165,6 +165,25 @@ async function enviarMensaje(
   if (r.status === -1) throw new For3sChatError(dondeFalla, "red");
   if (r.status === 401) throw new For3sChatError("key inválida", "api", 401);
   if (r.status === 429) {
+    // El agente usa 429 para DOS cosas distintas y hay que distinguirlas, porque el
+    // usuario no puede hacer nada igual en ambas:
+    //   · 'cupo_agotado'  → la cuenta de Claude topó su límite. Hay que ESPERAR
+    //     (el agente manda cuánto en `reintentar_en_seg`). Antes esto salía como
+    //     "error interno 500": el mensaje útil se quedaba en el log del server
+    //     (hallazgo de la radiografía 2026-07-26).
+    //   · sin código      → demasiadas peticiones a la vez (freno de concurrencia).
+    const d = r.data as { codigo?: string; error?: string; reintentar_en_seg?: number } | null;
+    if (d?.codigo === "cupo_agotado") {
+      const seg = d.reintentar_en_seg ?? 0;
+      const min = Math.ceil(seg / 60);
+      throw new For3sChatError(
+        seg > 0
+          ? `El cupo de Claude se agotó. Vuelve a intentar en ~${min} min.`
+          : (d.error ?? "El cupo de Claude se agotó. Intenta más tarde."),
+        "api",
+        429,
+      );
+    }
     throw new For3sChatError("demasiadas solicitudes, intenta en un momento", "api", 429);
   }
   if (!r.ok) throw new For3sChatError(`el agente respondió ${r.status}`, "api", r.status);
