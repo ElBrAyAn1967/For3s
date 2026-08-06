@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   User,
   Mail,
@@ -27,11 +27,14 @@ const photoKey = (email: string) => `for3s_demo_photo_${email}`;
  *   SOLO jazz/mashe/brian. General ve una leyenda "solo para usuarios de pago".
  */
 export default function ProfilePanel({
-  kind,
+  // ⚠️ `kind` NO se desestructura: sigue en el tipo (abajo) porque `DemoShell` la pasa,
+  // pero el componente dejó de leerla cuando S4a sustituyó
+  // `kind === "jazz" | "mashe" | "brian"` por `esPago`, que sale de demo_instancias.
+  // Retirarla del contrato es un cambio de API que excede este arreglo (§F-12).
   name: initialName,
   email,
   keyHint: initialHint,
-  agentOn: initialAgentOn,
+  agentOn,
   esPago = false,
 }: {
   kind: DemoKind;
@@ -49,7 +52,16 @@ export default function ProfilePanel({
 
   const [name, setName] = useState(initialName);
   const [keyHint, setKeyHint] = useState(initialHint);
-  const [agentOn, setAgentOn] = useState(initialAgentOn);
+  // ⭐ `agentOn` NO es estado local: es la prop, y punto.
+  //
+  // Antes se copiaba a un useState y un useEffect la resincronizaba en cada latido
+  // (`setAgentOn(initialAgentOn)`), lo que dispara renders en cascada — el error que
+  // eslint marcaba en la línea 75 (react-hooks: setState síncrono dentro de un effect).
+  //
+  // La copia además contradecía el criterio del proyecto: **el servidor es dueño del
+  // estado, React lo refleja** (`principles/expertise/dev-frontend.md` §2). La verdad
+  // viva llega por el heartbeat (`GeneralExperience.tsx:53` → DemoShell → esta prop);
+  // duplicarla en local solo creaba un segundo valor que podía divergir del real.
   const [photo, setPhoto] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -69,15 +81,19 @@ export default function ProfilePanel({
   const [agentPendiente, setAgentPendiente] = useState<boolean | null>(null);
   const [agentError, setAgentError] = useState("");
 
-  // El heartbeat refresca `initialAgentOn` con el estado REAL del contenedor. Cuando
-  // coincide con lo que pedimos, el tránsito terminó de verdad.
-  useEffect(() => {
-    setAgentOn(initialAgentOn);
-    if (agentPendiente !== null && initialAgentOn === agentPendiente) {
-      setAgentPendiente(null);
-      setBusyAgent(false);
-    }
-  }, [initialAgentOn, agentPendiente]);
+  // El heartbeat refresca `agentOn` con el estado REAL del contenedor. Cuando coincide
+  // con lo que pedimos, el tránsito terminó de verdad.
+  //
+  // ⚠️ Esto se DERIVA del render, no se sincroniza con un efecto: mientras el valor real
+  // no alcance al pedido, seguimos "en tránsito". Así el interruptor nunca miente
+  // (`dev-frontend.md` §2) y no hay renders en cascada.
+  const enTransito = agentPendiente !== null && agentOn !== agentPendiente;
+  if (agentPendiente !== null && agentOn === agentPendiente) {
+    // El servidor ya aplicó la orden: se limpia el tránsito durante el render, que es
+    // el patrón que React recomienda para "ajustar estado cuando cambia una prop".
+    setAgentPendiente(null);
+    setBusyAgent(false);
+  }
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onPickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,9 +166,10 @@ export default function ProfilePanel({
         );
         return;
       }
-      // Optimista SOLO si el server confirma que ya se aplicó (caso síncrono).
+      // Aplicado de forma SÍNCRONA (hoy no ocurre: el modelo C es asíncrono). No se
+      // pinta el valor a mano — el heartbeat lo traerá, y pintarlo aquí volvería a
+      // crear el interruptor que miente. Solo se suelta el "ocupado".
       if (data.aplicado) {
-        setAgentOn(next);
         setBusyAgent(false);
         return;
       }
@@ -255,8 +272,8 @@ export default function ProfilePanel({
                     : "border-edge-primary bg-surface-primary text-foreground-tertiary"
                 }`}
               >
-                <Power className={`size-3.5 ${agentPendiente !== null ? "animate-pulse" : ""}`} />
-                {agentPendiente !== null
+                <Power className={`size-3.5 ${enTransito ? "animate-pulse" : ""}`} />
+                {enTransito
                   ? agentPendiente
                     ? "Encendiendo…"
                     : "Apagando…"
@@ -264,7 +281,7 @@ export default function ProfilePanel({
                     ? t("agentOn")
                     : t("agentOff")}
               </button>
-              {agentPendiente !== null && (
+              {enTransito && (
                 <span className="text-[10px] text-foreground-tertiary">
                   El servidor lo aplica en unos segundos.
                 </span>
