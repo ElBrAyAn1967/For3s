@@ -29,7 +29,10 @@ import type { DemoKind } from "./types";
 // candado de seguridad. Si se leyera de la BD, cualquier instancia nueva heredaría
 // el permiso de usar el OAuth de suscripción — justo lo que este guard impide.
 // Añadir una instancia aquí debe ser una decisión CONSCIENTE con riesgo asumido.
-export const OAUTH_KINDS: DemoKind[] = ["jazz", "mashe", "brian"];
+// ⛔ jazz y mashe retiradas el 2026-08-06 al borrarse sus instancias. La lista sigue
+// FIJA a propósito (ver arriba): añadir una instancia aquí es una decisión consciente
+// con riesgo asumido, nunca algo que se herede de la BD.
+export const OAUTH_KINDS: DemoKind[] = ["brian"];
 
 // Interruptor maestro. Debe activarse a mano en el entorno de pruebas.
 // Producción NO debe tener esta var → OAuth queda muerto.

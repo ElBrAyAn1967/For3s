@@ -27,7 +27,8 @@ import { CONTAINER_PREFIJO, containerName } from "./types"; // P6: prefijo en un
 // ⚠️ 'foresito' NO está: es la instancia INTERNA de la empresa y es riesgoso
 // meter externos ahí (decisión de Brian 2026-07-22). Solo instancias demo-ables.
 // Cada una debe existir también en el CHECK de demo_users (jazz/mashe/brian/general).
-export const INSTANCIAS = ["general", "jazz", "mashe", "brian"] as const;
+// ⚠️ Valida lo que el panel admin acepta. jazz y mashe fuera desde el 2026-08-06.
+export const INSTANCIAS = ["general", "brian"] as const;
 export type Instancia = (typeof INSTANCIAS)[number];
 
 // Vista de una cuenta 1:1 para el panel admin (sin exponer el token completo

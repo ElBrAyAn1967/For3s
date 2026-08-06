@@ -18,15 +18,14 @@ import { cupoDe } from "./instancias"; // P3: el cupo sale de demo_instancias
 // Tokens secretos de las demos 1:1. En producción se setean por env var
 // (DEMO_JAZZ_TOKEN / DEMO_MASHE_TOKEN). El fallback solo aplica en desarrollo
 // local para poder probar la ruta sin configurar nada.
+// ⛔ jazz y mashe salieron el 2026-08-06: sus instancias se BORRARON del servidor
+// (cero uso real) y quedaron inactivas en demo_instancias. Un token de dev para una
+// instancia que ya no existe no es compatibilidad: es una credencial suelta.
 const DEV_FALLBACK = {
-  jazz: "j-dev-only-jazz-token",
-  mashe: "m-dev-only-mashe-token",
   brian: "b-pwQH4B_l0caRY16Uk1SEOU2P",
 } as const;
 
 const ENV_KEY = {
-  jazz: "DEMO_JAZZ_TOKEN",
-  mashe: "DEMO_MASHE_TOKEN",
   brian: "DEMO_BRIAN_TOKEN",
 } as const;
 

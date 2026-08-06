@@ -17,7 +17,10 @@ export type DemoKind = string;
 
 // Las instancias "base" que existían antes de demo_instancias. SOLO se usan como
 // fallback/semilla cuando no se puede consultar la BD — nunca como fuente de verdad.
-export const INSTANCIAS_SEMILLA = ["general", "brian", "jazz", "mashe"] as const;
+// ⚠️ Es el FALLBACK si Neon no responde (instancias.ts:120), no una lista decorativa.
+// jazz y mashe salieron el 2026-08-06: degradar a una instancia borrada sería peor que
+// degradar a ninguna.
+export const INSTANCIAS_SEMILLA = ["general", "brian"] as const;
 
 // Estado de una sesión de usuario (identificada por cookie). Mapea la máquina
 // de estados del plan: el usuario llega → se identifica → conecta su API key →

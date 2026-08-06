@@ -3,7 +3,7 @@
 // P2 · Antes había TRES fuentes de verdad para "¿este correo puede entrar?", y el
 // endpoint de registro las consultaba en cascada, con la decisión repartida en dos
 // bloques distintos:
-//   1. allowedEmails.isEmailAllowed  → correos por ENV VAR (legado)
+//   1. allowedEmails.isEmailAllowed  → correos por ENV VAR (legado, ELIMINADO 2026-08-06)
 //   2. accountStore.esCorreoDePrivada → tabla demo_llaves
 //   3. duenos.instanciaDe             → tabla demo_duenos
 // De esa dispersión salieron los bugs del dueño entrando a general (2026-07-25).
@@ -15,18 +15,18 @@
 // Orden de precedencia (importa):
 //   DUEÑO  → manda sobre todo: solo entra a SU oficina (regla "un dueño = su oficina").
 //   LLAVE  → invitado con llave privada vigente (no revocada).
-//   ENV    → compatibilidad con las 1:1 legado configuradas por env var.
 //   ABIERTA→ instancia 1:M (general): entra cualquiera sin fricción.
+//
+// ⛔ El motivo ENV desapareció el 2026-08-06 al borrar jazz y mashe: sin instancias 1:1
+// legado que compatibilizar, ese camino solo dejaba pasar correos de un dominio ajeno.
 
 import { instanciaDe } from "./duenos";
 import { esCorreoDePrivada } from "./accountStore";
-import { isEmailAllowed } from "./allowedEmails";
 import { getInstancia } from "./instancias";
 
 export type MotivoAcceso =
   | "dueno" // es el dueño de ESTA instancia
   | "llave" // tiene una llave privada vigente
-  | "env" // autorizado por env var (1:1 legado)
   | "abierta"; // la instancia admite a cualquiera (1:M)
 
 export type Veredicto =
@@ -60,12 +60,19 @@ export async function resolverAcceso(
     return { permitido: true, motivo: "llave", rol: "invitado" };
   }
 
-  // 3) Compatibilidad: 1:1 legado autorizada por env var.
-  //    isEmailAllowed devuelve true para 'general', así que se comprueba aparte
-  //    para no confundir "instancia abierta" con "autorizado por env".
-  if (inst !== "general" && isEmailAllowed(inst, correo)) {
-    return { permitido: true, motivo: "env", rol: "invitado" };
-  }
+  // 3) ⛔ El paso "autorizado por ENV VAR" SE ELIMINÓ el 2026-08-06.
+  //
+  // Existía para compatibilidad con las 1:1 legado (jazz/mashe/brian) configuradas por
+  // env var. `jazz` y `mashe` se BORRARON del servidor ese día — cero uso real, y sus
+  // datos eran restos de las pruebas E2E de julio.
+  //
+  // 🔴 Sin instancias que compatibilizar, ese paso dejaba de ser un puente y pasaba a ser
+  // solo un agujero: `allowedEmails.ts` caía a un `DEV_FALLBACK` con `jazz@example.com`,
+  // un dominio que NADIE controla. Cualquiera que lo registrara entraba.
+  // El test `tests/autorizar.test.ts` llevaba días en rojo documentando exactamente esto.
+  //
+  // Ahora quedan DOS fuentes de verdad, ambas en la BD: `demo_duenos` (paso 1) y
+  // `demo_llaves` (paso 2). Ninguna se puede satisfacer con un correo inventado.
 
   // 4) ¿La instancia es abierta (1:M)? Entonces entra cualquiera sin fricción.
   const cfg = await getInstancia(inst);

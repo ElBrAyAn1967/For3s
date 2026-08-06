@@ -1,57 +1,98 @@
 /**
  * CAMINO ② · AUTORIZAR — un invitado NO llega a lo que no es suyo.
  *
- * Plan: Mente/blocks/active/plan-tests-demo/docs/plan-critical-paths.md §2
- * Criterio: Mente/principles/expertise/val-functional.md §2.2
+ * Plan: Mente/blocks/archive/plan-tests-demo_2026-08/docs/plan-critical-paths.md §2
+ * Criterio: Mente/principles/expertise/val-functional.md §2.3
  *
- * ⚠️ LEE ESTO ANTES DE "ARREGLAR" UN TEST ROJO:
- * el último bloque de este archivo (`EL AGUJERO ABIERTO`) está diseñado para FALLAR hoy.
- * No es un test roto: es el agujero de `allowedEmails.ts` documentado como criterio
- * verificable. Su VERDE es la definición de "sub-bloque 7 cerrado" en blk-demo-2026-07.
+ * ── 🟢 EL AGUJERO SE CERRÓ EL 2026-08-06 ────────────────────────────────────
+ * La versión anterior de este archivo tenía UN test en rojo a propósito: `allowedEmails.ts`
+ * caía a un `DEV_FALLBACK` que autorizaba `jazz@example.com`, un dominio que nadie controla.
+ * Su verde ERA la definición de cerrar el sub-bloque 7.
  *
- * Medido 2026-08-05: sin `DEMO_JAZZ_EMAIL` en el entorno, `DEV_FALLBACK` autoriza
- * `jazz@example.com` — una dirección falsa que nadie controla.
+ * Se cerró por la vía de fondo, no parcheando el assert: Brian borró las instancias `jazz` y
+ * `mashe` del servidor (cero uso real — 4 y 8 episodios de las pruebas E2E de julio), y sin
+ * instancias 1:1 legado que compatibilizar, el módulo entero perdió su razón de existir.
+ * `lib/demo/allowedEmails.ts` **está borrado** y el paso "autorizado por ENV" desapareció de
+ * `resolverAcceso()`.
+ *
+ * ⚠️ ESTE ES UN TEST DE INTEGRACIÓN, y no por gusto: las dos fuentes de verdad que quedan
+ * —`demo_duenos` y `demo_llaves`— viven en Postgres. Antes se podía probar sin BD porque la
+ * autorización se resolvía contra una constante en el código; **que ya no se pueda es
+ * exactamente la mejora**. `val-functional.md` §2.3: donde cruza un proceso, solo cuenta el
+ * sistema real.
+ *
+ * 🔴 Corre contra `DEMO_DATABASE_URL_TEST`, nunca `DEMO_DATABASE_URL` (esa es la Neon de
+ * PRODUCCIÓN). Sin la variable, se salta — jamás cae de vuelta.
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { isEmailAllowed, allowedEmailFor } from "@/lib/demo/allowedEmails";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import postgres from "postgres";
 
-const LIMPIO = { ...process.env };
-beforeEach(() => { process.env = { ...LIMPIO }; });
-afterEach(() => { process.env = { ...LIMPIO }; });
+const URL_TEST = process.env.DEMO_DATABASE_URL_TEST;
 
-describe("② autorizar · lo que YA protege", () => {
-  it("rechaza un correo que no es el dueño", () => {
-    process.env.DEMO_JAZZ_EMAIL = "jazz.real@ejemplo.com";
-    expect(isEmailAllowed("jazz", "otro@ejemplo.com")).toBe(false);
+// `.invalid` es un TLD que RFC 2606 reserva para que NUNCA resuelva.
+const FORASTERO = "test-forastero@for3s.invalid";
+
+describe.skipIf(!URL_TEST)("② autorizar · quién entra y en calidad de qué", () => {
+  let sql: ReturnType<typeof postgres>;
+
+  beforeAll(async () => {
+    process.env.DEMO_DATABASE_URL = URL_TEST;
+    sql = postgres(URL_TEST!, { ssl: "require", max: 2 });
   });
 
-  it("acepta al dueño declarado por env", () => {
-    process.env.DEMO_JAZZ_EMAIL = "jazz.real@ejemplo.com";
-    expect(isEmailAllowed("jazz", "jazz.real@ejemplo.com")).toBe(true);
+  afterAll(async () => {
+    if (sql) await sql.end();
   });
 
-  it("normaliza mayúsculas y espacios — no son dos identidades distintas", () => {
-    process.env.DEMO_JAZZ_EMAIL = "jazz.real@ejemplo.com";
-    expect(isEmailAllowed("jazz", "  JAZZ.REAL@Ejemplo.com  ")).toBe(true);
+  it("⭐ un correo desconocido NO entra a una instancia 1:1", async () => {
+    // El corazón del camino ②. Antes bastaba con acertar el `DEV_FALLBACK`.
+    const { resolverAcceso } = await import("@/lib/demo/acceso");
+    const [priv] = await sql<{ nombre: string }[]>`
+      SELECT instancia AS nombre FROM demo_instancias WHERE modo = '1:1' AND activa LIMIT 1`;
+    if (!priv) return;                       // sin instancias 1:1 no hay nada que negar
+    const v = await resolverAcceso(priv.nombre, FORASTERO);
+    expect(v.permitido).toBe(false);
   });
 
-  it("una instancia sin dueño declarado no autoriza a nadie", () => {
-    // P1 del propio módulo: sin env y sin fallback devuelve "" → no autoriza.
-    expect(allowedEmailFor("instancia-inexistente")).toBe("");
-    expect(isEmailAllowed("instancia-inexistente" as never, "quien@sea.com")).toBe(false);
+  it("🔴 REGRESIÓN · un correo de `example.com` ya NO autoriza a nadie", async () => {
+    // EL AGUJERO QUE ESTE ARCHIVO EXISTE PARA VIGILAR.
+    // `jazz@example.com` era la puerta abierta: dominio ajeno, cualquiera podía registrarlo.
+    // Se prueba contra TODAS las instancias 1:1, no solo la que tuvo el bug.
+    const { resolverAcceso } = await import("@/lib/demo/acceso");
+    const privadas = await sql<{ nombre: string }[]>`
+      SELECT instancia AS nombre FROM demo_instancias WHERE modo = '1:1'`;
+    for (const p of privadas) {
+      for (const falso of ["jazz@example.com", "mashe@example.com", "brian@example.com"]) {
+        const v = await resolverAcceso(p.nombre, falso);
+        expect(v.permitido, `${falso} entró a ${p.nombre}`).toBe(false);
+      }
+    }
   });
 
-  it("`general` es público a propósito — y eso NO es el agujero", () => {
-    // Declarado: general no restringe. Se prueba para que un cambio futuro lo note.
-    expect(isEmailAllowed("general", "cualquiera@ejemplo.com")).toBe(true);
+  it("`general` sigue abierta a propósito — y eso NO es el agujero", async () => {
+    // Declarado: general es 1:M. Se prueba para que un cambio futuro lo note.
+    const { resolverAcceso } = await import("@/lib/demo/acceso");
+    const v = await resolverAcceso("general", FORASTERO);
+    expect(v.permitido).toBe(true);
+    if (v.permitido) expect(v.motivo).toBe("abierta");
   });
-});
 
-describe("🔴 EL AGUJERO ABIERTO · sub-bloque 7 de blk-demo-2026-07", () => {
-  it("una dirección FALSA no debería autorizar cuando no hay env var", () => {
-    // Sin DEMO_JAZZ_EMAIL, DEV_FALLBACK entrega jazz@example.com y ESO autoriza.
-    // Ese dominio no lo controla nadie: cualquiera que lo registre entra.
-    delete process.env.DEMO_JAZZ_EMAIL;
-    expect(isEmailAllowed("jazz", "jazz@example.com")).toBe(false);
+  it("una instancia inexistente no autoriza a nadie", async () => {
+    const { resolverAcceso } = await import("@/lib/demo/acceso");
+    const v = await resolverAcceso("instancia-que-no-existe", FORASTERO);
+    expect(v.permitido).toBe(false);
+  });
+
+  it("un DUEÑO solo entra a SU oficina, nunca a otra", async () => {
+    // La regla que causó el bug del 2026-07-25 (un dueño entrando a general).
+    const { resolverAcceso } = await import("@/lib/demo/acceso");
+    const [d] = await sql<{ email: string; instancia: string }[]>`
+      SELECT email, instancia FROM demo_duenos LIMIT 1`;
+    if (!d) return;                          // sin dueños registrados no hay nada que probar
+    const suya = await resolverAcceso(d.instancia, d.email);
+    expect(suya.permitido).toBe(true);
+    const ajena = await resolverAcceso("general", d.email);
+    expect(ajena.permitido).toBe(false);
+    if (!ajena.permitido) expect(ajena.razon).toBe("es_dueno_de_otra");
   });
 });
