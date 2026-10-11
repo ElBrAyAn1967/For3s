@@ -18,7 +18,7 @@
 // Si su instancia no tiene canal configurado, se falla claro en vez de reencaminar
 // a otro agente: mandar a alguien al agente equivocado es peor que no responder.
 
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { canalDe } from "./instancias";
 import { instanciaRealDe, hiloDe } from "./userStore";
 
@@ -46,6 +46,24 @@ export function clientIdDeCorreo(email: string): string {
   const norm = (email || "").trim().toLowerCase();
   // 24 hex chars = 96 bits: unicidad de sobra, y < 32 (no lo trunca _limpiar_id).
   return "u" + createHash("sha256").update(norm).digest("hex").slice(0, 24);
+}
+
+// SG-2 (auditoría de seguridad S60): el agente ya no cree un X-Client-Id solo porque
+// llega con la key demo — quien tuviera esa key podía hacerse pasar por cualquier
+// usuario. La web lo FIRMA con un segundo secreto que solo viven aquí (Vercel) y en
+// el servidor: X-Client-Sig = HMAC-SHA256(FOR3S_API_FIRMA_SECRETO, X-Client-Id) en hex.
+// Sin el secreto configurado no se manda firma (el servidor en modo «aceptar» pasa).
+export function firmaClientId(clientId: string, secreto: string | undefined): string | null {
+  const s = (secreto ?? "").trim();
+  if (!s) return null;
+  return createHmac("sha256", s).update(clientId).digest("hex");
+}
+
+/** Los headers de identidad de un usuario: su id, y su firma cuando hay secreto. */
+export function headersDeIdentidad(email: string, secreto: string | undefined): Record<string, string> {
+  const id = clientIdDeCorreo(email);
+  const firma = firmaClientId(id, secreto);
+  return firma ? { "X-Client-Id": id, "X-Client-Sig": firma } : { "X-Client-Id": id };
 }
 
 export class For3sChatError extends Error {
@@ -120,7 +138,7 @@ async function llamarAgente<T>(
       headers: {
         ...(opts.body !== undefined ? { "Content-Type": "application/json" } : {}),
         "X-API-Key": canal.key,
-        "X-Client-Id": clientIdDeCorreo(email),
+        ...headersDeIdentidad(email, process.env.FOR3S_API_FIRMA_SECRETO),
       },
       ...(opts.body !== undefined ? { body: JSON.stringify(opts.body) } : {}),
       signal: AbortSignal.timeout(opts.timeoutMs ?? TIMEOUT_LECTURA_MS),
