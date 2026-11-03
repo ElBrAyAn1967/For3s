@@ -24,6 +24,7 @@
 // podría, si no, apagarle la memoria al dueño (denegación de servicio).
 
 import { containerName, type DemoKind } from "./types";
+import { tocarTimbre } from "./timbre";
 
 /**
  * Registra la intención de encender/apagar. NO ejecuta docker: eso lo hace
@@ -43,9 +44,11 @@ export async function setContainerRunning(
 ): Promise<boolean> {
   const base = process.env.DEMO_AGENT_CONTROL_URL;
   if (!base) {
-    // Camino normal en producción: la orden viaja por la BD, no por HTTP.
+    // Camino normal en producción: la orden viaja por la BD, no por HTTP. El timbre
+    // solo despierta al lector del server para que la lea ya (lib/demo/timbre.ts).
+    const sono = await tocarTimbre();
     console.info(
-      `[agente] ${containerName(instancia)} → ${on ? "start" : "stop"} encolado en BD (lo aplica for3s-ctl)`,
+      `[agente] ${containerName(instancia)} → ${on ? "start" : "stop"} encolado en BD (lo aplica for3s-agente-sync) · timbre ${sono ? "sonó" : "no sonó"}`,
     );
     return false;
   }
